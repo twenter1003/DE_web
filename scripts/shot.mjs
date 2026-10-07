@@ -3,18 +3,20 @@
 //   node scripts/shot.mjs --url http://localhost:5288/ --at "#top@0" --at "#prologue@0.3" --name desk
 //   node scripts/shot.mjs --mobile --reduced --at "#ch1@0.5"
 //   node scripts/shot.mjs --at "[data-step]:nth-of-type(2)@0.4" (선택자@비율: 요소 높이의 비율 지점을 화면 가운데에)
+// --click "selector" : 스크린샷 전에 클릭(여러 번 가능)
 // 옵션: --out shots  --w 1440 --h 900  --mobile(390x844)  --reduced  --wait 900  --progress '{"v":1,...}'  --full
 import { chromium } from 'playwright'
 import { mkdirSync } from 'node:fs'
 
 const argv = process.argv.slice(2)
-const opt = { url: 'http://localhost:5288/', out: 'shots', w: 1440, h: 900, wait: 900, name: 'shot', at: [] }
+const opt = { url: 'http://localhost:5288/', out: 'shots', w: 1440, h: 900, wait: 900, name: 'shot', at: [], click: [] }
 for (let i = 0; i < argv.length; i++) {
   const a = argv[i]
   if (a === '--mobile') opt.mobile = true
   else if (a === '--reduced') opt.reduced = true
   else if (a === '--full') opt.full = true
   else if (a === '--at') opt.at.push(argv[++i])
+  else if (a === '--click') opt.click.push(argv[++i])
   else if (a.startsWith('--')) opt[a.slice(2)] = argv[++i]
 }
 if (opt.mobile) Object.assign(opt, { w: 390, h: 844 })
@@ -40,6 +42,10 @@ if (opt.progress) {
 await page.goto(opt.url, { waitUntil: 'networkidle' })
 await page.evaluate(() => document.fonts.ready)
 await page.waitForTimeout(400)
+for (const sel of opt.click) {
+  await page.click(sel)
+  await page.waitForTimeout(300)
+}
 
 let n = 0
 for (const spec of opt.at) {

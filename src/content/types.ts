@@ -72,12 +72,14 @@ export interface Growth {
   mapNote: string
 }
 
-export interface ChapterContent<S extends string = string, I = undefined> {
+export interface ChapterContent<S extends string = string, I = undefined, F = Record<string, string>> {
   id: ChapterId
   opening: Opening
   scenes: Record<S, SceneText>
   /** 챕터 전용 인터랙션 문구(형태는 챕터마다 다름) */
   interaction: I
+  /** 다이어그램 안에 들어가는 라벨·캡션 */
+  figures: F
   summary: string
   quiz: Quiz
   growth: Growth

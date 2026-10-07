@@ -4,11 +4,23 @@ import './styles/index.css'
 import { ScrollTrigger } from './lib/gsap'
 import { App } from './App'
 import { DevMaps } from './DevMaps'
+import { DevScene } from './DevScene'
 import { EnvProvider } from './state/env'
+import { ProgressProvider } from './state/progress'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    {import.meta.env.DEV && location.search.includes('debug=map') ? <DevMapsShell /> : <App />}
+    {import.meta.env.DEV && location.search.includes('debug=map') ? (
+      <DevMapsShell />
+    ) : import.meta.env.DEV && location.search.includes('debug=scene') ? (
+      <EnvProvider>
+        <ProgressProvider>
+          <DevScene />
+        </ProgressProvider>
+      </EnvProvider>
+    ) : (
+      <App />
+    )}
   </StrictMode>,
 )
 

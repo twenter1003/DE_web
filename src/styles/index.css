@@ -2,10 +2,19 @@
 @import 'pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css';
 @import '@fontsource-variable/jetbrains-mono';
 
+/* 모노 라벨 안의 한글 사이 띄어쓰기가 JetBrains Mono의 넓은 공백으로 벌어지지 않게,
+   공백 한 글자만 Pretendard(이미 내려받는 라틴 부분 파일)로 그린다 */
+@font-face {
+  font-family: 'Mono Space KR';
+  font-display: swap;
+  src: url('../../node_modules/pretendard/dist/web/variable/woff2-dynamic-subset/PretendardVariable.subset.91.woff2') format('woff2-variations');
+  unicode-range: U+0020;
+}
+
 /* 디자인 토큰: 색은 스테이지마다 바뀌는 CSS 변수(src/lib/stages.ts)를 가리킨다. */
 @theme inline {
   --font-sans: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
-  --font-mono: 'JetBrains Mono Variable', 'Pretendard Variable', Pretendard, ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-mono: 'Mono Space KR', 'JetBrains Mono Variable', 'Pretendard Variable', Pretendard, ui-monospace, SFMono-Regular, Menlo, monospace;
 
   --color-bg: var(--bg);
   --color-ink: var(--ink);
@@ -122,6 +131,11 @@ svg.diagram text {
   fill: var(--ink);
   font-family: var(--font-mono);
 }
+/* 코드 블록은 정렬을 위해 진짜 고정폭 공백을 쓴다 */
+pre,
+code {
+  font-family: 'JetBrains Mono Variable', 'Pretendard Variable', ui-monospace, monospace;
+}
 svg.diagram .t-sans {
   font-family: var(--font-sans);
 }
@@ -179,4 +193,15 @@ dialog::backdrop {
   min-height: 2.25rem;
   padding: 0.25rem 0.75rem;
   font-size: 0.875rem;
+}
+
+/* 인터랙션 기록 줄이 새로 들어올 때 */
+@keyframes row-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+.row-in {
+  animation: row-in 0.25s ease-out;
 }

@@ -53,7 +53,7 @@ function SceneHeader({ id, kind, scene }: Pick<Props, 'id' | 'kind' | 'scene'>) 
   )
 }
 
-function StepBody({ step, i, n }: { step: Step; i: number; n: number }) {
+function StepBody({ step, i, n, srAlt = true }: { step: Step; i: number; n: number; srAlt?: boolean }) {
   return (
     <div className="max-w-[34rem]">
       <p className="mb-2 font-mono text-xs text-muted" aria-hidden="true">
@@ -69,9 +69,11 @@ function StepBody({ step, i, n }: { step: Step; i: number; n: number }) {
           ))}
         </div>
       ) : null}
-      <p className="sr-only">
-        {UI.figure}: {step.alt}
-      </p>
+      {srAlt && (
+        <p className="sr-only">
+          {UI.figure}: {step.alt}
+        </p>
+      )}
     </div>
   )
 }
@@ -137,19 +139,19 @@ function ScrubScene({ id, kind, scene, diagram, build, onStep, tall }: Props) {
   )
 
   return (
-    <section ref={root} aria-labelledby={`${id}-title`} className="relative flex flex-col md:grid md:grid-cols-[minmax(0,30rem)_minmax(0,1fr)] md:gap-x-12 lg:gap-x-16">
+    <section ref={root} id={id} aria-labelledby={`${id}-title`} className="relative flex flex-col md:grid md:grid-cols-[minmax(0,30rem)_minmax(0,1fr)] md:gap-x-12 lg:gap-x-16">
       <div
-        className={`paper-grid sticky top-0 z-10 -mx-4 border-b border-edge px-4 py-3 md:col-start-2 md:row-start-1 md:mx-0 md:h-svh md:self-start md:border-0 md:px-0 md:py-[7svh] ${
-          tall ? 'h-[56svh]' : 'h-[50svh]'
+        className={`sticky top-0 z-10 -mx-4 border-b border-edge bg-bg px-4 pb-3 pt-[3.75rem] md:bg-transparent md:col-start-2 md:row-start-1 md:mx-0 md:h-svh md:self-start md:border-0 md:px-0 md:py-[7svh] ${
+          tall ? 'h-[60svh]' : 'h-[56svh]'
         }`}
       >
-        <div ref={diag} role="img" aria-label={scene.title} className="h-full w-full">
+        <div ref={diag} role="img" aria-label={scene.title} className="mx-auto h-full w-full max-w-[36rem]">
           {diagram()}
         </div>
       </div>
       <div className="md:col-start-1 md:row-start-1">
         <SceneHeader id={id} kind={kind} scene={scene} />
-        <ol ref={list} className="pb-[12svh]">
+        <ol ref={list} className="pb-[44svh] md:pb-[40svh]">
           {scene.steps.map((s, i) => (
             <li key={i} data-step className="flex min-h-[78svh] items-start pt-[4svh] md:min-h-[82svh] md:items-center md:pt-0">
               <StepBody step={s} i={i} n={n} />
@@ -175,7 +177,7 @@ function Snapshot({ diagram, build, n, i }: { diagram: () => ReactNode; build: S
     { scope: ref, dependencies: [mobile, n, i], revertOnUpdate: true },
   )
   return (
-    <div ref={ref} className="h-full w-full">
+    <div ref={ref} className="mx-auto h-full w-full max-w-[36rem]">
       {diagram()}
     </div>
   )
@@ -201,7 +203,7 @@ function StaticScene({ id, kind, scene, diagram, build, onStep, tall }: Props) {
   }, [n])
 
   return (
-    <section aria-labelledby={`${id}-title`}>
+    <section id={id} aria-labelledby={`${id}-title`}>
       <SceneHeader id={id} kind={kind} scene={scene} />
       <ol ref={list}>
         {scene.steps.map((s, i) => (
@@ -214,7 +216,7 @@ function StaticScene({ id, kind, scene, diagram, build, onStep, tall }: Props) {
               <Snapshot diagram={diagram} build={build} n={n} i={i} />
             </figure>
             <div className="self-center md:order-1">
-              <StepBody step={s} i={i} n={n} />
+              <StepBody step={s} i={i} n={n} srAlt={false} />
             </div>
           </li>
         ))}
