@@ -1,0 +1,182 @@
+@import 'tailwindcss';
+@import 'pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css';
+@import '@fontsource-variable/jetbrains-mono';
+
+/* 디자인 토큰: 색은 스테이지마다 바뀌는 CSS 변수(src/lib/stages.ts)를 가리킨다. */
+@theme inline {
+  --font-sans: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+  --font-mono: 'JetBrains Mono Variable', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --color-bg: var(--bg);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-surface: var(--surface);
+  --color-edge: var(--edge);
+  --color-accent: var(--accent);
+  --color-fail: var(--fail);
+  --color-ok: var(--ok);
+  --color-wait: var(--wait);
+
+  --text-step: 1.125rem;
+  --text-step--line-height: 1.8;
+}
+
+:root {
+  /* 기본값 = 스테이지 0. 섹션마다 인라인 변수로 덮어쓴다. */
+  --bg: #ecefe6;
+  --ink: #20252b;
+  --muted: #4a535c;
+  --line: #20252b;
+  --surface: #f7f8f3;
+  --edge: rgba(32, 37, 43, 0.22);
+  --grid: rgba(52, 92, 82, 0.08);
+  --grid-strong: rgba(52, 92, 82, 0.15);
+  --grid-size: 32px;
+  --accent: #c24705;
+  --fail: #b42318;
+  --ok: #1c7435;
+  --wait: #5f6b78;
+  --rail-w: 0px;
+  color-scheme: light;
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --rail-w: 4.5rem;
+  }
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-padding-top: 1rem;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 1.0625rem;
+  line-height: 1.75;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+p,
+li,
+figcaption,
+blockquote {
+  text-wrap: pretty;
+}
+
+/* 제도 용지 / 블루프린트 격자. 5칸마다 굵은 선. */
+.paper-grid {
+  background-color: var(--bg);
+  background-image:
+    linear-gradient(to right, var(--grid-strong) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grid-strong) 1px, transparent 1px),
+    linear-gradient(to right, var(--grid) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grid) 1px, transparent 1px);
+  background-size:
+    calc(var(--grid-size) * 5) calc(var(--grid-size) * 5),
+    calc(var(--grid-size) * 5) calc(var(--grid-size) * 5),
+    var(--grid-size) var(--grid-size),
+    var(--grid-size) var(--grid-size);
+}
+
+:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+::selection {
+  background: var(--accent);
+  color: #fff;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* SVG 기본: 다이어그램 선은 currentColor = --line */
+svg.diagram {
+  color: var(--line);
+  overflow: visible;
+}
+svg.diagram text {
+  fill: var(--ink);
+  font-family: var(--font-mono);
+}
+svg.diagram .t-sans {
+  font-family: var(--font-sans);
+}
+svg.diagram .t-muted {
+  fill: var(--muted);
+}
+
+/* 모션 줄이기: CSS 전환도 끈다 */
+[data-motion='reduced'] *,
+[data-motion='reduced'] *::before,
+[data-motion='reduced'] *::after {
+  transition-duration: 0.01ms !important;
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  scroll-behavior: auto !important;
+}
+
+dialog::backdrop {
+  background: rgba(10, 18, 30, 0.45);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2.75rem;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  border: 1.5px solid var(--ink);
+  background: var(--surface);
+  color: var(--ink);
+  font-weight: 600;
+  line-height: 1.3;
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s;
+}
+.btn:hover {
+  background: var(--ink);
+  color: var(--bg);
+}
+.btn[aria-pressed='true'],
+.btn-solid {
+  background: var(--ink);
+  color: var(--bg);
+}
+.btn-solid:hover {
+  background: var(--surface);
+  color: var(--ink);
+}
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.btn-sm {
+  min-height: 2.25rem;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.875rem;
+}
