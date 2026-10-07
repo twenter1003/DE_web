@@ -24,7 +24,7 @@ export function statsOf(completed: ReadonlySet<ChapterId>): Record<StatKey, numb
   return out
 }
 
-export function cardsOf(completed: ReadonlySet<ChapterId>): Set<string> {
+export function ownedLetters(completed: ReadonlySet<ChapterId>): Set<string> {
   return new Set(CARDS.filter((c) => completed.has(c.chapter)).map((c) => c.letter))
 }
 

@@ -50,10 +50,12 @@ interface NodeProps {
   muted?: boolean
   /** 라벨 텍스트 묶음에 붙일 data-el(라벨 교체 애니메이션용) */
   labelEl?: string
+  /** 원통을 가로 띠로 나눠 층 이름을 적는다(레이크하우스의 Bronze·Silver·Gold) */
+  bands?: string[]
 }
 
 /** 파이프라인 노드. 중심 좌표 기준. 저장소는 원통, 파일·문서는 접힌 모서리, 나머지는 상자 */
-export function Node({ x, y, w = 160, h = 54, label, sub, kind = 'process', seed, el, status, statuses, scale = 1, muted, labelEl }: NodeProps) {
+export function Node({ x, y, w = 160, h = 54, label, sub, kind = 'process', seed, el, status, statuses, scale = 1, muted, labelEl, bands }: NodeProps) {
   const x0 = x - w / 2
   const y0 = y - h / 2
   const x1 = x + w / 2
@@ -66,10 +68,20 @@ export function Node({ x, y, w = 160, h = 54, label, sub, kind = 'process', seed
     const ry = Math.min(9, h * 0.16)
     const body = `M ${x0} ${y0 + ry} A ${rx} ${ry} 0 0 1 ${x1} ${y0 + ry} L ${x1} ${y1 - ry} A ${rx} ${ry} 0 0 1 ${x0} ${y1 - ry} Z`
     const outline = `M ${x0} ${y0 + ry} A ${rx} ${ry} 0 0 1 ${x1} ${y0 + ry} A ${rx} ${ry} 0 0 1 ${x0} ${y0 + ry} M ${x0} ${y0 + ry} L ${x0} ${y1 - ry} A ${rx} ${ry} 0 0 0 ${x1} ${y1 - ry} L ${x1} ${y0 + ry}`
+    const top = y0 + ry * 2 + 22
+    const bh = bands ? (y1 - ry - top) / bands.length : 0
     shape = (
       <>
         <path d={body} style={{ fill: 'var(--surface)' }} />
         <RPath d={outline} seed={s} rough={0.6} />
+        {bands?.map((b, i) => (
+          <g key={b} data-el={`band-${i}`}>
+            <RPath d={`M ${x0} ${top + bh * i} A ${rx} ${ry} 0 0 0 ${x1} ${top + bh * i}`} seed={`${s}-band${i}`} rough={0.4} strokeWidth={1} />
+            <text x={x} y={top + bh * i + bh / 2 + ry * 0.6 + 4} textAnchor="middle" className="t-muted" style={{ fontSize: 12 * scale }}>
+              {b}
+            </text>
+          </g>
+        ))}
       </>
     )
   } else if (kind === 'doc') {
@@ -91,7 +103,14 @@ export function Node({ x, y, w = 160, h = 54, label, sub, kind = 'process', seed
   return (
     <g data-el={el} style={muted || kind === 'proposal' ? { opacity: 0.78 } : undefined}>
       {shape}
-      <NodeLabel x={x} y={y} label={label} sub={sub} scale={scale} el={labelEl} />
+      <NodeLabel
+        x={x}
+        y={bands ? y0 + Math.min(9, h * 0.16) * 2 + 10 : kind === 'store' ? y + Math.min(9, h * 0.16) * 0.7 : y}
+        label={label}
+        sub={bands ? undefined : sub}
+        scale={scale}
+        el={labelEl}
+      />
       {status && <Badge x={x1 - 2} y={y0 + 2} status={status} />}
       {statuses?.map((st) => (
         <Badge key={st} x={x1 - 2} y={y0 + 2} status={st} el={`${el}:${st}`} visible={st === status} />

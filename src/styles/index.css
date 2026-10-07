@@ -5,7 +5,7 @@
 /* 디자인 토큰: 색은 스테이지마다 바뀌는 CSS 변수(src/lib/stages.ts)를 가리킨다. */
 @theme inline {
   --font-sans: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
-  --font-mono: 'JetBrains Mono Variable', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-mono: 'JetBrains Mono Variable', 'Pretendard Variable', Pretendard, ui-monospace, SFMono-Regular, Menlo, monospace;
 
   --color-bg: var(--bg);
   --color-ink: var(--ink);

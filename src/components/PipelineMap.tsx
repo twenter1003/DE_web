@@ -160,17 +160,19 @@ export function PipelineMap({ t, from, interactive, onNavigate, ghosts, tags, cl
           const body = (
             <g data-node={n.id} data-change={n.change} data-dx={dx || undefined} data-dy={dy || undefined}>
               <rect className="node-focus" x={n.x - n.w / 2 - 6} y={n.y - n.h / 2 - 6} width={n.w + 12} height={n.h + 12} rx={8} style={{ fill: 'none', stroke: 'var(--accent)', opacity: 0 }} strokeWidth={3} />
-              <Node x={n.x} y={n.y} w={n.w} h={n.h} label={n.label} sub={n.sub} kind={n.kind} seed={`map-${n.id}`} labelEl={labelChanged ? 'lbl-new' : undefined} />
+              <Node
+                x={n.x}
+                y={n.y}
+                w={n.w}
+                h={n.h}
+                label={n.label}
+                sub={n.sub}
+                kind={n.kind}
+                seed={`map-${n.id}`}
+                labelEl={labelChanged ? 'lbl-new' : undefined}
+                bands={n.id === 'lakehouse' ? ['Bronze', 'Silver', 'Gold'] : undefined}
+              />
               {labelChanged && n.prev && <NodeLabel x={n.x} y={n.y} label={n.prev.label} sub={n.prev.sub} el="lbl-old" />}
-              {n.id === 'lakehouse' && !vertical && (
-                <g>
-                  {['Bronze', 'Silver', 'Gold'].map((m, i) => (
-                    <text key={m} x={n.x} y={n.y + 34 + i * 0} dx={(i - 1) * 54} textAnchor="middle" className="t-muted" style={{ fontSize: 11 }} data-el={`medal-${i}`}>
-                      {m}
-                    </text>
-                  ))}
-                </g>
-              )}
               {tags && n.change === 'enter' && (
                 <g data-el="tag-new">
                   <rect x={n.x - n.w / 2} y={n.y - n.h / 2 - 22} width={38} height={18} rx={3} style={{ fill: 'var(--accent)' }} />
@@ -221,7 +223,7 @@ export function mapTransition(q: Q, tl: gsap.core.Timeline, start: number, { dur
   const step = dur / 3
 
   tl.set([...enterN, ...enterE, ...newL, ...tagsNew], { opacity: 0 }, 0)
-  tl.set(svg, { attr: { viewBox: svg.dataset.vbFrom } }, 0)
+  tl.set(svg, { attr: { viewBox: svg.dataset.vbFrom ?? "" } }, 0)
   for (const m of moved) {
     const el = m as SVGGElement
     tl.set(el, { x: Number(el.dataset.dx ?? 0), y: Number(el.dataset.dy ?? 0) }, 0)
@@ -239,7 +241,7 @@ export function mapTransition(q: Q, tl: gsap.core.Timeline, start: number, { dur
     tl.to(oldL, { opacity: 0, duration: step }, start + step)
     tl.to(newL, { opacity: 1, duration: step }, start + step)
   }
-  tl.to(svg, { attr: { viewBox: svg.dataset.vbTo }, duration: dur, ease: 'power2.inOut' }, start + step * 0.5)
+  tl.to(svg, { attr: { viewBox: svg.dataset.vbTo ?? "" }, duration: dur, ease: 'power2.inOut' }, start + step * 0.5)
   if (enterE.length) tl.to(enterE, { opacity: 1, duration: step }, start + step * 1.6)
   if (enterN.length) tl.to(enterN, { opacity: 1, duration: step, stagger: Math.min(0.08, step / enterN.length) }, start + step * 1.4)
   if (tagsNew.length) tl.to(tagsNew, { opacity: 1, duration: step * 0.6 }, start + dur)

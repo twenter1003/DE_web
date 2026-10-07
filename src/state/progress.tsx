@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useMemo, useReducer, useRef, ty
 import { CHAPTER_IDS, QUIZ_CHAPTERS, type ChapterId } from '../content/types'
 import type { Level, StatKey } from '../content/people'
 import { load, remove, save } from '../lib/storage'
-import { cardsOf, levelOf, statsOf } from './derive'
+import { levelOf, ownedLetters, statsOf } from './derive'
 
 // 학습 진행도. localStorage에 저장하되, 실패해도 메모리 상태로 동작한다.
 
@@ -107,7 +107,7 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
       furthest: state.furthest,
       level: levelOf(completed, state.climax),
       stats: statsOf(completed),
-      cards: cardsOf(completed),
+      cards: ownedLetters(completed),
       ratio: QUIZ_CHAPTERS.filter((c) => completed.has(c)).length / QUIZ_CHAPTERS.length,
       isFresh,
       answer,
