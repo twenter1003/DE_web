@@ -98,6 +98,8 @@ function ScrubScene({ id, kind, scene, diagram, build, onStep, tall }: Props) {
       const tl = gsap.timeline({ paused: true })
       build(q, tl, { mobile })
       padTo(tl, n)
+      // 멈춘 타임라인은 시간 0을 그리지 않는다 → 시작 상태(tl.set(...,0))를 즉시 적용
+      tl.time(1e-4).time(0)
 
       const items = Array.from(list.current.querySelectorAll<HTMLElement>('[data-step]'))
       const anchor = mobile ? 0.74 : 0.5
