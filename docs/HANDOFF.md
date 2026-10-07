@@ -2,7 +2,12 @@
 
 사용자 요청: Phase 0~3을 **멈추지 말고** 끝까지 완료. 컨텍스트 70% 근처에서 이 문서를 갱신하고 새 세션으로 넘김. 가정·질문은 최종 보고에 모은다.
 
-## 현재 상태
+## 현재 상태 (최신: 커밋 90b5067)
+- **Phase 1 완료**: Prologue·Ch1·Ch2 구현·검토·커밋. `docs/STORYBOARD.md` 합침(`node scripts/storyboard.mjs`). 카드 26장 정의를 스토리보드와 동기화. Ch3~Epilogue는 스텁(`return null`)으로 registry에 등록돼 있음.
+- **다음 = Phase 2**: `docs/phase2-workflow.js`를 Workflow 도구에 `script`로 그대로 넣어 실행(배치 3개: Ch3·4·5 → Ch6·7·8 → Ch9·10·Epilogue, 각 build → review → gate가 빌드·커밋). 실행 전 개발 서버(포트 5288)가 떠 있어야 함.
+- 검토자가 남긴 공유 컴포넌트 과제(Phase 3에서 처리): ① 모바일 세로 맵에서 app과 운영 DB가 나란히 놓여 연결선이 짧음(`PipelineMap` verticalLayout), ② Ch1 `scenes.tsx`의 `primed()` 래퍼는 StepScene 수정으로 이제 불필요(지워도 됨).
+
+## 이전 기록
 - Phase 0: 완료. `docs/SPEC.md`, `CLAUDE.md`, `docs/ARCHITECTURE.md`, `docs/CHAPTER_GUIDE.md`, `docs/storyboard/00-bible.md` + `01~12` 챕터 스토리보드(작성 → 적대적 검토 완료, 일관성 검토는 워크플로 `wf_0a2dde01-551` 마지막 단계). **`docs/STORYBOARD.md`(00-bible + 01~12 이어 붙이기)는 아직 안 만듦.**
 - Phase 1: 기반 + Prologue 완료(커밋 `11f0673`). Ch1·Ch2는 워크플로 `wf_54d91a1f-b2d`(build → review)로 구현 중. 끝나면 직접 스크린샷 검토 후 커밋.
 - Phase 2(Ch3~Ch10, Epilogue)·Phase 3: 아직.
