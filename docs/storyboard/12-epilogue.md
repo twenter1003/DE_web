@@ -16,7 +16,7 @@
 
 #### step 2
 - 텍스트: 카메라가 물러나면, 그 종이 옆으로 바구니의 데이터 플랫폼 전체가 드러나요. 데이터가 들어오고, 쌓이고, 다듬어지고, 필요한 사람에게 나가는 길이 한눈에 보여요. 손그림이던 선은 이제 정밀한 설계도가 됐어요.
-- 화면: 남색 블루프린트 위 16노드 전체를 흰 정밀한 선(roughness 0)으로 그린 설계도. 다섯 구역 라벨: '들어오는 곳'(app, contract, oltp, media) / '흐르는 길'(kafka, fraud) / '쌓고 다듬는 곳'(lakehouse, spark, model) / '지휘하고 지키는 곳'(orch, alert, catalog, cost) / '쓰는 곳'(bi, ml, reverse). 화살표와 배지는 Ch10이 끝난 시점의 맵 그대로다 — oltp → lakehouse 'Zero-ETL', lakehouse(Gold) → bi '15분마다', kafka → fraud, lakehouse → ml, lakehouse → reverse → 맵 바깥 'CRM·마케팅 툴', 화살표 위 품질 검사 배지 ✓, orch의 제어 점선. 왼쪽 아래 구석에 축소된 종이 카드 '첫 스케치 · Prologue'. 캡션: "바구니에 맞춘 하나의 예시예요. 모든 회사의 정답 설계도는 아니에요."
+- 화면: 남색 블루프린트 위 16노드 전체를 흰 정밀한 선(roughness 0)으로 그린 설계도. 다섯 구역 라벨: '들어오는 곳'(app, contract, oltp, media) / '흐르는 길'(kafka, fraud) / '쌓고 다듬는 곳'(lakehouse, spark, model) / '지휘하고 지키는 곳'(orch, alert, catalog, cost) / '쓰는 곳'(bi, ml, reverse). 화살표와 배지는 Ch10이 끝난 시점의 맵 그대로다 — app → oltp, oltp → lakehouse 'Zero-ETL', app → kafka, kafka → fraud, kafka → lakehouse, media → lakehouse, lakehouse ↔ spark, lakehouse → model → bi, model → reverse(보조 라벨 '→ CRM·마케팅 툴'), lakehouse → ml, contract와 app 사이 약속 표시 선, 제어 점선 orch ⇢ spark · orch ⇢ alert · catalog ⇢ lakehouse · cost ⇢ lakehouse, 품질 검사 배지 ✓ 3개(kafka → lakehouse, lakehouse → model, model → bi). 왼쪽 아래 구석에 축소된 종이 카드 '첫 스케치 · Prologue'. 캡션: "바구니에 맞춘 하나의 예시예요. 모든 회사의 정답 설계도는 아니에요."
 - 모션: 맵 그룹이 scale 3 → 1로 물러나는 동안(스크롤 연동) 종이는 왼쪽 아래 구석 카드로 작아지고, 종이 밖 노드들이 구역 순서(들어오는 곳 → 쓰는 곳)대로 나타난다. 손그림 한 장이 설계도로 자랐다는 것 하나.
 
 #### step 3
@@ -45,7 +45,7 @@
 
 #### step 3
 - 텍스트: '제때'는 무조건 빨리가 아니라, 예산엔 15분, 이상 결제엔 몇 초처럼 쓰는 사람에게 맞는 때예요. '감당할 수 있는 비용'은 Ch9의 청구서처럼 돈도 설계에서 함께 따진다는 뜻이에요. Ch10의 저울은 이 둘을 함께 달아 보는 도구였죠.
-- 화면: 구절 '제때,'와 '감당할 수 있는 비용으로'에 밑줄. 밝은 곳: lakehouse → bi 화살표 라벨 '15분마다', kafka → fraud 화살표 라벨 '몇 초', orch 노드 / cost 노드(요금 미터기 아이콘, 바늘 낮음), Zero-ETL 선의 꼬리표 '쓴 만큼 비용'.
+- 화면: 구절 '제때,'와 '감당할 수 있는 비용으로'에 밑줄. 밝은 곳: model → bi 화살표 옆 꼬리표 '15분마다', kafka → fraud 화살표 옆 꼬리표 '몇 초'(두 꼬리표는 이 step에서만 붙는 주석), orch 노드 / cost 노드(요금 미터기 아이콘, 바늘 낮음), Zero-ETL 선의 꼬리표 '쓴 만큼 비용'.
 - 모션: step 2와 같은 방식으로 밑줄 → 노드 연결선이 그려진다. 마지막에 '15분마다'와 '몇 초' 두 라벨이 나란히 강조된다. 맞는 때는 하나가 아니라는 것.
 
 #### step 4

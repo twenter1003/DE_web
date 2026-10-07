@@ -95,7 +95,7 @@ Ch8~Ch10에서 설계·판단(+50)과 소통·리딩(+55)이 가장 크게 자�
 |---|---|---|---|---|
 | app | 쇼핑몰 앱·웹 | Prologue | — | 모든 데이터의 출발점 |
 | csv | CSV 파일 | Prologue | Ch2 | 야간 ETL이 수동 내보내기를 대체 |
-| bi | 주니의 노트북 → (Ch2) 리포트 → (Ch4) BI 대시보드 | Prologue | — | 라벨만 진화 |
+| bi | 주니의 노트북 → (Ch2) 아침 리포트 → (Ch4) BI 대시보드 | Prologue | — | 라벨만 진화 |
 | oltp | 운영 DB (OLTP) | Ch1 | — | Ch1에선 노트북이 직접 쿼리(점선, 부하 경고) |
 | etl | 야간 ETL 배치 | Ch2 | Ch10 | Ch10 Build vs Buy에서 관리형 Zero-ETL로 대체 |
 | warehouse | 분석용 DB → (Ch4) 데이터 웨어하우스 | Ch2 | Ch8 | 레이크하우스로 통합 |

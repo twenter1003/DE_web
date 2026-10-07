@@ -1,4 +1,4 @@
-import { useMemo, type MouseEvent } from 'react'
+import { useMemo, type MouseEvent, type ReactNode } from 'react'
 import { tocOf } from '../content/toc'
 import { UI } from '../content/ui'
 import type { ChapterId } from '../content/types'
@@ -27,6 +27,11 @@ interface Props {
   /** 강제로 세로(모바일) 배치 */
   vertical?: boolean
   label?: string
+  /**
+   * 맵 위에 덧그릴 장면 전용 주석(태그·칩·카드). 지금 배치(가로/세로)에서의 노드 위치를 받아 SVG로 그린다.
+   * 예: overlay={(at) => { const b = at('bi'); return b && <text x={b.x} y={b.y - 40}>15분마다</text> }}
+   */
+  overlay?: (at: (id: string) => { x: number; y: number; w: number; h: number } | undefined) => ReactNode
 }
 
 // ── 모바일: 열(소스→수집→저장→처리→활용)을 위→아래 띠로 바꾼다 ──
@@ -100,7 +105,7 @@ function EdgeView({ e, a, b, change, vertical }: { e: MapEdge; a: MapNode; b: Ma
   )
 }
 
-export function PipelineMap({ t, from, interactive, onNavigate, ghosts, tags, className = '', vertical: forceVertical, label }: Props) {
+export function PipelineMap({ t, from, interactive, onNavigate, ghosts, tags, className = '', vertical: forceVertical, label, overlay }: Props) {
   const { mobile } = useEnv()
   const vertical = forceVertical ?? mobile
 
@@ -200,6 +205,7 @@ export function PipelineMap({ t, from, interactive, onNavigate, ghosts, tags, cl
           )
         })}
       </g>
+      {overlay && <g data-el="map-overlay">{overlay((id) => model.byId.get(id))}</g>}
     </svg>
   )
 }
