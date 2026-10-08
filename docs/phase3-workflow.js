@@ -14,7 +14,9 @@ const CHAPTERS = [
   ['ch6', 'Ch06'], ['ch7', 'Ch07'], ['ch8', 'Ch08'], ['ch9', 'Ch09'], ['ch10', 'Ch10'], ['epilogue', 'Epilogue'],
 ]
 const CTX = `Project root ${ROOT}: Korean scroll-driven data-engineering course (Vite/React/GSAP). Read ${ROOT}/CLAUDE.md, ${ROOT}/docs/SPEC.md (sections 4, 9, 10), ${ROOT}/docs/CHAPTER_GUIDE.md.
-Dev server: http://localhost:5288 (already running; do not start/kill servers). Screenshot tool: node scripts/shot.mjs (read its header; it adds ?mount=all so every chapter is mounted). Downscale PNGs before reading: sips -Z 900 in.png --out out.png. For DOM checks write short playwright snippets (require('playwright')) against http://localhost:5288/?mount=all.`
+Dev server: http://localhost:5288 (already running; do not start/kill servers). Screenshot tool: node scripts/shot.mjs (read its header; it adds ?mount=all so every chapter is mounted). Downscale PNGs before reading: sips -Z 900 in.png --out out.png. For DOM checks write short playwright snippets (require('playwright')) against http://localhost:5288/?mount=all.
+SCRATCH FILES: keep temporary files in your own folder (e.g. shots/<your-label>-* or /private/tmp/claude-501/-Users-kimtaewoo-DE-web/87f927fd-5f5a-4ca9-8840-608bdfafed08/scratchpad/<your-label>/); never delete files you did not create — other agents share these folders.
+Known issues already spotted by the lead (verify and include if real): Ch4 star-schema step 4 — an accent dot overlaps the labels '주문 항목 팩트' and '1~3일치만 담은 예시'; Epilogue zoom step 4 — chapter tags crowd/overlap node labels (e.g. the Ch8 tag over 레이크하우스); Ch1 SQL runner on mobile — diagram keeps the tallest step's height leaving empty space; Ch2 code runner mobile ELT — ~200px empty space.`
 
 const FINDINGS = {
   type: 'object',
