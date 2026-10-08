@@ -32,33 +32,7 @@ npm run build
 `dist/`에 정적 파일이 만들어져요. 빌드는 상대 경로(`base: './'`)라서 어느 경로에 올려도 동작해요. `npm run preview`로 빌드 결과를 미리 볼 수 있어요.
 
 - **Vercel**: 저장소를 가져오면 Vite 프로젝트로 인식해요. Build Command `npm run build`, Output Directory `dist`.
-- **GitHub Pages**: 저장소 Settings → Pages에서 Source를 GitHub Actions로 정하고, 아래 워크플로를 `.github/workflows/pages.yml`로 추가해요.
-
-  ```yaml
-  name: Pages
-  on:
-    push:
-      branches: [main]
-  permissions:
-    contents: read
-    pages: write
-    id-token: write
-  jobs:
-    deploy:
-      runs-on: ubuntu-latest
-      environment:
-        name: github-pages
-      steps:
-        - uses: actions/checkout@v4
-        - uses: actions/setup-node@v4
-          with:
-            node-version: 22
-        - run: npm ci && npm run build
-        - uses: actions/upload-pages-artifact@v3
-          with:
-            path: dist
-        - uses: actions/deploy-pages@v4
-  ```
+- **GitHub Pages**: `main`에 push하면 `.github/workflows/pages.yml`이 빌드해서 배포해요(저장소 Settings → Pages의 Source = GitHub Actions). 지금 배포 주소: https://twenter1003.github.io/DE_web/
 
 ## 문구 고치기 (컴포넌트를 건드리지 않고)
 
