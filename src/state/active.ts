@@ -19,5 +19,6 @@ export function useActive() {
       return () => listeners.delete(l)
     },
     () => active,
+    () => 'hero' as const,
   )
 }

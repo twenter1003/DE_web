@@ -1,6 +1,6 @@
 import { CHAPTER_IDS } from '../content/types'
 import { ensureMounted } from '../state/mount'
-import { ScrollTrigger } from './gsap'
+import { refreshTriggers } from './refresh'
 
 const nextFrame = () => new Promise((r) => requestAnimationFrame(() => r(null)))
 
@@ -19,7 +19,7 @@ export async function goTo(id: string) {
       // 새로 그려진 장면들의 트리거 위치를 먼저 계산해 둔다(refresh는 스크롤 위치를 되돌리므로 스크롤보다 먼저)
       await nextFrame()
       await nextFrame()
-      ScrollTrigger.refresh()
+      refreshTriggers()
     }
   }
   const el = document.getElementById(id)

@@ -1,7 +1,7 @@
 import { Suspense, useEffect, useRef, type ComponentType } from 'react'
 import { tocOf } from '../content/toc'
 import type { ChapterId } from '../content/types'
-import { ScrollTrigger } from '../lib/gsap'
+import { refreshTriggers } from '../lib/refresh'
 import { STAGES, stageVars } from '../lib/stages'
 import { ensureMounted, onArmed, useMountedUpTo } from '../state/mount'
 
@@ -44,7 +44,7 @@ function Placeholder({ id, index, steps }: { id: ChapterId; index: number; steps
 /** 실제 챕터가 그려지면 트리거 위치를 다시 계산(아래쪽 내용이 밀리므로) */
 function Ready({ Component }: { Component: ComponentType }) {
   useEffect(() => {
-    const id = requestAnimationFrame(() => ScrollTrigger.refresh())
+    const id = requestAnimationFrame(() => refreshTriggers())
     return () => cancelAnimationFrame(id)
   }, [])
   return <Component />

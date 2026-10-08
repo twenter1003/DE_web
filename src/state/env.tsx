@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { gsap, ScrollTrigger } from '../lib/gsap'
+import { refreshTriggers } from '../lib/refresh'
 import { load, save } from '../lib/storage'
 
 // 화면 환경: 모션 줄이기(시스템 설정 + 페이지 토글)와 모바일 여부.
@@ -31,16 +31,26 @@ export function EnvProvider({ children }: { children: ReactNode }) {
   })
 
   useEffect(() => {
-    const mm = gsap.matchMedia()
-    mm.add(
-      { reduce: '(prefers-reduced-motion: reduce)', mobile: '(max-width: 767px)', desktop: '(min-width: 768px)' },
-      (ctx) => {
-        const c = ctx.conditions as { reduce: boolean; mobile: boolean }
-        setSystemReduced(c.reduce)
-        setMobile(c.mobile)
-      },
-    )
-    return () => mm.revert()
+    // 첫 값은 위에서 window.matchMedia로 바로 읽고, 바뀌는 것은 gsap.matchMedia로 따라간다.
+    // GSAP은 첫 화면에 필요 없어서 나중에 불러온다.
+    let mm: gsap.MatchMedia | undefined
+    let dead = false
+    import('../lib/gsap').then(({ gsap }) => {
+      if (dead) return
+      mm = gsap.matchMedia()
+      mm.add(
+        { reduce: '(prefers-reduced-motion: reduce)', mobile: '(max-width: 767px)', desktop: '(min-width: 768px)' },
+        (ctx) => {
+          const c = ctx.conditions as { reduce: boolean; mobile: boolean }
+          setSystemReduced(c.reduce)
+          setMobile(c.mobile)
+        },
+      )
+    })
+    return () => {
+      dead = true
+      mm?.revert()
+    }
   }, [])
 
   const setPref = useCallback((p: MotionPref) => {
@@ -53,7 +63,7 @@ export function EnvProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     document.documentElement.dataset.motion = reduced ? 'reduced' : 'full'
     // 레이아웃이 바뀌었으니 트리거 위치를 다시 계산
-    const id = requestAnimationFrame(() => ScrollTrigger.refresh())
+    const id = requestAnimationFrame(() => refreshTriggers())
     return () => cancelAnimationFrame(id)
   }, [reduced, mobile])
 

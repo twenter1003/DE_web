@@ -23,6 +23,7 @@ export function useMountedUpTo() {
       return () => listeners.delete(l)
     },
     () => upTo,
+    () => -1,
   )
 }
 
