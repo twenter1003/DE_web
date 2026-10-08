@@ -48,15 +48,21 @@ function verticalLayout(nodes: MapNode[]): MapNode[] {
   let y = 0
   for (const col of [...bands.keys()].sort((a, b) => a - b)) {
     const list = bands.get(col)!.sort((a, b) => a.y - b.y || a.x - b.x)
-    list.forEach((n, i) => {
-      const row = Math.floor(i / 2)
-      const lone = list.length % 2 === 1 && i === list.length - 1
-      const h = n.h > 100 ? 96 : MH
-      out.push({ ...n, w: MW, h, x: lone ? 162 : i % 2 === 0 ? 80 : 244, y: y + row * 74 + h / 2 })
-    })
-    const rows = Math.ceil(list.length / 2)
-    const tallExtra = list.some((n) => n.h > 100) ? 46 : 0
-    y += rows * 74 + 34 + tallExtra
+    // 원래 맵의 위쪽(이벤트 흐름)과 아래쪽(배치·저장 흐름)을 다른 줄에 둬서,
+    // 같은 열에서 이어진 노드(앱 → 운영 DB 등)가 옆자리에 붙지 않고 위아래로 놓이게 한다.
+    const groups = [list.filter((n) => n.y < 340), list.filter((n) => n.y >= 340)].filter((g) => g.length)
+    for (const g of groups) {
+      for (let i = 0; i < g.length; i += 2) {
+        const row = g.slice(i, i + 2)
+        const h = Math.max(...row.map((n) => (n.h > 100 ? 96 : MH)))
+        row.forEach((n, k) => {
+          const nh = n.h > 100 ? 96 : MH
+          out.push({ ...n, w: MW, h: nh, x: row.length === 1 ? 162 : k === 0 ? 80 : 244, y: y + h / 2 })
+        })
+        y += h + 24
+      }
+    }
+    y += 22
   }
   return out
 }

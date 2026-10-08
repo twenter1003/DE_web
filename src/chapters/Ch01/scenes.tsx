@@ -129,17 +129,6 @@ const swapBlock = (tl: gsap.core.Timeline, blocks: Element[], i: number, t: numb
   tl.to(blocks[i - 1], { autoAlpha: 0, duration: 0.01 }, t)
   tl.to(blocks[i], { autoAlpha: 1, duration: 0.01 }, t)
 }
-/**
- * 공통 StepScene은 첫 step에 들어서기 전까지 타임라인을 한 번도 그리지 않아서(시간 0 → 0은 변화 없음)
- * tl.set(…, 0) 초기 상태가 적용되지 않고 모든 step 그림이 겹쳐 보인다. 만든 직후 한 번 그려 둔다.
- * ponytail: 공통 StepScene에서 고치면 이 래퍼는 지운다.
- */
-const primed =
-  (build: SceneBuild): SceneBuild =>
-  (q, tl, env) => {
-    build(q, tl, env)
-    tl.time(1e-4).time(0)
-  }
 /** 코드 창: 줄바꿈하지 않고 창 안에서 가로 스크롤(모바일) */
 const CODE_CLS = '[grid-area:1/1] overflow-x-auto whitespace-pre! max-md:p-3! max-md:text-[0.75rem]! max-md:leading-5!'
 
@@ -257,7 +246,7 @@ export function ProblemFig() {
   )
 }
 
-export const buildProblem: SceneBuild = primed((q, tl) => {
+export const buildProblem: SceneBuild = (q, tl) => {
   const shaft = q('[data-el="export"] [data-el="shaft"] path')
   const head = q('[data-el="export"] [data-el="head"]')
   tl.set(q('[data-el="desk"]'), { opacity: 0 }, 0)
@@ -298,7 +287,7 @@ export const buildProblem: SceneBuild = primed((q, tl) => {
   tl.to(colBand, { scaleY: 1, duration: 0.18, ease: 'none' }, at(2) + 0.44)
   tl.to(q('[data-el="col-l"]'), { opacity: 1, duration: 0.08 }, at(2) + 0.6)
   tl.to(q('[data-el="same-col"]'), { opacity: 1, duration: 0.1 }, at(2) + 0.7)
-})
+}
 
 // ─────────────────────────────────────────────────────────────
 // 장면 3. 시도와 실패 ① — 첫 SQL은 통했어요
@@ -419,7 +408,7 @@ export function AttemptFig() {
   )
 }
 
-export const buildAttempt: SceneBuild = primed((q, tl) => {
+export const buildAttempt: SceneBuild = (q, tl) => {
   const isStatic = q('[data-static]').length > 0
   const blocks = F.code.map((_, i) => q(`[data-el="code-${i}"]`)[0])
   const notes = F.codeNotes.map((_, i) => q(`[data-el="note-${i}"]`)[0])
@@ -543,7 +532,7 @@ export const buildAttempt: SceneBuild = primed((q, tl) => {
   tl.to(r4Names, { opacity: 1, duration: 0.03 }, s4 + 0.56)
   tl.to(r4Names, { x: 0, duration: 0.18, ease: 'power2.inOut', stagger: 0.015 }, s4 + 0.58)
   tl.to(r4NameHead, { opacity: 1, duration: 0.06 }, s4 + 0.74)
-})
+}
 
 // ─────────────────────────────────────────────────────────────
 // 장면 4. 시도와 실패 ② — 운영 DB에 던진 큰 쿼리
@@ -652,7 +641,7 @@ export function OverloadFig() {
   )
 }
 
-export const buildOverload: SceneBuild = primed((q, tl) => {
+export const buildOverload: SceneBuild = (q, tl) => {
   const needle = q('[data-el="gauge-needle"]')[0] as SVGGElement
   const origin = needle.dataset.origin ?? `${G.x} ${G.y}`
   const pct = q('[data-el="pct"]')[0]
@@ -695,7 +684,7 @@ export const buildOverload: SceneBuild = primed((q, tl) => {
     tl.to(w, { opacity: 0, duration: 0.05 }, s3 + 0.32 + i * 0.12)
     tl.to(oks[i], { opacity: 1, duration: 0.05 }, s3 + 0.32 + i * 0.12)
   })
-})
+}
 
 // ─────────────────────────────────────────────────────────────
 // 장면 5. 개념 — 계산대와 장부 정리
@@ -753,7 +742,7 @@ export function AnalogyFig() {
   )
 }
 
-export const buildAnalogy: SceneBuild = primed((q, tl) => {
+export const buildAnalogy: SceneBuild = (q, tl) => {
   const cs = q('[data-el="cust"]')
   const ok = cs.map((c) => c.querySelector('[data-el="c-ok"]')!)
   const wait = cs.map((c) => c.querySelector('[data-el="c-wait"]')!)
@@ -798,7 +787,7 @@ export const buildAnalogy: SceneBuild = primed((q, tl) => {
   advance(2, s3 + 0.56)
   flip(waiting, done, 0, s3 + 0.6)
   ;[3, 4, 5].forEach((ci, k) => flip(wait, ok, ci, s3 + 0.62 + k * 0.07))
-})
+}
 
 // ─────────────────────────────────────────────────────────────
 // 장면 6. 개념 — OLTP와 OLAP
@@ -914,7 +903,7 @@ export function OltpFig() {
   )
 }
 
-export const buildOltp: SceneBuild = primed((q, tl) => {
+export const buildOltp: SceneBuild = (q, tl) => {
   const pokes = q('[data-el="poke"]')
   const hls = q('[data-el="poke-hl"]')
   const oks = q('[data-el="poke-ok"]')
@@ -956,7 +945,7 @@ export const buildOltp: SceneBuild = primed((q, tl) => {
   tl.to([q('[data-el="cmp"]'), q('[data-el="cmp-frame"]')], { opacity: 1, duration: 0.1 }, s3 + 0.1)
   rowsCmp.forEach((r, i) => tl.to(r, { opacity: 1, duration: 0.1 }, s3 + 0.22 + i * 0.14))
   tl.to([q('[data-el="cmp-load"]'), q('[data-el="caption"]')], { opacity: 1, duration: 0.1 }, s3 + 0.68)
-})
+}
 
 // ─────────────────────────────────────────────────────────────
 // 장면 7. 해결 — 운영 DB는 계산대에 맡기기
@@ -1053,7 +1042,7 @@ export function SolutionFig() {
   )
 }
 
-export const buildSolution: SceneBuild = primed((q, tl) => {
+export const buildSolution: SceneBuild = (q, tl) => {
   const notes = q('[data-el="rule"]')
   const mapwrap = q('[data-el="mapwrap"]')
   const dashes = q('[data-el="dash"]')
@@ -1122,4 +1111,4 @@ export const buildSolution: SceneBuild = primed((q, tl) => {
   tl.to(q('[data-el="paper"]'), { opacity: 1, duration: 0.12 }, s3 + 0.08)
   tl.to(dashes, { opacity: 1, duration: 0.001, stagger: 0.36 / dashes.length, ease: 'none' }, s3 + 0.24)
   tl.to(q('[data-el="ask"]'), { opacity: 1, duration: 0.1 }, s3 + 0.66)
-})
+}
