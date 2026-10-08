@@ -7,11 +7,14 @@ import { mapTransition, PipelineMap } from '../../components/PipelineMap'
 import { RRect } from '../../components/sketch'
 import { at, type SceneBuild } from '../../components/StepScene'
 import { mapStateAt, type Box } from '../../state/derive'
+import { useEnv } from '../../state/env'
+import { gsap } from '../../lib/gsap'
 import { DashArrow, init, Meter, needleInit, needleTo, pick, StatusMark, WorkCard } from './parts'
 import { BILL_NOW } from './scenes'
 
 // 장면 6. 해결 — 필요한 만큼만 읽고, 필요한 만큼만 연다
 // 맵(세로 배치)은 왼쪽, 청구서·비용 모니터·카탈로그 카드는 오른쪽 판. step 2는 작업 카드 그림으로 바꿔 보여 준다.
+// 모바일: 맵 전체를 옆에 두면 글자가 5px 안팎이라, 맵은 위 띠에서 바뀐 줄만 크게 보여 주고(개요는 노드 수 카운터) 판은 아래에 쌓는다.
 
 const F = ch9.figures
 const N_BEFORE = mapStateAt(T.ch8).nodes.length
@@ -36,7 +39,7 @@ const fitLeft = (r: Box, aspect: number) => {
 }
 
 /** 맵 위 덧그림: 다른 노드를 피해 오른쪽으로 돌아가는 제어 점선 두 개, bi 칩, 보관 계층 표시, 카메라 */
-function SolOverlay({ at: pos }: { at: At }) {
+function SolOverlay({ at: pos, mobile }: { at: At; mobile: boolean }) {
   const lh = pos('lakehouse')
   const bi = pos('bi')
   const cat = pos('catalog')
@@ -63,10 +66,16 @@ function SolOverlay({ at: pos }: { at: At }) {
   const ay = yb + 10
   const x0 = Math.min(...all.map((n) => n.x - n.w / 2)) - 8
   const y0 = Math.min(...all.map((n) => n.y - n.h / 2)) - 8
-  const full: Box = { x: x0, y: y0, w: right + 24 + 14 - x0, h: chip.y + chip.h + 8 - y0 }
+  const x1 = right + 24 + 14
+  const full: Box = { x: x0, y: y0, w: x1 - x0, h: chip.y + chip.h + 8 - y0 }
+  // 모바일 카메라: step 1은 bi·비용 모니터 줄(칩 포함), step 3은 카탈로그 줄
+  const r1 = Math.min(bi.y - bi.h / 2, cost.y - cost.h / 2) - 12
+  const m1: Box = { x: x0, y: r1, w: x1 - x0, h: chip.y + chip.h + 8 - r1 }
+  // 아래쪽은 모델링 → BI 화살표의 품질 배지까지 담는다(반쯤 잘려 보이지 않게)
+  const m3: Box = { x: x0, y: cat.y + cat.h / 2 + 36 - m1.h, w: m1.w, h: m1.h }
   return (
     <g>
-      <rect data-el="cams" data-full={box(full)} width={0} height={0} style={{ fill: 'none' }} />
+      <rect data-el="cams" data-full={box(full)} data-m1={box(m1)} data-m3={box(m3)} width={0} height={0} style={{ fill: 'none' }} />
       <DashArrow pts={catPts} el="rt-cat" />
       <DashArrow pts={costPts} el="rt-cost" />
       <g data-el="bi-chip">
@@ -75,6 +84,8 @@ function SolOverlay({ at: pos }: { at: At }) {
           {F.biFilter}
         </Txt>
       </g>
+      {/* 모바일에선 레이크하우스가 카메라 밖이라 보관 계층 표시는 청구서 카드 안에 둔다 */}
+      {!mobile && (
       <g data-el="archive">
         {/* 작은 선반: 위 칸(빠름) · 아래 칸(보관)으로 상자가 내려간 모습 */}
         <rect x={ax} y={ay} width={34} height={30} style={{ fill: 'none', stroke: 'var(--line)' }} strokeWidth={1.3} />
@@ -88,15 +99,19 @@ function SolOverlay({ at: pos }: { at: At }) {
           {F.archive[1]}
         </Txt>
       </g>
+      )}
     </g>
   )
 }
 
-function Counter() {
+function Counter({ mobile }: { mobile: boolean }) {
   return (
-    <div data-el="counter" className="absolute right-0 top-0 rounded-lg border-[1.5px] border-edge bg-surface px-3 py-1.5 text-right md:top-[6%] md:py-2">
+    <div
+      data-el="counter"
+      className={`rounded-lg border-[1.5px] border-edge bg-surface ${mobile ? 'flex items-baseline gap-2 self-end px-2.5 py-1' : 'absolute right-0 top-[6%] px-3 py-2 text-right'}`}
+    >
       <p className="text-xs font-semibold text-muted">{F.nodeCount}</p>
-      <p className="grid font-mono text-lg font-extrabold leading-tight md:text-2xl">
+      <p className={`grid font-mono font-extrabold leading-tight ${mobile ? 'text-base' : 'text-2xl'}`}>
         <span data-el="cnt1" className="col-start-1 row-start-1">
           {N_BEFORE}
           <span data-el="cnt1-to"> → {N_BEFORE + 1}</span>
@@ -110,12 +125,14 @@ function Counter() {
   )
 }
 
-const PANEL = 'absolute right-0 top-[4.25rem] w-[55%] space-y-2 text-[0.6875rem] leading-snug md:top-[calc(6%+5.5rem)] md:w-[50%] md:space-y-3 md:text-[0.875rem]'
+const PANEL = 'absolute right-0 top-[calc(6%+5.5rem)] w-[50%] space-y-3 text-[0.875rem] leading-snug'
+/** 모바일: 맵 띠 아래, 두 판이 같은 칸에 겹쳐 있고(step 1 ↔ step 3) 카드는 두 열 */
+const PANEL_M = 'col-start-1 row-start-1 grid grid-cols-2 content-start items-start gap-1.5 text-[0.6875rem] leading-snug'
 const CARD = 'rounded-xl border-[1.5px] border-edge bg-surface px-2.5 py-2 md:px-4 md:py-3'
 
-function CostPanels() {
+function CostPanels({ mobile }: { mobile: boolean }) {
   return (
-    <div data-el="panel1" className={PANEL}>
+    <div data-el="panel1" className={mobile ? PANEL_M : PANEL}>
       <div className={CARD}>
         <div className="flex flex-wrap items-baseline justify-between gap-x-2">
           <p className="font-bold">{F.nextBill}</p>
@@ -124,7 +141,8 @@ function CostPanels() {
             {F.thisMonth}
           </p>
         </div>
-        <div className="mt-1 grid grid-cols-[minmax(0,1fr)_5rem] items-end gap-2 md:grid-cols-[minmax(0,1fr)_7rem]">
+        {/* 모바일은 카드가 반 폭이라 미터기를 막대 아래에 두어 글자가 읽히는 크기를 지킨다 */}
+        <div className={`mt-1 grid gap-2 ${mobile ? '' : 'grid-cols-[minmax(0,1fr)_7rem] items-end'}`}>
           <div className="space-y-1">
             {F.bill.rows.map((r, k) => (
               <div key={r}>
@@ -136,10 +154,15 @@ function CostPanels() {
               </div>
             ))}
           </div>
-          <svg viewBox="12 14 146 92" className="diagram w-full" aria-hidden="true">
+          <svg viewBox="12 14 146 92" className={`diagram ${mobile ? 'mx-auto w-[6.5rem]' : 'w-full'}`} aria-hidden="true">
             <Meter x={74} y={76} r={52} label={F.meterQuery} el="nm" high={F.high} seed="s6-nm" value={0.9} highColor="var(--ink)" />
           </svg>
         </div>
+        {mobile && (
+          <p data-el="archive" className="mt-1.5 border-t border-edge pt-1 font-semibold">
+            {F.archive[0]} {F.archive[1]}
+          </p>
+        )}
       </div>
       <div className={CARD}>
         <p className="font-bold">{F.costPanel}</p>
@@ -166,10 +189,10 @@ function CostPanels() {
   )
 }
 
-function CatalogPanels() {
+function CatalogPanels({ mobile }: { mobile: boolean }) {
   return (
-    <div data-el="panel3" className={PANEL}>
-      <div className="relative pt-2.5">
+    <div data-el="panel3" className={mobile ? PANEL_M : PANEL}>
+      <div className="relative col-span-2 pt-2.5">
         <div data-el="gov" className="pointer-events-none absolute inset-0 rounded-t-[1.5rem] border-x-2 border-t-[3px] border-ink">
           <span className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 whitespace-nowrap bg-bg px-2 text-[0.8125rem] font-extrabold md:text-base">{F.governance}</span>
         </div>
@@ -233,29 +256,52 @@ function WorkFig() {
 }
 
 export function SolutionFig() {
+  const { mobile } = useEnv()
+  const map = <PipelineMap t={T.ch9} from={T.ch8} vertical overlay={(a) => <SolOverlay at={a} mobile={mobile} />} />
+  const cards = (
+    <div data-el="cards-layer" className="absolute inset-0">
+      <WorkFig />
+    </div>
+  )
+  if (mobile)
+    return (
+      <div className="relative flex h-full w-full flex-col gap-1.5">
+        <Counter mobile />
+        {/* 높이는 buildSolution이 카메라 영역 비율에 맞춘다(위아래로 다른 줄이 비치지 않게) */}
+        <div data-el="map-layer" className="relative h-[30%] shrink-0 overflow-hidden">
+          {map}
+        </div>
+        <div className="grid">
+          <CostPanels mobile />
+          <CatalogPanels mobile />
+        </div>
+        {cards}
+      </div>
+    )
   return (
     <div className="relative h-full w-full">
       <div data-el="map-layer" className="absolute inset-0 overflow-hidden">
-        <PipelineMap t={T.ch9} from={T.ch8} vertical overlay={(a) => <SolOverlay at={a} />} />
+        {map}
       </div>
-      <div data-el="cards-layer" className="absolute inset-0">
-        <WorkFig />
-      </div>
-      <Counter />
-      <CostPanels />
-      <CatalogPanels />
+      {cards}
+      <Counter mobile={false} />
+      <CostPanels mobile={false} />
+      <CatalogPanels mobile={false} />
     </div>
   )
 }
 
-export const buildSolution: SceneBuild = (q, tl) => {
+export const buildSolution: SceneBuild = (q, tl, { mobile }) => {
   const o = pick(q)
   const svg = o('map')[0] as SVGSVGElement | undefined
   const cams = o('cams')[0] as SVGElement | undefined
   if (!svg || !cams) return
+  const m1 = unbox(cams.dataset.m1)
+  // 모바일: 맵 띠의 높이를 카메라 영역 비율에 맞춰, 바뀐 줄이 띠 폭을 꽉 채우게 한다
+  if (mobile) gsap.set(o('map-layer'), { height: (svg.getBoundingClientRect().width * m1.h) / m1.w })
   const rect = svg.getBoundingClientRect()
   const aspect = rect.width > 0 && rect.height > 0 ? rect.width / rect.height : 0.75
-  const cam = fitLeft(unbox(cams.dataset.full), aspect)
+  const cam = mobile ? box(m1) : fitLeft(unbox(cams.dataset.full), aspect)
   svg.dataset.vbFrom = cam
   svg.dataset.vbTo = cam
   const node = (id: string) => q(`[data-node="${id}"]`)
@@ -305,6 +351,8 @@ export const buildSolution: SceneBuild = (q, tl) => {
   // step 3: 카탈로그 노드 → 테이블 꼬리표 → '거버넌스'가 네 꼬리표를 묶는다
   const s3 = at(2)
   tl.to(o('cards-layer'), { opacity: 0, duration: 0.08 }, s3)
+  // 모바일: 맵이 가려진 사이 카메라를 카탈로그 줄로 옮긴다
+  if (mobile) tl.set(svg, { attr: { viewBox: box(unbox(cams.dataset.m3)) } }, s3 + 0.04)
   tl.set(o('cnt1'), { opacity: 0 }, s3 + 0.04)
   tl.set(o('cnt2'), { opacity: 1 }, s3 + 0.04)
   tl.to(ring('cost'), { opacity: 0, duration: 0.02 }, s3 + 0.04)

@@ -90,25 +90,41 @@ export function DexBoard() {
     e.preventDefault()
     goTo(`${chapter}-quiz`)
   }
+  // 격자는 Tab 한 번(선택된 칸만 tabIndex 0), 칸 사이는 방향키·Home·End로 옮긴다. 열 수는 화면 폭마다 달라서 그때 읽는다
+  const grid = useRef<HTMLOListElement>(null)
+  const onKey = (e: React.KeyboardEvent, i: number) => {
+    const cols = grid.current ? getComputedStyle(grid.current).gridTemplateColumns.split(' ').length : 1
+    const moves: Record<string, number> = { ArrowRight: i + 1, ArrowLeft: i - 1, ArrowDown: i + cols, ArrowUp: i - cols, Home: 0, End: CARDS.length - 1 }
+    const to = moves[e.key]
+    if (!(e.key in moves) || to < 0 || to >= CARDS.length) return
+    e.preventDefault()
+    grid.current?.querySelectorAll('button')[to]?.focus()
+  }
   return (
     <section aria-labelledby="epilogue-dexboard-title" className="py-[8svh]">
       <h3 id="epilogue-dexboard-title" className="text-[1.375rem] font-bold leading-snug md:text-[1.625rem]">
         {n === 26 ? F.dexDone(26) : F.dexCount(n)}
       </h3>
-      <ol className="mt-6 grid grid-cols-3 gap-1.5 sm:grid-cols-5 lg:grid-cols-7 xl:grid-cols-9">
-        {CARDS.map((x) => {
+      <p className="mt-2 text-muted">{I.dex.hint}</p>
+      <ol ref={grid} className="mt-6 grid grid-cols-3 gap-1.5 sm:grid-cols-5 lg:grid-cols-7 xl:grid-cols-9">
+        {CARDS.map((x, i) => {
           const has = cards.has(x.letter)
           const from = tocOf(x.chapter).label
+          const on = sel === x.letter
           return (
             <li key={x.letter}>
+              {/* 선택 표시는 포커스 링(바깥 외곽선)과 다르게: 강조색 테두리를 안쪽으로 두껍게 + 옅은 바탕 */}
               <button
                 type="button"
+                tabIndex={on ? 0 : -1}
+                aria-current={on ? 'true' : undefined}
                 onClick={() => setSel(x.letter)}
                 onFocus={() => setSel(x.letter)}
+                onKeyDown={(e) => onKey(e, i)}
                 aria-label={has ? I.dex.cell(x.letter, x.term, x.def) : I.dex.cellMissing(x.letter, from)}
                 className={`flex h-full min-h-[3.5rem] w-full flex-col items-start rounded-lg border-[1.5px] px-2 py-1.5 text-left ${
-                  has ? 'border-line bg-surface' : 'border-dashed border-edge'
-                } ${sel === x.letter ? 'outline outline-2 outline-offset-1 outline-[var(--accent)]' : ''}`}
+                  on ? 'border-accent bg-accent/15 shadow-[inset_0_0_0_1.5px_var(--accent)]' : has ? 'border-line bg-surface' : 'border-edge'
+                } ${has ? '' : 'border-dashed'}`}
               >
                 <span className={`font-mono text-lg font-bold leading-6 ${has ? '' : 'text-muted'}`} aria-hidden="true">
                   {x.letter}

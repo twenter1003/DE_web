@@ -100,7 +100,10 @@ export function TimeTravel() {
       <div className="space-y-6">
         {/* 조작: 이전 · 슬라이더 · 다음 */}
         <div>
-          <p className="max-w-[44rem] rounded-lg border-l-4 border-accent bg-bg px-4 py-3 font-semibold">{cur.guide}</p>
+          {/* 버전을 바꾸면 안내도 읽어 준다(변경 기록·순매출 아래쪽 live 영역과 따로) */}
+          <p aria-live="polite" aria-atomic="true" className="max-w-[44rem] rounded-lg border-l-4 border-accent bg-bg px-4 py-3 font-semibold">
+            {cur.guide}
+          </p>
           <div className="mt-5 grid grid-cols-2 items-center gap-x-4 gap-y-3 md:grid-cols-[auto_minmax(0,1fr)_auto]">
             {/* DOM 순서 = 데스크톱 화면 순서(이전 · 슬라이더 · 다음) → Tab 순서가 보이는 순서와 같다. 모바일은 슬라이더를 위 줄에 둔다 */}
             <button type="button" className="btn col-start-1 row-start-2 justify-self-start md:col-start-1 md:row-start-1 md:-mt-6" disabled={v === 1} onClick={() => step(-1)}>

@@ -129,8 +129,9 @@ const swapBlock = (tl: gsap.core.Timeline, blocks: Element[], i: number, t: numb
   tl.to(blocks[i - 1], { autoAlpha: 0, duration: 0.01 }, t)
   tl.to(blocks[i], { autoAlpha: 1, duration: 0.01 }, t)
 }
-/** 코드 창: 줄바꿈하지 않고 창 안에서 가로 스크롤(모바일) */
-const CODE_CLS = '[grid-area:1/1] overflow-x-auto whitespace-pre! max-md:p-3! max-md:text-[0.75rem]! max-md:leading-5!'
+/** 코드 창: 폭이 모자라면 잘리지 않게 줄바꿈하고, 이어지는 줄만 2칸 들여 쓴다(hanging each-line).
+ *  넓은 화면(약 1280px~)에선 모든 줄이 한 줄에 들어간다. 모바일은 글자·줄 간격을 줄여 아래 그림 높이를 지킨다 */
+const CODE_CLS = '[grid-area:1/1] overflow-x-auto [text-indent:2ch_hanging_each-line] max-md:p-2! max-md:text-[0.6875rem]! max-md:leading-[15px]!'
 
 // ─────────────────────────────────────────────────────────────
 // 장면 2. 문제 — 운영 DB 속의 표
@@ -333,7 +334,7 @@ export function AttemptFig() {
           <CodeType key={i} code={c} el={`code-${i}`} className={CODE_CLS} />
         ))}
       </div>
-      <div className="grid font-mono text-[0.75rem] leading-snug text-muted md:text-[0.8125rem]">
+      <div className="grid font-mono text-[0.6875rem] leading-snug text-muted md:text-[0.8125rem]">
         {F.codeNotes.map((t, i) => (
           <p key={i} data-el={`note-${i}`} className="[grid-area:1/1]">
             {t}
@@ -466,7 +467,8 @@ export const buildAttempt: SceneBuild = (q, tl) => {
     const t = s2 + 0.05 + (0.45 * (i + 0.5)) / rows.length
     if (KEEP.includes(i)) tl.to(keepB[k++], { opacity: 1, duration: 0.04 }, t)
     else {
-      tl.to(r, { opacity: 0.3, duration: 0.04 }, t)
+      // 흐려도 날짜는 읽혀야 한다(왜 빠졌는지가 날짜에 있음): 0.65 ≈ 4.7:1
+      tl.to(r, { opacity: 0.65, duration: 0.04 }, t)
       tl.to(excl[e++], { opacity: 1, duration: 0.04 }, t)
     }
   })
@@ -545,9 +547,12 @@ const MINI = { x: 24, y: 64, w: 136, h: 156 }
 export function OverloadFig() {
   return (
     <div className="flex h-full w-full flex-col justify-center gap-2">
-      <div className="flex items-center justify-between gap-2 font-mono text-xs md:text-sm">
-        <span className="text-muted">{F.sqlTag}</span>
-        <span className="flex items-center gap-2">
+      {/* 풀이는 [중지] 줄 왼쪽에 둔다(줄 하나를 아껴 모바일에서 그림을 덜 줄인다) */}
+      <div className="flex flex-wrap items-center justify-between gap-2 font-mono text-xs md:text-sm">
+        <span data-el="note" className="text-muted">
+          {F.customersNote}
+        </span>
+        <span className="ml-auto flex items-center gap-2">
           <span data-el="stopped" className="rounded border-[1.5px] border-fail px-2 py-0.5 font-bold text-fail">
             {F.stopped}
           </span>
@@ -561,12 +566,12 @@ export function OverloadFig() {
           </span>
         </span>
       </div>
-      <div className="grid">
-        <CodeType code={F.bigQuery} el="code" className={`${CODE_CLS} md:text-[0.8125rem]!`} />
+      {/* 모바일: step 2부터 코드 창을 접어 부하 그림에 높이를 내준다(grid 1fr→0fr, buildOverload) */}
+      <div data-el="code-fold" className="grid grid-rows-[1fr]">
+        <div className="grid min-h-0 overflow-hidden">
+          <CodeType code={F.bigQuery} el="code" className={`${CODE_CLS} md:text-[0.8125rem]!`} />
+        </div>
       </div>
-      <p data-el="note" className="font-mono text-[0.75rem] text-muted md:text-[0.8125rem]">
-        {F.customersNote}
-      </p>
       <svg viewBox="0 0 440 256" className="diagram h-auto min-h-0 w-full shrink" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
         <Cylinder cx={92} top={22} bottom={236} rx={84} ry={14} seed="ov-db" />
         <Txt x={92} y={52} size={14} weight={800} anchor="middle">
@@ -634,14 +639,15 @@ export function OverloadFig() {
           </Txt>
         </g>
       </svg>
-      <p data-el="caption" className="text-center text-[0.75rem] leading-snug text-muted md:text-[0.8125rem]">
-        {F.loadNote}
-      </p>
+      {/* 모바일: step 1엔 접어 두었다가 코드 창이 접힐 때 펼친다(buildOverload) */}
+      <div data-el="caption" className="grid grid-rows-[1fr]">
+        <p className="min-h-0 overflow-hidden text-center text-[0.75rem] leading-snug text-muted md:text-[0.8125rem]">{F.loadNote}</p>
+      </div>
     </div>
   )
 }
 
-export const buildOverload: SceneBuild = (q, tl) => {
+export const buildOverload: SceneBuild = (q, tl, { mobile }) => {
   const needle = q('[data-el="gauge-needle"]')[0] as SVGGElement
   const origin = needle.dataset.origin ?? `${G.x} ${G.y}`
   const pct = q('[data-el="pct"]')[0]
@@ -664,6 +670,14 @@ export const buildOverload: SceneBuild = (q, tl) => {
 
   // step 2: 빛줄기가 표를 훑을수록 부하가 오르고 결제가 ⏸로 쌓인다
   const s2 = at(1)
+  // 모바일: 코드 창(과 그 풀이)을 접어 그림을 키운다. 이제부터 볼 것은 쿼리가 아니라 운영 DB 부하.
+  // 캡션 자리는 step 1엔 접어 두고 여기서 펼친다(글자는 아래에서 나중에 나타남)
+  if (mobile) {
+    const fold = { duration: 0.14, ease: 'none' }
+    tl.fromTo(q('[data-el="code-fold"]'), { gridTemplateRows: '1fr' }, { gridTemplateRows: '0fr', autoAlpha: 0, ...fold }, s2)
+    tl.fromTo(q('[data-el="caption"]'), { gridTemplateRows: '0fr' }, { gridTemplateRows: '1fr', ...fold }, s2)
+    tl.to(q('[data-el="note"]'), { opacity: 0, duration: 0.08 }, s2)
+  }
   tl.to(beam, { scaleY: 1, duration: 0.6, ease: 'none' }, s2)
   tl.to(needle, { rotation: angle(0.98), svgOrigin: origin, duration: 0.6, ease: 'none' }, s2)
   tl.to(load, { v: 98, duration: 0.6, ease: 'none', onUpdate: write }, s2)

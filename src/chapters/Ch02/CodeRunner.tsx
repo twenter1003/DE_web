@@ -25,8 +25,9 @@ const ROWS_TOP = 44 // 표 제목(0~18) + 머리글(18~40) 아래부터 줄
 const SLOTS = RAW_ORDERS.length
 const TABLE_H = ROWS_TOP + SLOTS * PITCH
 const CHIP_H = 42
-const CX = { id: 14, date: 62, priceL: 137, priceR: 203, region: 212, tagR: 295 }
-const HL: Record<string, [number, number]> = { id: [8, 58], date: [58, 134], price: [134, 207], addr: [208, 256] }
+// 칸 위치는 모바일 글자 하한(11.5 → 12.75)에서도 날짜와 글자 가격이 붙지 않게 잡았다
+const CX = { id: 12, date: 59, priceL: 142, priceR: 203, region: 212, tagR: 295 }
+const HL: Record<string, [number, number]> = { id: [8, 56], date: [56, 139], price: [139, 207], addr: [208, 256] }
 
 interface Box {
   x: number
@@ -117,7 +118,7 @@ const ICONS: Record<Kind, string> = {
 }
 
 function Chip({ cx, y, slot, step, cur, shown }: { cx: number; y: number; slot: number; step: Step; cur: boolean; shown: boolean }) {
-  const w = Math.max(8, Math.min(56, slot - 10))
+  const w = Math.max(8, Math.min(56, slot - 6))
   const x0 = cx - w / 2
   const ok = step.ok
   const kind = step.kind
@@ -126,9 +127,6 @@ function Chip({ cx, y, slot, step, cur, shown }: { cx: number; y: number; slot: 
       <rect x={x0} y={y} width={w} height={CHIP_H} rx={4} style={{ fill: 'var(--surface)' }} />
       <RRect x={x0} y={y} w={w} h={CHIP_H} seed={`chip${step.line}`} rough={0.35} stroke={ok ? undefined : 'var(--fail)'} />
       <rect x={x0 - 2.5} y={y - 2.5} width={w + 5} height={CHIP_H + 5} rx={6} style={{ fill: 'none', stroke: 'var(--accent)', opacity: cur ? 1 : 0, transition: 'opacity 0.25s' }} strokeWidth={2.6} />
-      <Txt x={x0 - 4} y={y + CHIP_H / 2 + 4} size={11} anchor="end" color="var(--accent)" style={{ opacity: cur ? 1 : 0, transition: 'opacity 0.25s' }}>
-        ▶
-      </Txt>
       <Txt x={x0 + 4} y={y + 11} size={9.5} weight={700} muted>
         {step.line + 1}
       </Txt>
@@ -172,6 +170,9 @@ const fade = (on: boolean, extra?: CSSProperties): CSSProperties => ({ opacity: 
 
 /** 주문 한 줄 = 데이터 블록. 고칠 곳이 남아 있으면 울퉁불퉁, 다 고치면 반듯 */
 function RowBlock({ row, dup, changed }: { row: Row; dup: boolean; changed: string[] }) {
+  const { mobile } = useEnv()
+  // 점선 밑줄 길이: 모바일에선 fs()가 11.5를 12.75로 키워 그린다(index.css --fs-lift: 7px)
+  const ul = (s: string) => tw(s, mobile ? 12.75 : 11.5)
   const raw = RAW_ORDERS[row.uid]
   const textPrice = !isNum(row.price)
   const oddDate = !isStdDate(row.date)
@@ -198,7 +199,7 @@ function RowBlock({ row, dup, changed }: { row: Row; dup: boolean; changed: stri
         <Txt x={CX.date} y={y} size={11.5} mono>
           {raw.date}
         </Txt>
-        {!isStdDate(raw.date) && <line x1={CX.date} y1={y + 3} x2={CX.date + tw(raw.date, 11.5)} y2={y + 3} style={{ stroke: 'var(--muted)' }} strokeWidth={1.2} strokeDasharray="2 2" />}
+        {!isStdDate(raw.date) && <line x1={CX.date} y1={y + 3} x2={CX.date + ul(raw.date)} y2={y + 3} style={{ stroke: 'var(--muted)' }} strokeWidth={1.2} strokeDasharray="2 2" />}
       </g>
       <g style={fade(row.date !== raw.date)}>
         <Txt x={CX.date} y={y} size={11.5} mono>
@@ -210,7 +211,7 @@ function RowBlock({ row, dup, changed }: { row: Row; dup: boolean; changed: stri
         <Txt x={CX.priceL} y={y} size={11.5} mono>
           {priceText}
         </Txt>
-        <line x1={CX.priceL} y1={y + 3} x2={CX.priceL + tw(priceText, 11.5)} y2={y + 3} style={{ stroke: 'var(--muted)' }} strokeWidth={1.2} strokeDasharray="2 2" />
+        <line x1={CX.priceL} y1={y + 3} x2={CX.priceL + ul(priceText)} y2={y + 3} style={{ stroke: 'var(--muted)' }} strokeWidth={1.2} strokeDasharray="2 2" />
       </g>
       <g style={fade(!textPrice)}>
         <Txt x={CX.priceR} y={y} size={11.5} mono anchor="end">

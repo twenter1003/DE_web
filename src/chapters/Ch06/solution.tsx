@@ -169,7 +169,7 @@ function SolOverlay({ at: pos }: { at: At }) {
         )}
       </g>
 
-      {/* step 1: 결제 보류 알림(실시간 재고 화면 자리는 step 2에 채워진다) */}
+      {/* step 1: 출고 보류 알림(실시간 재고 화면 자리는 step 2에 채워진다) */}
       <g data-el="hold">
         <path d={`M ${stock.x0 - 1} ${fraud.y - 8} L ${fraud.x1 + 3} ${fraud.y} L ${stock.x0 - 1} ${fraud.y + 8} Z`} style={{ fill: 'var(--surface)', stroke: 'var(--line)' }} strokeWidth={1.4} strokeLinejoin="round" />
         <rect x={stock.x0 - 2} y={stock.y - 28} width={stock.w + 8} height={56} rx={10} style={{ fill: 'var(--surface)', stroke: 'var(--line)' }} strokeWidth={1.6} />

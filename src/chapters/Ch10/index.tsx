@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { ch10 as c } from '../../content/chapters/ch10'
 import { tocOf } from '../../content/toc'
@@ -11,6 +11,7 @@ import { RArrow, RPath, RRect, StageCtx } from '../../components/sketch'
 import { StepScene } from '../../components/StepScene'
 import { refreshTriggers } from '../../lib/refresh'
 import { STAGES } from '../../lib/stages'
+import { useEnv } from '../../state/env'
 import { useProgress } from '../../state/progress'
 import {
   AttemptFig,
@@ -119,15 +120,27 @@ function LevelDesk() {
 
 export function Ch10() {
   const { markClimax } = useProgress()
-  return (
+  const { reduced } = useEnv()
+  // 클라이맥스: 결정 장면의 step 2(안 만들기로 한 순간)나 step 3이 화면 가운데 선을 지나면 Lv5 승급.
+  // 빠르게 스크롤해 step 3에 닿아도, 아래에서 거슬러 올라와도 승급하고, 장면을 통째로 건너뛰면(레일·목차 점프, 새로고침) 승급하지 않는다.
+  // 두 모드 모두 같은 관찰자로 판단해 결과가 같다(모드가 바뀌면 step 요소가 새로 그려지므로 다시 관찰)
+  useEffect(() => {
+    const steps = Array.from(document.querySelectorAll('#ch10-decision [data-step]')).slice(1)
+    const io = new IntersectionObserver((es) => es.some((e) => e.isIntersecting) && markClimax(), { rootMargin: '-50% 0px -50% 0px' })
+    steps.forEach((el) => io.observe(el))
+    return () => io.disconnect()
+  }, [markClimax, reduced])
+  // markClimax는 바뀌지 않는다. 진행도가 바뀔 때마다(챕터 도달·퀴즈) 챕터 전체를 다시 그리지 않게 트리를 고정한다.
+  // 진행도를 읽는 부품(LevelDesk·Quiz·ChapterGrowth)은 각자 구독한다
+  return useMemo(() => (
     <ChapterShell id="ch10">
       <Opening />
       <StepScene id="ch10-problem" kind="problem" scene={c.scenes.problem} diagram={() => <ProblemFig />} build={buildProblem} />
       <StepScene id="ch10-attempt" kind="attempt" scene={c.scenes.attempt} diagram={() => <AttemptFig />} build={buildAttempt} tall />
       <StepScene id="ch10-tradeoff" kind="concept" scene={c.scenes.tradeoff} diagram={() => <TradeoffFig />} build={buildTradeoff} />
       <TradeoffScale />
-      {/* 클라이맥스: step 2(안 만들기로 한 순간)에 들어서면 Lv5 승급. 건너뛰어 step 3에 닿아도 승급 */}
-      <StepScene id="ch10-decision" kind="solution" scene={c.scenes.decision} diagram={() => <DecisionFig />} build={buildDecision} onStep={(i) => i >= 1 && markClimax()} tall />
+      {/* 클라이맥스(Lv5 승급)는 위 useEffect의 관찰자가 맡는다 */}
+      <StepScene id="ch10-decision" kind="solution" scene={c.scenes.decision} diagram={() => <DecisionFig />} build={buildDecision} tall />
       <StageCtx.Provider value={PRECISE}>
         <StepScene id="ch10-buy" kind="concept" scene={c.scenes.buy} diagram={() => <BuyFig />} build={buildBuy} />
         <StepScene id="ch10-serve" kind="solution" scene={c.scenes.serve} diagram={() => <ServeFig />} build={buildServe} tall />
@@ -137,5 +150,5 @@ export function Ch10() {
         <ChapterGrowth id="ch10" growth={c.growth} />
       </StageCtx.Provider>
     </ChapterShell>
-  )
+  ), [markClimax])
 }

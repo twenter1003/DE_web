@@ -188,7 +188,7 @@ const interaction = {
     dateFar: (max: number) => `며칠 전인지는 ${max} 이하의 숫자로 적어 주세요.`,
     needQuote: (c: string) => `${c} 값은 글자라서 작은따옴표로 감싸요.`,
     noQuote: (c: string) => `${c}는 숫자 열이라 따옴표 없이 써요.`,
-    textOp: (c: string) => `${c} 같은 글자 열은 = 나 <> 로 같은지만 비교해요.`,
+    textOp: (c: string) => `이 실행기에서는 ${c} 같은 글자 열을 = 나 <> 로 같은지만 비교해요.`,
     generic: (tok: string) => `'${tok}' 부분을 이해하지 못했어요.`,
     internal: '이 쿼리는 이해하지 못했어요. 실험 버튼으로 예시 쿼리를 불러와 비교해 보세요.',
   },
@@ -219,7 +219,7 @@ const interaction = {
       '`JOIN products ON orders.product_id = products.product_id` (없어도 돼요)',
       "`WHERE` 조건 하나 (없어도 돼요): `DATE(ordered_at) = CURRENT_DATE - 1` · `product_id = 'P1'` · `qty >= 2`",
       '`GROUP BY 열, 열` (없어도 돼요) — SUM·COUNT와 함께 SELECT한 보통 열은 모두 여기에 적어요',
-      '대소문자는 상관없어요. `--` 뒤는 사람이 읽는 메모(주석)라 실행하지 않고, 맨 끝 `;`는 있어도 없어도 돼요.',
+      "`SELECT` 같은 낱말과 열·표 이름은 대소문자를 가리지 않지만, 작은따옴표 안의 값은 가려요(`'P1'`과 `'p1'`은 달라요). `--` 뒤는 사람이 읽는 메모(주석)라 실행하지 않고, 맨 끝 `;`는 있어도 없어도 돼요.",
     ],
   },
   note: '진짜 SQL 엔진이 아니라 위 목록만 알아듣는 연습용 실행기예요. 날짜를 쓰는 문법은 데이터베이스마다 조금씩 달라요. 결과는 보기 쉽게 정렬했어요(실제로는 ORDER BY로 순서를 정해요).',
@@ -268,10 +268,10 @@ const figures = {
   sumP1: '1 + 3',
 
   // 장면 4. 시도와 실패 ②
+  // 고객은 이름이 겹칠 수 있어 customer_id로 묶는다
   bigQuery:
-    'SELECT customers.name, products.name, SUM(qty * price) AS 매출\nFROM orders\nJOIN products ON orders.product_id = products.product_id\nJOIN customers ON orders.customer_id = customers.customer_id\nGROUP BY customers.name, products.name;  -- 기간 조건 없음: 전체 기간',
+    'SELECT customers.name, products.name, SUM(qty * price) AS 매출\nFROM orders  -- 기간 조건 없음: 전체 기간\nJOIN products ON orders.product_id = products.product_id\nJOIN customers ON orders.customer_id = customers.customer_id\nGROUP BY customers.customer_id, customers.name, products.name;',
   customersNote: 'customers = 고객 테이블',
-  sqlTag: 'SQL',
   stop: '■ 중지',
   stopped: '쿼리 중지됨 ✕',
   gaugeLabel: '운영 DB 부하',
@@ -335,15 +335,15 @@ export const ch1: ChapterContent<'problem' | 'attempt' | 'overload' | 'analogy' 
       title: '운영 DB 속의 표',
       steps: [
         {
-          text: '주문이 늘수록 손으로 세는 시간도 늘어요. 주니는 석 리드에게 물어보러 갔고, 석 리드는 CSV의 출처부터 보여 줬어요.',
+          text: '주문이 늘수록 손으로 세는 시간도 늘어요. 주니가 묻자 석 리드는 CSV의 출처부터 보여 줬어요.',
           lines: [
             { who: 'juni', mood: 'panic', text: '이거 어떻게 해요?' },
-            { who: 'seok', text: '운영 DB에 다 있어요. SQL 써 봐요.' },
+            { who: 'seok', text: '운영 DB에 다 있어요. 작은 질문부터 SQL로 물어봐요.' },
           ],
           alt: '석 리드의 모니터에 원통 모양 노드 운영 DB. 운영 DB에서 주니가 든 파일 주문내역.csv로 실선 화살표가 이어지고, 화살표 라벨은 내보내기예요.',
         },
         {
-          text: "데이터베이스(Database, 데이터를 정리해 저장하고 꺼내 쓰게 해 주는 시스템)에는 표가 여러 개 담겨 있어요. 표 하나하나는 테이블(Table, 엑셀 시트 같은 표)이라고 해요. 바구니가 장사에 쓰는 이 데이터베이스를 '운영 DB'라고 불러요(DB는 데이터베이스의 줄임말).",
+          text: "바구니의 주문·상품 정보는 데이터베이스(Database, 데이터를 정리해 저장하고 꺼내 쓰게 해 주는 시스템)에 표 여러 개로 나뉘어 담겨 있어요. 표 하나하나는 테이블(Table, 엑셀 시트 같은 표)이라고 해요. 장사에 쓰는 이 데이터베이스를 '운영 DB'라고 불러요(DB는 데이터베이스의 줄임말).",
           alt: '원통 운영 DB의 뚜껑이 열려 있고, 안에서 나온 테이블 카드 두 장 orders (주문)과 products (상품)이 위에 나란히 놓여 있어요.',
         },
         {
@@ -394,7 +394,7 @@ export const ch1: ChapterContent<'problem' | 'attempt' | 'overload' | 'analogy' 
         {
           text: '주니가 급히 쿼리를 멈추자 밀렸던 결제가 하나씩 끝났어요. 질문 자체보다, 그 질문을 던진 장소가 문제였죠.',
           lines: [{ who: 'juni', mood: 'panic', text: '제, 제 쿼리 때문이었나 봐요!' }],
-          alt: '코드 창 위에 쿼리 중지됨 ✕. 빛줄기는 사라졌고 게이지는 15%. 결제 카드 3장이 모두 ✓ 완료. 태오가 노트북을 들고 옆에 서 있어요.',
+          alt: '■ 중지 버튼이 눌렸고 그 옆에 쿼리 중지됨 ✕. 빛줄기는 사라졌고 게이지는 15%. 결제 카드 3장이 모두 ✓ 완료. 태오가 노트북을 들고 옆에 서 있어요.',
         },
       ],
     },

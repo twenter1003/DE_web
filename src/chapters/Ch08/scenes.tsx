@@ -102,7 +102,8 @@ const CURSOR = [
   [FILES[2][0] + 6, FILES[2][1] + 26],
   [212, 246],
 ] as const
-const PM = { x: 404, y: 34, h: 120, lake: 36, wh: 72 }
+// 두 구간은 같은 길이: 저장 단가가 아니라 '같은 데이터를 한 벌 더' 저장한다는 것만 보여 준다
+const PM = { x: 404, y: 34, h: 120, lake: 44, wh: 44 }
 
 function Cursor({ x, y }: { x: number; y: number }) {
   return (
@@ -274,9 +275,9 @@ export const buildProblem: SceneBuild = (q, tl, { mobile }) => {
   tl.to(segL, { scaleY: 1, duration: 0.12, ease: 'none' }, at(2) + 0.44)
   tl.to(needle, { y: PM.wh, duration: 0.12, ease: 'none' }, at(2) + 0.44)
   tl.to([...o('seg-lake-l'), ...o('seg-lake-tick')], { opacity: 1, duration: 0.05 }, at(2) + 0.52)
-  tl.to(segW, { scaleY: 1, duration: 0.2, ease: 'none' }, at(2) + 0.57)
-  tl.to(needle, { y: 0, duration: 0.2, ease: 'none' }, at(2) + 0.57)
-  tl.to([...o('seg-wh-l'), ...o('seg-wh-tick')], { opacity: 1, duration: 0.05 }, at(2) + 0.72)
+  tl.to(segW, { scaleY: 1, duration: 0.12, ease: 'none' }, at(2) + 0.57)
+  tl.to(needle, { y: 0, duration: 0.12, ease: 'none' }, at(2) + 0.57)
+  tl.to([...o('seg-wh-l'), ...o('seg-wh-tick')], { opacity: 1, duration: 0.05 }, at(2) + 0.65)
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -316,7 +317,7 @@ export function AttemptFig() {
         <Txt x={sync.x} y={sync.y + 13} size={15} weight={700} anchor="middle">
           {F.sync}
         </Txt>
-        <Txt x={sync.x} y={sync.y + 30} size={12} anchor="middle" muted>
+        <Txt x={sync.x} y={sync.y + 30} size={12} anchor="middle" muted el="sync-sub">
           {F.syncSub}
         </Txt>
       </g>
@@ -438,7 +439,9 @@ export const buildAttempt: SceneBuild = (q, tl, { mobile }) => {
   // step 3: 동기화는 흐려지고, 두 저장소가 가운데로 한 칸씩 다가간다
   const s3 = at(2)
   tl.to([...o('timeline'), ...cards, ...o('eq'), ...o('neq')], { opacity: 0, duration: 0.12 }, s3)
-  tl.to([...o('sync'), ...arrows[0]], { opacity: 0.3, duration: 0.16 }, s3 + 0.08)
+  // 흐려도 '동기화' 글자와 제어 화살표는 읽혀야 한다(0.7 → 4.5:1 이상). 흐린 보조 글자는 대비가 모자라 지운다
+  tl.to([...o('sync'), ...arrows[0]], { opacity: 0.7, duration: 0.16 }, s3 + 0.08)
+  tl.to(o('sync-sub'), { opacity: 0, duration: 0.16 }, s3 + 0.08)
   tl.to([...arrows[1], ...arrows[2]], { opacity: 0, duration: 0.16 }, s3 + 0.08)
   tl.to(o('watch'), { opacity: 1, duration: 0.1 }, s3 + 0.16)
   tl.to(o('alert'), { opacity: 1, duration: 0.12 }, s3 + 0.22)
@@ -480,6 +483,19 @@ const IN_Y = 226
 const OUT_Y = 324
 // step 3 좌우 비교
 const CMP = [112, 328]
+
+/** 버려진 파일 이름은 두 줄(이름 / .확장자): 모바일 글자 하한에서 140 간격의 이웃 라벨과 겹치지 않게 */
+function NameLines({ x, name }: { x: number; name: string }) {
+  const dot = name.lastIndexOf('.')
+  return (
+    <>
+      <tspan x={x}>{name.slice(0, dot)}</tspan>
+      <tspan x={x} dy="1.2em">
+        {name.slice(dot)}
+      </tspan>
+    </>
+  )
+}
 
 function Bottle({ x, seed }: { x: number; seed: string }) {
   return <RPath d={`M ${x - 5} 166 L ${x + 5} 166 L ${x + 5} 178 Q ${x + 13} 184 ${x + 13} 194 L ${x + 13} 236 Q ${x + 13} 240 ${x + 9} 240 L ${x - 9} 240 Q ${x - 13} 240 ${x - 13} 236 L ${x - 13} 194 Q ${x - 13} 184 ${x - 5} 178 Z`} seed={seed} rough={0.3} fill="var(--bg)" />
@@ -667,19 +683,19 @@ export function ConceptFig() {
             <g data-el="out-icon">
               <FileIcon x={OUT_X[k]} y={OUT_Y} w={30} h={38} seed={`c-out${k}`} dash={k === 2 ? '4 3' : undefined} />
             </g>
-            <Txt x={OUT_X[k]} y={OUT_Y + 56} size={11} anchor="middle" mono el="out-ink">
-              {f.name}
+            <Txt x={OUT_X[k]} y={OUT_Y + 52} size={11} anchor="middle" mono el="out-ink">
+              <NameLines x={OUT_X[k]} name={f.name} />
             </Txt>
-            <Txt x={OUT_X[k]} y={OUT_Y + 56} size={11} anchor="middle" mono muted el="out-muted">
-              {f.name}
+            <Txt x={OUT_X[k]} y={OUT_Y + 52} size={11} anchor="middle" mono muted el="out-muted">
+              <NameLines x={OUT_X[k]} name={f.name} />
             </Txt>
             <Tag x={OUT_X[k]} y={OUT_Y - 8} text={f.tag} size={11.5} el="out-tag" color="var(--muted)" />
           </g>
         ))}
         <g data-el="not-in">
-          <RPath d="M 16 392 L 16 398 L 424 398 L 424 392" seed="c-brk" rough={0.2} strokeWidth={1.2} stroke="var(--muted)" />
-          <RLine x1={220} y1={398} x2={220} y2={404} seed="c-brk2" rough={0.1} strokeWidth={1.2} stroke="var(--muted)" />
-          <Txt x={220} y={420} size={12.5} weight={650} anchor="middle" muted>
+          <RPath d="M 16 402 L 16 408 L 424 408 L 424 402" seed="c-brk" rough={0.2} strokeWidth={1.2} stroke="var(--muted)" />
+          <RLine x1={220} y1={408} x2={220} y2={414} seed="c-brk2" rough={0.1} strokeWidth={1.2} stroke="var(--muted)" />
+          <Txt x={220} y={429} size={12.5} weight={650} anchor="middle" muted>
             {F.notInTable}
           </Txt>
         </g>
@@ -1215,12 +1231,12 @@ const unbox = (s: string | undefined): Box => {
   const [x, y, w, h] = (s ?? '0 0 100 100').split(' ').map(Number)
   return { x, y, w, h }
 }
-/** 영역 r을 화면 비율(aspect)에 맞춘 뷰박스로(가운데 정렬) */
-const fitBox = (r: Box, aspect: number) => {
+/** 영역 r을 화면 비율(aspect)에 맞춘 뷰박스로(가운데 정렬, top이면 남는 높이를 아래로만) */
+const fitBox = (r: Box, aspect: number, top = false) => {
   let { x, y, w, h } = r
   if (w / h > aspect) {
     const nh = w / aspect
-    y -= (nh - h) / 2
+    if (!top) y -= (nh - h) / 2
     h = nh
   } else {
     const nw = h * aspect
@@ -1248,11 +1264,16 @@ function Shield() {
 
 /** 맵 위 덧그림: 지워질 동기화, 옛 자리 윤곽, 옮겨 가는 배지, Bronze로 다시 그린 이미지 연결선 */
 function SolOverlay({ at: pos }: { at: At }) {
-  const [lake, wh, lh, media, spark] = ['lake', 'warehouse', 'lakehouse', 'media', 'spark'].map(pos)
-  if (!lake || !wh || !lh || !media || !spark) return null
+  const [lake, wh, lh, media, spark, kafka, orch] = ['lake', 'warehouse', 'lakehouse', 'media', 'spark', 'kafka', 'orch'].map(pos)
+  if (!lake || !wh || !lh || !media || !spark || !kafka || !orch) return null
   // 장면 카메라: step 1 = 저장소 둘레, step 2 진입 = 레이크하우스
   // 아래 끝은 오케스트레이터·알림 위쪽에서 끊는다(넓은 화면 비율에서 두 노드 윗변만 걸려 보이지 않게)
   const r1: Box = { x: lake.x - lake.w / 2 + 26, y: 118, w: wh.x + wh.w / 2 + 10 - (lake.x - lake.w / 2 + 26), h: 568 }
+  // 모바일은 노드 글자가 커져(글자 하한) 가장자리 노드가 잘려 보인다. 야간 ETL·옛 레이크 열부터 옛 웨어하우스 열까지 통째로,
+  // 위로는 이벤트 브로커 줄부터 아래로는 오케스트레이터 줄까지 담는다(맨 위 이상 결제 탐지 줄은 화면 밖)
+  const lx = lake.x - lake.w / 2 - 10
+  const ty = kafka.y - kafka.h / 2 - 40
+  const r1m: Box = { x: lx, y: ty, w: wh.x + wh.w / 2 + 10 - lx, h: orch.y + orch.h / 2 + 30 - ty }
   const rLh: Box = { x: lh.x - lh.w / 2 - 30, y: lh.y - lh.h / 2 - 30, w: lh.w + 60, h: lh.h + 60 }
   const sync = { x: (lake.x + wh.x) / 2, y: (lake.y + wh.y) / 2, w: 120, h: 48 }
   const ry = Math.min(9, lake.h * 0.16)
@@ -1261,7 +1282,7 @@ function SolOverlay({ at: pos }: { at: At }) {
   const [mx, my] = edgePt(media, lh.x - lh.w / 2, bronzeY)
   return (
     <g>
-      <rect data-el="cams" data-r1={box(r1)} data-rlh={box(rLh)} width={0} height={0} style={{ fill: 'none' }} />
+      <rect data-el="cams" data-r1={box(r1)} data-r1m={box(r1m)} data-rlh={box(rLh)} width={0} height={0} style={{ fill: 'none' }} />
       {[lake, wh].map((n, k) => (
         <g key={k} data-el="ghost">
           <path d={cylPath(n.x, n.y, n.w, n.h, ry).outline} style={{ fill: 'none', stroke: 'var(--muted)' }} strokeWidth={1.4} strokeDasharray="5 5" />
@@ -1296,7 +1317,7 @@ function SolOverlay({ at: pos }: { at: At }) {
 }
 
 /** step 2: 레이크하우스를 가까이에서. 한 방향으로 쌓이는 세 층, 같은 Gold를 읽는 두 리포트, 줄어든 저장 비용 */
-const CM = { x: 392, y: 36, h: 120, lake: 36, wh: 72, lh: 44 }
+const CM = { x: 392, y: 36, h: 120, lake: PM.lake, wh: PM.wh, lh: 54 }
 const BANDS = [
   { k: 'gold', y: 128 },
   { k: 'silver', y: 222 },
@@ -1438,7 +1459,7 @@ export function SolutionFig() {
   )
 }
 
-export const buildSolution: SceneBuild = (q, tl) => {
+export const buildSolution: SceneBuild = (q, tl, { mobile }) => {
   const o = pick(q)
   const [svg, vsvg] = o('map') as SVGSVGElement[]
   const cams = o('cams')[0] as SVGElement | undefined
@@ -1446,7 +1467,8 @@ export const buildSolution: SceneBuild = (q, tl) => {
   if (!svg || !vsvg || !cams || !ocams) return
   const rect = svg.getBoundingClientRect()
   const aspect = rect.width > 0 && rect.height > 0 ? rect.width / rect.height : 0.75
-  const cam1 = fitBox(unbox(cams.dataset.r1), aspect)
+  // 모바일: 남는 높이는 아래(맵 끝 너머 빈 곳)로 보내, 위 줄 노드의 아랫변이 걸려 보이지 않게 한다
+  const cam1 = mobile ? fitBox(unbox(cams.dataset.r1m), aspect, true) : fitBox(unbox(cams.dataset.r1), aspect)
   const camLh = fitBox(unbox(cams.dataset.rlh), aspect)
   const camNear = fitBox(unbox(ocams.dataset.near), aspect)
   const camAll = fitLeft(unbox(ocams.dataset.full), aspect)
@@ -1469,6 +1491,9 @@ export const buildSolution: SceneBuild = (q, tl) => {
   const movers = o('mover')
   const rr = o('rr-media')
   init(tl, [...lh, ...edge('media>lakehouse'), ...o('ghost'), ...movers, ...newChecks, ...bands, ...o('close-layer'), ...o('over-layer'), ...o('counter'), ...o('memo'), ...o('cnt-to')], { opacity: 0 })
+  // 모바일 step 1 카메라는 ETL 열과 Kafka 줄을 함께 담느라 그 사이의 CDC가 왼쪽 끝에 반쯤 걸린다.
+  // 글자 조각만 보이지 않게 이 맵(svg)에서는 CDC와 그 연결선을 감춘다(step 2부터는 맵 자체가 사라지고, step 3은 다른 맵 vsvg)
+  if (mobile) init(tl, [...node('cdc'), ...edge('oltp>cdc'), ...edge('cdc>kafka')], { opacity: 0 })
   init(tl, vsvg, { attr: { viewBox: camNear } })
   init(tl, lhStrokes, { drawSVG: '0%' })
   init(tl, q('[data-el="sync-x"] path'), { drawSVG: '0%' })

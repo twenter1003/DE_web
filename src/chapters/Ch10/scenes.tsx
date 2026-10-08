@@ -1,4 +1,4 @@
-import type { CSSProperties, ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import { ch10 } from '../../content/chapters/ch10'
 import { T } from '../../content/map'
 import { LEVELS, PEOPLE } from '../../content/people'
@@ -37,7 +37,7 @@ const MAP_AR = (() => {
 const ZERO_ETL = mapStateAt(T.ch10Buy).edges.find((e) => e.id === 'oltp>lakehouse')?.label ?? ''
 
 /** 맵 노드 하나를 장면 좌표에 다시 그린다 */
-function MNode({ id, x, y, w = 150, h = 52, el, bands, plain }: { id: string; x: number; y: number; w?: number; h?: number; el?: string; bands?: boolean; plain?: boolean }) {
+function MNode({ id, x, y, w = 150, h = 52, el, bands, plain, noSub }: { id: string; x: number; y: number; w?: number; h?: number; el?: string; bands?: boolean; plain?: boolean; noSub?: boolean }) {
   const n = lb(id)
   return (
     <Node
@@ -46,7 +46,7 @@ function MNode({ id, x, y, w = 150, h = 52, el, bands, plain }: { id: string; x:
       w={w}
       h={h}
       label={plain ? '' : n.label}
-      sub={plain ? undefined : n.sub}
+      sub={plain || noSub ? undefined : n.sub}
       kind={n.kind}
       seed={`c10-${id}-${x}-${y}`}
       el={el}
@@ -84,6 +84,9 @@ function Caps({ items }: { items: [string, string][] }) {
 
 const shafts = (els: Element[]) => els.flatMap((e) => Array.from(e.querySelectorAll('[data-el="shaft"] path')))
 const heads = (els: Element[]) => els.flatMap((e) => Array.from(e.querySelectorAll('[data-el="head"]')))
+/** 물러난(걷어낸) 요소의 흐림. 이름이 무엇이 물러났는지 알려 주므로 보조색(muted) 글자도 4.5:1이 남는 만큼만(0.8 ≈ 4.8:1).
+ *  제안 노드는 Node가 이미 0.78로 그리므로 더 흐리지 않는다 */
+const DIM = 0.8
 
 // ─────────────────────────────────────────────────────────────
 // 장면 2. 문제 — 하루 만에 21개가 된 맵
@@ -386,9 +389,10 @@ export const buildAttempt: SceneBuild = (q, tl) => {
   // step 3: 펜을 내려놓고 소라에게 — 혼잣말이 질문이 된다
   const s3 = at(2)
   tl.to([...o('frag'), ...o('tbl')], { opacity: 0, duration: 0.1 }, s3)
-  tl.to(o('board'), { opacity: 0.3, duration: 0.15 }, s3)
+  // 뒤로 물린 화이트보드·회상 말풍선도 글자는 읽혀야 해서 흐림은 대비 4.5:1이 남는 만큼만
+  tl.to(o('board'), { opacity: DIM, duration: 0.15 }, s3)
   tl.set(o('recall'), { y: -26 }, 0)
-  tl.to(o('recall'), { opacity: 0.6, y: 0, duration: 0.18 }, s3 + 0.06)
+  tl.to(o('recall'), { opacity: 0.85, y: 0, duration: 0.18 }, s3 + 0.06)
   tl.set(o('now-txt'), { opacity: 0 }, 0)
   tl.to(o('juni-now'), { opacity: 1, duration: 0.1 }, s3 + 0.18)
   tl.to(o('ghost-txt'), { opacity: 0, duration: 0.1 }, s3 + 0.3)
@@ -630,43 +634,69 @@ export const buildTradeoff: SceneBuild = (q, tl) => {
 const RX = [105, 330]
 const RY = (r: number) => 48 + r * 84
 const enough = F.reasons.enough.join(' ')
+/** 걷어낸 다섯 노드: [id, 열, 줄] */
+const GONE: [string, 0 | 1, number][] = [
+  ['stock', 0, 1],
+  ['rtAgg', 1, 1],
+  ['newTool', 0, 2],
+  ['cache', 1, 2],
+  ['rtDash', 1, 3],
+]
 
-function ReasonFig() {
+/** 회의실 화면에 띄운 이벤트 브로커 둘레. after면 다섯 노드를 걷어낸 뒤(모션 줄이기의 클라이맥스 정지 그림) */
+function ReasonFig({ after }: { after?: boolean }) {
   const [L, R] = RX
   const tagY = (r: number) => RY(r) + 38
   return (
-    <Fig>
+    // after(모션 줄이기, 카운터 줄과 그림 칸을 나눠 씀)는 모니터 받침을 빼고 잘라 글자를 조금이라도 크게
+    <Fig viewBox={after ? '0 0 440 440' : undefined}>
       {/* 회의실 화면 */}
       <rect x={4} y={4} width={432} height={432} rx={10} style={{ fill: 'var(--bg)', stroke: 'var(--edge)' }} strokeWidth={1.5} />
-      <path d="M 202 436 L 196 464 M 238 436 L 244 464 M 176 466 L 264 466" style={{ fill: 'none', stroke: 'var(--edge)' }} strokeWidth={2} strokeLinecap="round" />
+      {!after && <path d="M 202 436 L 196 464 M 238 436 L 244 464 M 176 466 L 264 466" style={{ fill: 'none', stroke: 'var(--edge)' }} strokeWidth={2} strokeLinecap="round" />}
 
       <RArrow x1={L + 76} y1={RY(0)} x2={R - 83} y2={RY(0)} seed="r-kf" rough={0.4} />
-      <RArrow x1={L} y1={RY(0) + 27} x2={L} y2={RY(1) - 29} seed="r-ks" rough={0.4} />
-      <Elbow pts={[[214, RY(0) + 4], [214, RY(1)], [R - 82, RY(1)]]} dash="7 6" stroke="var(--muted)" />
-      <Elbow pts={[[R + 75, RY(1)], [422, RY(1)], [422, RY(2)], [R + 84, RY(2)]]} dash="7 6" stroke="var(--muted)" />
-      <Elbow pts={[[R + 75, RY(2)], [422, RY(2)], [422, RY(3)], [R + 84, RY(3)]]} dash="7 6" stroke="var(--muted)" />
-      <Elbow pts={[[L + 76, RY(2)], [R - 84, RY(2)]]} dash="7 6" stroke="var(--muted)" />
       <RArrow x1={L + 76} y1={RY(4)} x2={R - 83} y2={RY(4)} seed="r-mb" rough={0.4} />
+      <g style={after ? { opacity: 0.25 } : undefined}>
+        <RArrow x1={L} y1={RY(0) + 27} x2={L} y2={RY(1) - 29} seed="r-ks" rough={0.4} />
+        <Elbow pts={[[214, RY(0) + 4], [214, RY(1)], [R - 82, RY(1)]]} dash="7 6" stroke="var(--muted)" />
+        <Elbow pts={[[R + 75, RY(1)], [422, RY(1)], [422, RY(2)], [R + 84, RY(2)]]} dash="7 6" stroke="var(--muted)" />
+        <Elbow pts={[[R + 75, RY(2)], [422, RY(2)], [422, RY(3)], [R + 84, RY(3)]]} dash="7 6" stroke="var(--muted)" />
+        <Elbow pts={[[L + 76, RY(2)], [R - 84, RY(2)]]} dash="7 6" stroke="var(--muted)" />
+      </g>
 
       <MNode id="kafka" x={L} y={RY(0)} w={140} h={44} />
       <MNode id="fraud" x={R} y={RY(0)} h={44} />
-      <MNode id="stock" x={L} y={RY(1)} w={140} h={44} />
-      <MNode id="rtAgg" x={R} y={RY(1)} h={44} />
-      <MNode id="newTool" x={L} y={RY(2)} w={140} h={44} />
-      <MNode id="cache" x={R} y={RY(2)} h={44} />
       <MNode id="orch" x={L} y={RY(3)} w={140} h={44} />
-      <MNode id="rtDash" x={R} y={RY(3)} h={44} />
       <MNode id="model" x={L} y={RY(4)} w={140} h={44} />
       <MNode id="bi" x={R} y={RY(4)} h={44} />
+      {/* after: 보조 줄은 '걷어냄' 꼬리표에 가려지므로 빼고, 이름을 가운데 둬 취소선이 이름을 지나게 */}
+      {GONE.map(([id, c, r]) => (
+        <g key={id} style={after && lb(id).kind !== 'proposal' ? { opacity: DIM } : undefined}>
+          <MNode id={id} x={RX[c]} y={RY(r)} w={c ? 150 : 140} h={44} noSub={after} />
+        </g>
+      ))}
 
-      <Pill x={R} y={tagY(1)} text={enough} el="rs" />
-      <Pill x={R} y={tagY(2)} text={enough} el="rs" />
-      <Pill x={R} y={tagY(3)} text={enough} el="rs" />
-      <Pill x={L} y={tagY(2)} text={F.reasons.noProblem} el="rs" />
-      <Pill x={L} y={tagY(1)} text={F.reasons.zeroViews} status="fail" el="rs" />
-      <Pill x={L} y={tagY(3)} text={F.reasons.run15} el="rs" />
-      <Pill x={(L + R) / 2 - 3} y={RY(4) - 22} text={F.reasons.every15} el="rs" />
-      <Pill x={R - 10} y={tagY(0)} text={F.reasons.keep} status="ok" el="rs" strong />
+      {after ? (
+        <>
+          {GONE.map(([id, c, r]) => (
+            <Gone key={id} x={RX[c]} y={RY(r)} w={c ? 150 : 140} h={44} />
+          ))}
+          <Pill x={L} y={tagY(3)} text={F.reasons.run15} />
+          <Pill x={(L + R) / 2 - 3} y={RY(4) - 22} text={F.reasons.every15} />
+          <Pill x={R - 10} y={tagY(0)} text={F.reasons.keep} status="ok" strong />
+        </>
+      ) : (
+        <>
+          <Pill x={R} y={tagY(1)} text={enough} el="rs" />
+          <Pill x={R} y={tagY(2)} text={enough} el="rs" />
+          <Pill x={R} y={tagY(3)} text={enough} el="rs" />
+          <Pill x={L} y={tagY(2)} text={F.reasons.noProblem} el="rs" />
+          <Pill x={L} y={tagY(1)} text={F.reasons.zeroViews} status="fail" el="rs" />
+          <Pill x={L} y={tagY(3)} text={F.reasons.run15} el="rs" />
+          <Pill x={(L + R) / 2 - 3} y={RY(4) - 22} text={F.reasons.every15} el="rs" />
+          <Pill x={R - 10} y={tagY(0)} text={F.reasons.keep} status="ok" el="rs" strong />
+        </>
+      )}
     </Fig>
   )
 }
@@ -677,24 +707,11 @@ function ClimaxLayer() {
   return (
     <div data-el="climax" className={`absolute inset-0 flex flex-col gap-2 ${reduced ? '' : 'justify-center'}`}>
       {reduced ? (
-        // 모션 줄이기: 전·후 두 장을 나란히(모바일은 위아래로) 두고 사이에 21 → 16
-        // 이름표는 맵 바로 위에 붙인다(데스크톱은 맵 비율 상자, 모바일은 남은 높이를 채운다)
-        <div className="flex min-h-0 flex-1 flex-col gap-1 md:flex-row md:items-center md:gap-2">
-          <div className="flex min-h-0 flex-1 flex-col">
-            <p className="font-mono text-xs text-muted">{F.snapBefore(N10)}</p>
-            <div className="relative min-h-0 w-full flex-1 md:flex-none md:aspect-(--ar)" style={{ '--ar': MAP_AR } as CSSProperties}>
-              <PipelineMap t={T.ch10Proposal} vertical={false} label={F.snapBefore(N10)} />
-            </div>
-          </div>
-          <p className="shrink-0 self-center text-center font-mono text-sm font-bold">
-            {F.flow(N10, NC)}
-            <span className="block font-normal text-muted">{F.ch9(N9)}</span>
-          </p>
-          <div className="flex min-h-0 flex-1 flex-col">
-            <p className="font-mono text-xs text-muted">{F.snapAfter(NC)}</p>
-            <div data-el="after" className="relative min-h-0 w-full flex-1 md:flex-none md:aspect-(--ar)" style={{ '--ar': MAP_AR } as CSSProperties}>
-              <PipelineMap t={T.ch10Climax} from={T.ch10Proposal} ghosts vertical={false} label={F.snapAfter(NC)} />
-            </div>
+        // 모션 줄이기: 전체 맵 두 장을 나란히 두면 노드 글자가 몇 px로 줄어 무엇을 걷어냈는지 읽을 수 없다.
+        // step 1과 같은 이벤트 브로커 둘레에서 다섯 노드를 걷어낸 뒤 모습을 보여 주고, 21 → 16은 아래 카운터에 적는다
+        <div className="relative min-h-0 flex-1">
+          <div className="absolute inset-0">
+            <ReasonFig after />
           </div>
         </div>
       ) : (
@@ -706,8 +723,9 @@ function ClimaxLayer() {
         <div className="min-w-0 space-y-2">
           <p className="font-mono text-sm text-muted">
             {F.nodes}{' '}
-            <b data-el="c-num" className="text-[1.375rem] font-extrabold text-ink md:text-[1.625rem]">
-              {NC}
+            {/* 모션 줄이기에선 세지 않고 21 → 16을 그대로 적는다(c-num이 없으면 카운트 트윈도 없다) */}
+            <b data-el={reduced ? undefined : 'c-num'} className="text-[1.375rem] font-extrabold text-ink md:text-[1.625rem]">
+              {reduced ? F.flow(N10, NC) : NC}
             </b>{' '}
             <span className="text-xs">{F.ch9(N9)}</span>
           </p>
@@ -739,12 +757,13 @@ function ClimaxLayer() {
 function AdrLayer() {
   const rows = F.adr.rows
   return (
+    // 모바일은 그림 띠가 낮아(키 작은 폰은 약 330px) 줄 간격을 좁혀야 카드가 HUD 밑·띠 아래로 넘치지 않는다
     <div data-el="adr" className="absolute inset-0 flex flex-col justify-center">
-      <div className="rounded-xl border-[1.5px] border-edge bg-surface p-4 text-[0.875rem] leading-relaxed md:p-5 md:text-[0.9375rem]">
+      <div className="rounded-xl border-[1.5px] border-edge bg-surface p-3 text-[0.875rem] leading-snug md:p-5 md:text-[0.9375rem] md:leading-relaxed">
         <p className="font-mono text-[0.9375rem] font-bold md:text-base">
           <TypeText text={F.adr.title} />
         </p>
-        <dl className="mt-3 space-y-2.5">
+        <dl className="mt-2 space-y-1.5 md:mt-3 md:space-y-2.5">
           {rows.map(([k, v], i) => (
             <div key={k} className="relative grid grid-cols-[6.75rem_minmax(0,1fr)] gap-x-2 pb-1">
               <dt className="font-bold">
@@ -762,7 +781,7 @@ function AdrLayer() {
           ))}
         </dl>
       </div>
-      <p data-el="adr-cap" className="mt-3 text-center text-[0.8125rem] leading-snug text-muted md:text-sm">
+      <p data-el="adr-cap" className="mt-2 text-center md:mt-3 text-[0.8125rem] leading-snug text-muted md:text-sm">
         {F.adrNote}
       </p>
     </div>
@@ -794,13 +813,20 @@ export const buildDecision: SceneBuild = (q, tl) => {
   const s = at(1)
   tl.to(o('reason'), { opacity: 0, duration: 0.1 }, s)
   tl.to(o('climax'), { opacity: 1, duration: 0.1 }, s + 0.04)
-  const aq = scoped(o('after')[0])
-  // 전체 맵이 작게 보이므로 '걷어냄' 표시만 크게
-  tl.set(aq('[data-el="tag-gone"] text'), { fontSize: 30, attr: { dy: -4 } }, 0)
-  tl.set(aq('[data-el="tag-gone"] line'), { attr: { 'stroke-width': 5 } }, 0)
-  // 걷어내기만 하는 전환이라 '새로 생기는 것'이 없다. 빈 목록 경고가 나지 않게 빈 자리표 하나를 넘긴다
-  const noop = document.createElementNS('http://www.w3.org/2000/svg', 'g')
-  mapTransition((sel) => (sel === '[data-el="tag-new"]' ? [noop] : aq(sel)), tl, s + 0.14, { dur: 0.36, ghosts: true })
+  // 전체 맵은 움직이는 모드에만 있다(모션 줄이기는 ReasonFig after 정지 그림)
+  const after = o('after')[0]
+  if (after) {
+    const aq = scoped(after)
+    // 전체 맵이 작게 보이므로 '걷어냄' 표시만 크게
+    tl.set(aq('[data-el="tag-gone"] text'), { fontSize: 30, attr: { dy: -4 } }, 0)
+    tl.set(aq('[data-el="tag-gone"] line'), { attr: { 'stroke-width': 5 } }, 0)
+    // 걷어내기만 하는 전환이라 '새로 생기는 것'이 없다. 빈 목록 경고가 나지 않게 빈 자리표 하나를 넘긴다
+    const noop = document.createElementNS('http://www.w3.org/2000/svg', 'g')
+    // '걷어냄' 표시는 걷어낸 노드 g 안에 있어 노드째 흐리면 표시까지 흐려진다 → 노드의 상자·글자만 흐린다
+    const EXIT = '[data-node][data-change="exit"]'
+    const ghostBody = aq(EXIT).flatMap((n) => Array.from(n.children).filter((c) => c.getAttribute('data-el') !== 'tag-gone'))
+    mapTransition((sel) => (sel === '[data-el="tag-new"]' ? [noop] : sel === EXIT ? ghostBody : aq(sel)), tl, s + 0.14, { dur: 0.36, ghosts: true })
+  }
   countTo(tl, o('c-num')[0], N10, NC, String, s + 0.14, 0.34)
   tl.set([...o('lv-new'), ...o('desk-new')], { opacity: 0 }, 0)
   tl.to([...o('lv-old'), ...o('desk-old')], { opacity: 0, duration: 0.14 }, s + 0.56)
@@ -837,7 +863,7 @@ function Stamp({ x, y, text, el }: { x: number; y: number; text: string; el: str
 const OL = { oltp: [70, 300], cdc: [215, 175], kafka: [378, 175], etl: [215, 410], lh: [378, 335], orch: [62, 440] } as const
 const ZL = { oltp: [72, 220], lh: [362, 300] } as const
 
-function Gone({ x, y, w, h, el }: { x: number; y: number; w: number; h: number; el: string }) {
+function Gone({ x, y, w, h, el }: { x: number; y: number; w: number; h: number; el?: string }) {
   return (
     <g data-el={el}>
       <line x1={x - w / 2} y1={y} x2={x + w / 2} y2={y} style={{ stroke: 'var(--fail)' }} strokeWidth={2.5} />
@@ -973,8 +999,9 @@ export function BuyFig() {
             </Txt>
           </g>
           <Pill x={OL.etl[0]} y={466} text={F.twice} el="z-twice" />
-          <Gone x={OL.cdc[0]} y={OL.cdc[1]} w={116} h={46} el="z-gone" />
-          <Gone x={OL.etl[0]} y={OL.etl[1]} w={116} h={46} el="z-gone" />
+          {/* 취소선은 이름(기준선 y-3)을 지나게 8 위로. 꼬리표가 덮는 보조 줄은 걷어낼 때 지운다 */}
+          <Gone x={OL.cdc[0]} y={OL.cdc[1] - 8} w={116} h={46} el="z-gone" />
+          <Gone x={OL.etl[0]} y={OL.etl[1] - 8} w={116} h={46} el="z-gone" />
           <g data-el="z-new">
             <RArrow x1={132} y1={300} x2={312} y2={313} seed="z-zero" rough={0.3} strokeWidth={2.4} />
             <Txt x={222} y={294} size={14} weight={850} anchor="middle" el="z-label">
@@ -1052,9 +1079,12 @@ export const buildBuy: SceneBuild = (q, tl) => {
   tl.set([...retry, ...o('z-twice'), ...o('z-gone'), ...o('z-label')], { opacity: 0 }, 0)
   tl.to(retry, { opacity: 1, duration: 0.08 }, s3 + 0.12)
   tl.to(o('z-twice'), { opacity: 1, duration: 0.08 }, s3 + 0.2)
-  const old = [...o('z-cdc'), ...o('z-etl'), ...o('z-old')]
-  // 노드·화살표만 흐리게. ↻×3과 '두 번 옮김'은 바꾼 이유라 끝까지 읽혀야 한다
-  tl.to(old, { opacity: 0.2, duration: 0.14 }, s3 + 0.34)
+  // 걷어낸 노드·화살표만 흐리게. ↻×3과 '두 번 옮김'은 바꾼 이유라 끝까지 읽혀야 한다.
+  // 노드 이름은 무엇을 걷어냈는지 알려 주므로 대비 4.5:1이 남게(DIM), 화살표만 더 흐리게
+  const gone = [...o('z-cdc'), ...o('z-etl')]
+  tl.to(gone, { opacity: DIM, duration: 0.14 }, s3 + 0.34)
+  tl.to(gone.flatMap((g) => Array.from(g.querySelectorAll('.t-muted'))), { opacity: 0, duration: 0.1 }, s3 + 0.34)
+  tl.to(o('z-old'), { opacity: 0.25, duration: 0.14 }, s3 + 0.34)
   tl.to(o('z-gone'), { opacity: 1, duration: 0.1 }, s3 + 0.38)
   stepCount(tl, o('cnt')[0], NC, [
     [NC - 1, s3 + 0.4],
@@ -1255,12 +1285,12 @@ export function ServeFig() {
             </Txt>
             <circle cx={242} cy={420} r={4} style={{ fill: 'var(--accent)' }} />
             <Txt x={252} y={424} size={13} weight={650}>
-              {F.bronze}
+              {F.silver}
             </Txt>
           </g>
           {Array.from({ length: nP }, (_, i) => {
             const sq = i % 2 === 0
-            const [sx, sy] = sq ? [128 + (i % 4) * 6, 382 + (i % 3) * 6] : [128 + (i % 4) * 6, 300 + (i % 3) * 6]
+            const [sx, sy] = sq ? [128 + (i % 4) * 6, 382 + (i % 3) * 6] : [128 + (i % 4) * 6, 338 + (i % 3) * 6]
             const [tx, ty] = SLOT(i)
             return sq ? (
               <rect key={i} data-el="mp" data-sx={sx} data-sy={sy} data-tx={tx} data-ty={ty} x={-3.5} y={-3.5} width={7} height={7} rx={1} style={{ fill: 'var(--accent)' }} />

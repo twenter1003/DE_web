@@ -262,7 +262,7 @@ function buildStage(run: Run): Stage {
           run.rows.forEach((r, i) => {
             if (kept.has(r.id)) return
             const d = ((i + 0.5) / n) * SCAN
-            for (const [k, p] of f) if (k.startsWith(`c:${r.id}:`) || k === `bg:${r.id}`) f.set(k, { ...p, o: 0.3, d, t: 0.1 })
+            for (const [k, p] of f) if (k.startsWith(`c:${r.id}:`) || k === `bg:${r.id}`) f.set(k, { ...p, o: 0.65, d, t: 0.1 }) // 흐려도 값은 읽히게(옅은 띠 위에서도 4.5:1 이상)
             f.set(N(`x:${r.id}`, <Tag />, 3), { x: tagX, y: rowTop(i) + 3, d, t: 0.1 })
           })
         },

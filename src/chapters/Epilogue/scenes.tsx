@@ -78,8 +78,8 @@ const POS: Record<string, [number, number, number, number]> = {
   ml: [330, 286, 96, 34],
   catalog: [194, 356, 88, 34],
   cost: [290, 356, 88, 34],
-  orch: [392, 356, 92, 34],
-  alert: [392, 406, 92, 34],
+  orch: [390, 356, 96, 34],
+  alert: [390, 406, 96, 34],
 }
 /** 구역 라벨 자리 */
 const ZONE_AT: [number, number][] = [
@@ -124,12 +124,19 @@ const edgeById = (id: string) => EDGES.find((x) => x.e.id === id)!
 /** 선 라벨(Zero-ETL) 자리: 자기 선 위, 0.13 지점(첫째 줄과 kafka 꼬리표 사이 빈 통로) */
 const labelAt = ({ e, x1, y1, x2, y2 }: (typeof EDGES)[number]) => ({ x: x1 + (x2 - x1) * 0.13, y: y1 + (y2 - y1) * 0.13, w: e.label ? tw(e.label, 11.5) + 10 : 0 })
 
-/** 챕터 꼬리표: 노드 오른쪽 위에 붙는 탭 */
+/** 레이크하우스 포커스 링: 노드와 띄운 거리, 굵기 */
+const RING = { gap: 5, w: 3 }
+/** 꼬리표 자리. 기본은 노드 테두리 바깥 오른쪽 위(tr). 그 자리에 화살표·Zero-ETL 라벨·툴팁이 지나가는 노드만 왼쪽 위(tl)나 아래(bl·br)로 */
+const TAG_AT: Record<string, 'tl' | 'bl' | 'br'> = { kafka: 'tl', lakehouse: 'tl', bi: 'bl', reverse: 'bl', alert: 'br' }
+
+/** 챕터 꼬리표: 노드 모서리 바깥에 붙는 탭(테두리·포커스 링을 가리지 않게) */
 function ChapterTag({ n }: { n: BNode }) {
   const label = tocOf(n.chapter).label
   const w = label.length * 7.5 + 10
-  const x = n.x + n.w / 2 - w + 6
-  const y = n.y - n.h / 2 - 12
+  const at = TAG_AT[n.id] ?? 'tr'
+  const x = at[1] === 'l' ? n.x - n.w / 2 : n.x + n.w / 2 - w
+  const ring = n.id === 'lakehouse' ? RING.gap + RING.w / 2 : 0
+  const y = at[0] === 'b' ? n.y + n.h / 2 + 2 : n.y - n.h / 2 - 18 - ring
   return (
     <g data-el="ctag" data-ord={CHAPTER_IDS.indexOf(n.chapter)}>
       <rect x={x} y={y} width={w} height={16} rx={3} style={{ fill: 'var(--bg)', stroke: 'var(--line)' }} strokeWidth={1} />
@@ -331,21 +338,22 @@ export function ZoomFig() {
       captions={[
         ['cap-2', F.zoomCaption],
         ['cap-3', F.barsCaption],
-        ['cap-4', F.mapGuide],
+        ['cap-4', F.mapBelow],
       ]}
     >
       <BlueprintWithCard
         tags
         under={
           <g data-el="ring">
-            <rect x={LH.x - LH.w / 2 - 6} y={LH.y - LH.h / 2 - 6} width={LH.w + 12} height={LH.h + 12} rx={8} style={{ fill: 'none', stroke: 'var(--accent)' }} strokeWidth={3} />
+            <rect x={LH.x - LH.w / 2 - RING.gap} y={LH.y - LH.h / 2 - RING.gap} width={LH.w + RING.gap * 2} height={LH.h + RING.gap * 2} rx={8} style={{ fill: 'none', stroke: 'var(--accent)' }} strokeWidth={RING.w} />
           </g>
         }
       />
       <Bars />
+      {/* 툴팁은 링 아래로 조금 띄워, 레이크하우스에 닿는 화살촉(카탈로그·비용 모니터)이 보이게 둔다 */}
       <g data-el="tip">
-        <rect x={LH.x - tipW / 2} y={LH.y + LH.h / 2 + 10} width={tipW} height={26} rx={6} style={{ fill: 'var(--surface)', stroke: 'var(--accent)' }} strokeWidth={1.5} />
-        <Txt x={LH.x} y={LH.y + LH.h / 2 + 28} size={13} weight={700} anchor="middle">
+        <rect x={LH.x - tipW / 2} y={LH.y + LH.h / 2 + 14} width={tipW} height={22} rx={6} style={{ fill: 'var(--surface)', stroke: 'var(--accent)' }} strokeWidth={1.5} />
+        <Txt x={LH.x} y={LH.y + LH.h / 2 + 29.5} size={13} weight={700} anchor="middle">
           {TIP}
         </Txt>
       </g>
@@ -476,7 +484,7 @@ const mb = edgeById('model>bi')
 const kf = edgeById('kafka>fraud')
 const ze = edgeById('oltp>lakehouse')
 const zeL = labelAt(ze)
-const B = { bi: box('bi'), rev: box('reverse'), contract: box('contract'), app: box('app'), alert: box('alert'), orch: box('orch'), cost: box('cost') }
+const B = { bi: box('bi'), rev: box('reverse'), contract: box('contract'), model: box('model'), app: box('app'), alert: box('alert'), orch: box('orch'), cost: box('cost') }
 // step 2: 쓰는 사람 꼬리표(BI는 아래, 소라·리아는 노드 위 통로)
 const S2_TAGS: TagDef[] = [
   { el: 'utag', text: F.users.bi, x: B.bi.l - 1, y: B.rev.b + 18, anchor: 'start' },
@@ -505,8 +513,9 @@ const LINKS: LinkDef[] = [
   { el: 'link2', i: 0, side: 'r', via: [[RIGHT, tMl.t]] },
   { el: 'link2', i: 0, side: 'r', via: [[RIGHT, H3], [tRev.cx, H3], [tRev.cx, tRev.t]] },
   { el: 'link2', i: 0, side: 'r', via: [[RIGHT, H3], [150, H3], [150, B.bi.t]] },
-  // '믿을 수 있는' → 데이터 계약·모니터링·알림
+  // '믿을 수 있는' → 데이터 계약·모델링·지표(한곳의 지표 정의)·모니터링·알림
   { el: 'link2', i: 1, side: 'l', via: [[LEFT, B.contract.cy], [B.contract.l, B.contract.cy]] },
+  { el: 'link2', i: 1, side: 'l', via: [[LEFT, B.model.cy], [B.model.l, B.model.cy]] },
   { el: 'link2', i: 1, side: 'l', via: [[LEFT, B.alert.cy], [B.alert.l, B.alert.cy]] },
   // '제때' → 몇 초·15분마다·오케스트레이터
   { el: 'link3', i: 2, side: 'l', via: [[LEFT, H0], [(B.contract.r + B.app.l) / 2, H0], [(B.contract.r + B.app.l) / 2, tSec.t]] },
@@ -668,7 +677,7 @@ export function SentenceFig() {
   )
 }
 
-const S2_LIT = ['bi', 'reverse', 'ml', 'contract', 'alert']
+const S2_LIT = ['bi', 'reverse', 'ml', 'contract', 'model', 'alert']
 const S3_LIT = ['orch', 'cost']
 const S3_EDGES = ['model>bi', 'kafka>fraud', 'oltp>lakehouse']
 
@@ -973,7 +982,8 @@ export function DexFig() {
         const [x, y] = gridPos(i)
         const [sx, sy] = stripPos(card.letter)
         const owned = cards.has(card.letter)
-        const lines = termLines(card.term)
+        // 못 모은 칸의 'Prologue에서 얻어요'처럼 긴 문구도 칸을 넘지 않게 두 줄로
+        const lines = termLines(owned ? card.term : F.getAt(tocOf(card.chapter).label))
         return (
           <g key={card.letter} data-el="tile" data-gx={x} data-gy={y} data-sx={sx} data-sy={sy}>
             <rect
@@ -989,17 +999,11 @@ export function DexFig() {
               {card.letter}
             </Txt>
             <g data-el="term">
-              {owned ? (
-                lines.map((l, k) => (
-                  <Txt key={k} x={x + 10} y={y + (lines.length > 1 ? 41 : 47) + k * 12} size={lines.length > 1 ? 11.5 : 12.5} weight={650}>
-                    {l}
-                  </Txt>
-                ))
-              ) : (
-                <Txt x={x + 10} y={y + 47} size={11.5} weight={600} muted>
-                  {F.getAt(tocOf(card.chapter).label)}
+              {lines.map((l, k) => (
+                <Txt key={k} x={x + 10} y={y + (lines.length > 1 ? 41 : 47) + k * 12} size={owned && lines.length === 1 ? 12.5 : 11.5} weight={owned ? 650 : 600} muted={!owned}>
+                  {l}
                 </Txt>
-              )}
+              ))}
             </g>
           </g>
         )

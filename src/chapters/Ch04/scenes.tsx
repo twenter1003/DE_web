@@ -1323,7 +1323,7 @@ const STAR_ARROWS: [number, number, number, number][] = [
 ]
 const RES2 = { x: 322, y: 20, w: 108, h: 84 }
 // 팩트 → 결과 입자: 제목·측정값 라벨 오른쪽으로 올라가 결과 상자 자리에 닿는다(상자는 입자가 사라진 뒤 나타남)
-const SP2_START = [FT.x + FT_W + 10, FT.y + RH * 2.5]
+const SP2_START = [FT.x + FT_W + 16, FT.y + RH * 2.5]
 const SP2_END = [RES2.x + RES2.w / 2, RES2.y + RES2.h / 2]
 
 function DimTable({ x, y, cols, title, labels, el, seed }: { x: number; y: number; cols: number[]; title: string; labels: string[]; el: string; seed: string }) {
@@ -1395,7 +1395,7 @@ export function StarFig() {
         <Txt x={MINI.x} y={MINI.y - 6} size={12.5} weight={700} muted>
           {F.before}
         </Txt>
-        <g transform={`translate(${MINI.x} ${MINI.y}) scale(${MINI.s})`} style={{ opacity: 0.6 }}>
+        <g transform={`translate(${MINI.x} ${MINI.y}) scale(${MINI.s})`} style={{ opacity: 0.75 }}>
           {PIECES.map((_, k) => (
             <WidePiece key={k} k={k} x={PIECE_X[k] - WIDE_X} y={0} seed={`st-mp${k}`} bars />
           ))}

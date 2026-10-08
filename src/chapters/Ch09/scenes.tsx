@@ -823,26 +823,27 @@ export function SecurityFig() {
         <Txt x={PS.rx} y={PS.top - 12} size={14} weight={800}>
           {F.soraTable}
         </Txt>
+        {/* 원본은 틀만 흐리게, 글자는 읽혀야 하니 불투명한 muted 색으로 물러나 보이게 */}
         <g style={{ opacity: 0.55 }}>
           <rect x={PS.lx} y={PS.top} width={PS.lw} height={tH} style={{ fill: 'var(--surface)' }} />
           <RRect x={PS.lx} y={PS.top} w={PS.lw} h={tH} rough={0.3} seed="s-ps-l" />
           <RLine x1={PS.lx} y1={PS.top + PS.headH} x2={PS.lx + PS.lw} y2={PS.top + PS.headH} rough={0.2} seed="s-ps-lh" />
-          {F.originalHead.map((l, k) => (
-            <Txt key={k} x={PS.lx + 8} y={PS.top + 17 + k * 16} size={11.5} weight={800}>
-              {l}
-            </Txt>
-          ))}
-          {CUSTOMERS.map((c, i) => (
-            <g key={c.id}>
-              <Txt x={PS.lx + 8} y={PS.top + PS.headH + i * PS.rowH + 15} size={12.5} weight={650}>
-                {`${c.id} ${c.name}`}
-              </Txt>
-              <Txt x={PS.lx + 8} y={PS.top + PS.headH + i * PS.rowH + 30} size={12} style={{ fontVariantNumeric: 'tabular-nums' }}>
-                {c.phone}
-              </Txt>
-            </g>
-          ))}
         </g>
+        {F.originalHead.map((l, k) => (
+          <Txt key={k} x={PS.lx + 8} y={PS.top + 17 + k * 16} size={11.5} weight={800} muted>
+            {l}
+          </Txt>
+        ))}
+        {CUSTOMERS.map((c, i) => (
+          <g key={c.id}>
+            <Txt x={PS.lx + 8} y={PS.top + PS.headH + i * PS.rowH + 15} size={12.5} weight={650} muted>
+              {`${c.id} ${c.name}`}
+            </Txt>
+            <Txt x={PS.lx + 8} y={PS.top + PS.headH + i * PS.rowH + 30} size={12} muted style={{ fontVariantNumeric: 'tabular-nums' }}>
+              {c.phone}
+            </Txt>
+          </g>
+        ))}
         <RArrow x1={PS.lx + PS.lw + 6} y1={PS.top + tH / 2} x2={PS.rx - 8} y2={PS.top + tH / 2} seed="s-ps-a" rough={0.3} />
         <Txt x={(PS.lx + PS.lw + PS.rx) / 2} y={PS.top + tH / 2 - 10} size={13} weight={800} anchor="middle">
           {F.pseudo}

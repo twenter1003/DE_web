@@ -136,7 +136,7 @@ export function TradeoffScale() {
 
         {/* 모든 단계 한눈에 보기 */}
         <details className="rounded-xl border-[1.5px] border-edge bg-bg p-4">
-          <summary className="cursor-pointer font-bold">{I.tableTitle}</summary>
+          <summary className="cursor-pointer py-2 font-bold">{I.tableTitle}</summary>
           <table className="mt-4 hidden w-full border-collapse text-left text-sm md:table">
             <thead>
               <tr className="border-b-[1.5px] border-edge">

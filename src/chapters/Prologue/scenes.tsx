@@ -647,9 +647,11 @@ export function SolutionFig() {
             {F.lab}
           </Txt>
           <RPath d="M 392 224 L 400 224 L 400 236 L 410 252 L 382 252 L 392 236 Z" seed="flask" rough={0.4} />
-          <Txt x={278} y={264} size={11.5}>
-            {F.labAsk}
-          </Txt>
+          {F.labAsk.map((line, i) => (
+            <Txt key={line} x={278} y={264 + i * 16} size={11.5}>
+              {line}
+            </Txt>
+          ))}
           <RPath d="M 282 350 L 302 336 L 322 342 L 342 322" seed="line" rough={0.3} stroke="var(--accent)" strokeWidth={2.5} />
           <path data-el="forecast" d="M 342 322 L 362 314 L 382 304 L 404 296" style={{ fill: 'none', stroke: 'var(--accent)' }} strokeWidth={2.5} strokeDasharray="5 5" />
           <line x1={278} y1={358} x2={416} y2={358} style={{ stroke: 'var(--line)' }} strokeWidth={1.5} />
@@ -723,7 +725,8 @@ export function SolutionFig() {
           <Txt x={22} y={294} size={13} weight={700} muted>
             {F.mapThumb}
           </Txt>
-          <g transform="translate(0 82)">
+          {/* 하위 라벨(.t-muted)은 폰에서 6px대로 작아지고 바로 위 손그림 노드에 같은 글이 있어 숨긴다 */}
+          <g transform="translate(0 82)" className="[&_.t-muted]:hidden">
             <PipelineMap t={T.prologue} vertical={false} />
           </g>
         </g>

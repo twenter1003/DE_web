@@ -206,7 +206,7 @@ export function ShopPlayground() {
           <Box title={I.boxes.tx} count={s.txCount} rows={s.tx} newest={s.newest.tx} icon="receipt" boxRef={txBox} />
         </div>
         <div className="mt-4 flex flex-wrap items-start justify-between gap-3">
-          <div className="min-w-0 flex-1">
+          <div className="min-w-0 flex-1 basis-full sm:basis-0">
             <p className="font-semibold">{I.summary(s.acts, s.evCount, s.txCount)}</p>
             {s.note && <p className="mt-1 text-muted">{s.note}</p>}
           </div>

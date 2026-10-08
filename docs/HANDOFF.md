@@ -7,7 +7,10 @@
 - **Phase 3 일부 완료**: 감사 9개 끝 → 결과 150건이 `docs/phase3-findings.json`에 저장됨(high 8 / medium 56 / low 86).
   - 공유 코드 38건 처리(31건 완료, 3건 일부, 4건 건너뜀 — `sharedFixReport` 참고). Ch5 수정 완료(`chapterFixReports.ch5`).
   - **남은 일 = 챕터별 수정 + 최종 검증**: Prologue, Ch1~4, Ch6~10, Epilogue의 findings(`audits.*.findings`에서 `chapter`가 그 챕터인 것). 일부는 1fa35dc에 이미 반영됐을 수 있으니 고치기 전에 현재 파일 확인.
-- 다음 세션에서 할 순서:
+- **2026-10-08 세션(울트라코드, Opus)**: 수정 단계만 도는 워크플로 `wf_1815db3c-e6d` 실행 — 챕터마다 수정 → 독립 검토(콘텐츠 정확성 + UI 회귀, 읽기 전용) → 재수정(최대 2회) → 최종 검증(build·Lighthouse / SPEC 10장·콘솔 / 375·360·모션 줄이기·키보드) → 실패 시 최종 수정·재검증. 커밋은 메인 세션이 함. 스크립트는 세션 폴더 `workflows/scripts/phase3-fix-review-verify-*.js`(세션이 바뀌면 resume 불가 → `git diff`로 반영 상태 확인 후 남은 챕터만 다시). 챕터별 findings 추출 도우미: `node -e` 로 `audits.*.findings`를 `chapter`로 거르면 됨(id = `<audit>#<index>`).
+- **사용자 추가 요청: BGM**(같은 세션) — Web Audio 합성(파일 없음) `src/lib/bgm.ts`(첫 클릭 때 지연 로드), 상태 `src/state/bgm.ts`, HUD `BgmToggle`(기본 꺼짐, aria-pressed, 설정 탭에도), 문구 `UI.bgm`. 스테이지마다 악기 추가(0 패드·1 피아노·3 베이스·5 킥/햇·7 블루프린트·8 멜로디·11 에필로그). 단계별 RMS -28.5→-22.9 dBFS, 피크 ≤ -9.9. 독립 검토 워크플로 `wf_1b9526e6-040`(엔진/UX/음악) 결과 반영 필요. 히어로 제목 800~1000px 단어 끊김도 고침(`md:text-[clamp(3rem,6.2vw,5.25rem)]`).
+- **GitHub**: 공개 저장소 https://github.com/twenter1003/DE_web (origin, 사용자 승인). `main` push → `.github/workflows/pages.yml`이 https://twenter1003.github.io/DE_web/ 에 배포. Phase 3·BGM 커밋 후 다시 push할 것(사용자 승인됨).
+- 다음 세션에서 할 순서(위 워크플로가 끝나지 않았을 때):
   1. 개발 서버 `npx vite --port 5288 --strictPort` 띄우기(5173은 사용자 다른 앱).
   2. 챕터마다 에이전트 하나씩(병렬, 자기 챕터 파일만): `docs/phase3-findings.json`에서 그 챕터 findings를 읽어 수정 → typecheck·스크린샷(데스크톱/--mobile/--reduced)으로 확인. (`docs/phase3-workflow.js`를 그대로 돌리면 감사부터 다시 돈다 — 세션이 바뀌면 resume 불가. 수정 단계만 돌리는 스크립트로 바꿔 쓸 것.)
   3. 최종 검증: `npm run build`, SPEC 10장 완료 기준(퀴즈 전부 → 26/26, Lv5, 맵 성장·Ch10 단순화·에필로그 줌아웃, 모션 줄이기, 모바일), 전체 스크롤 콘솔 에러 0, Lighthouse(모바일·데스크톱), 커밋.
