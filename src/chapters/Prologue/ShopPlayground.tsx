@@ -210,7 +210,7 @@ export function ShopPlayground() {
             <p className="font-semibold">{I.summary(s.acts, s.evCount, s.txCount)}</p>
             {s.note && <p className="mt-1 text-muted">{s.note}</p>}
           </div>
-          <button type="button" className="btn btn-sm" onClick={() => setS(INIT)}>
+          <button type="button" className="btn btn-sm" onClick={() => setS({ ...INIT, live: I.live.reset })}>
             {I.reset}
           </button>
         </div>

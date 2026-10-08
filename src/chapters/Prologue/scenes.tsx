@@ -1,6 +1,8 @@
 import { prologue } from '../../content/chapters/prologue'
 import { Badge, Node, SvgTable, type Col } from '../../components/diagram'
 import { Fig, Txt, countTo, scatter } from '../../components/fig'
+import { PipelineMap } from '../../components/PipelineMap'
+import { T } from '../../content/map'
 import { JuniFace } from '../../components/people'
 import { REllipse, RLine, RPath, RRect, RArrow } from '../../components/sketch'
 import { at, type SceneBuild } from '../../components/StepScene'
@@ -598,6 +600,7 @@ const PIPE_UP = 'M 220 200 L 240 200 L 240 112 L 262 112'
 const PIPE_DOWN = 'M 220 200 L 240 200 L 240 300 L 262 300'
 
 export function SolutionFig() {
+  const { reduced } = useEnv()
   return (
     <Fig>
       <g data-el="city">
@@ -705,10 +708,26 @@ export function SolutionFig() {
             {F.toSchema}
           </Txt>
         </g>
-        <Txt x={420} y={34} size={12} muted anchor="end" el="thumb-l">
-          {F.mapThumb}
-        </Txt>
+        {!reduced && (
+          <Txt x={420} y={34} size={12} muted anchor="end" el="thumb-l">
+            {F.mapThumb}
+          </Txt>
+        )}
       </g>
+
+      {/* 모션 줄이기 step 4: 종이가 맵 자리로 날아가는 대신 손그림 아래에 HUD 맵(노드 3개)을 함께 둔다.
+          안쪽 <svg>는 바깥 440×480을 채우고 맵을 가운데 맞춰 그린다(가로가 긴 맵이라 폭이 꽉 차고 노드 줄 중심은 y=240).
+          그래서 아래로 82만큼 옮기면 노드 줄 중심이 y≈322에 온다 */}
+      {reduced && (
+        <g data-el="still-map">
+          <Txt x={22} y={294} size={13} weight={700} muted>
+            {F.mapThumb}
+          </Txt>
+          <g transform="translate(0 82)">
+            <PipelineMap t={T.prologue} vertical={false} />
+          </g>
+        </g>
+      )}
     </Fig>
   )
 }
@@ -717,7 +736,10 @@ export const buildSolution: SceneBuild = (q, tl) => {
   const mainPipe = q('[data-el="pipe"] path')
   const branchPaths = q('[data-el="branches"] path')
   tl.set([q('[data-el="role-de"]'), q('[data-el="drip"]')], { opacity: 0 }, 0)
+  // step 1의 부엌·실험실은 배경 틀만 흐리게 보인다. 읽히지 않는 흐린 글자를 남기지 않도록 글자는 step 2에서 함께 나타난다
+  const roomText = q('[data-el="kitchen"] text, [data-el="lab"] text')
   tl.set([q('[data-el="kitchen"]'), q('[data-el="lab"]')], { opacity: 0.25 }, 0)
+  tl.set(roomText, { opacity: 0 }, 0)
   tl.set(mainPipe, { drawSVG: '0%' }, 0)
   tl.set(branchPaths, { drawSVG: '0%' }, 0)
   tl.set(q('[data-el="bar"]'), { scaleY: 0, transformOrigin: '50% 100%' }, 0)
@@ -732,7 +754,7 @@ export const buildSolution: SceneBuild = (q, tl) => {
 
   // step 2: 같은 물, 다른 쓰임
   tl.to(branchPaths, { drawSVG: '100%', duration: 0.25 }, at(1))
-  tl.to([q('[data-el="kitchen"]'), q('[data-el="lab"]')], { opacity: 1, duration: 0.15 }, at(1) + 0.2)
+  tl.to([q('[data-el="kitchen"]'), q('[data-el="lab"]'), roomText], { opacity: 1, duration: 0.15 }, at(1) + 0.2)
   tl.to(q('[data-el="bar"]'), { scaleY: 1, duration: 0.25, stagger: 0.05 }, at(1) + 0.35)
   tl.fromTo(q('[data-el="forecast"]'), { opacity: 1, drawSVG: '0%' }, { drawSVG: '100%', duration: 0.3 }, at(1) + 0.45)
 
@@ -749,10 +771,21 @@ export const buildSolution: SceneBuild = (q, tl) => {
   })
   tl.to(q('[data-el="order"]'), { opacity: 1, duration: 0.05 }, at(2) + 0.45)
   tl.fromTo(q('[data-el="order"]'), { x: 0 }, { x: 200, duration: 0.3, stagger: 0.04, ease: 'none' }, at(2) + 0.45)
-  tl.fromTo(q('[data-el="gone"]'), { opacity: 1 }, { opacity: 0.45, duration: 0.15 }, at(2) + 0.6)
+  // 흐려지는 건 점선 입자뿐, '남지 않음' 라벨은 또렷하게 남는다
+  tl.to(q('[data-el="gone"]'), { opacity: 1, duration: 0.05 }, at(2) + 0.6)
+  tl.to(q('[data-el="gone"] circle'), { opacity: 0.45, duration: 0.15 }, at(2) + 0.62)
   tl.to(q('[data-el="sticky"]'), { opacity: 1, duration: 0.1 }, at(2) + 0.58)
 
   // step 4: 이 그림이 앞으로 자랄 맵이 된다
+  const still = q('[data-el="still-map"]')
+  if (still.length) {
+    // 모션 줄이기: 손그림은 읽히는 크기(0.8배)로 위 가운데, 그 아래 HUD 맵 3노드, 맨 아래 주니·석 리드·메모
+    tl.set(still, { opacity: 0 }, 0)
+    tl.to(q('[data-el="paper"]'), { scale: 0.8, x: 42, y: -54, transformOrigin: '0% 0%', duration: 0.3 }, at(3))
+    tl.set(q('[data-el="meet"]'), { x: 12, y: 56 }, at(3))
+    tl.to([still, q('[data-el="meet"]')], { opacity: 1, duration: 0.15 }, at(3) + 0.3)
+    return
+  }
   tl.to(q('[data-el="paper"]'), { scale: 0.42, x: 250, y: -16, transformOrigin: '0% 0%', duration: 0.35, ease: 'power2.inOut' }, at(3))
   tl.to(q('[data-el="meet"]'), { opacity: 1, duration: 0.15 }, at(3) + 0.3)
 }

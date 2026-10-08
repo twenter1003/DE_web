@@ -37,7 +37,7 @@ const paper = (bg: string, ink: string, muted: string, surface: string): Palette
   gridStrong: 'rgba(52, 92, 82, 0.15)',
   accent: '#C24705',
   fail: '#B42318',
-  ok: '#1C7435',
+  ok: '#19692F',
   wait: '#5F6B78',
 })
 
@@ -52,7 +52,7 @@ const blueprint = (bg: string, surface: string): Palette => ({
   grid: 'rgba(221, 233, 248, 0.07)',
   gridStrong: 'rgba(221, 233, 248, 0.14)',
   accent: '#FF8A3D',
-  fail: '#FF8F85',
+  fail: '#FFB4AC',
   ok: '#7EE0A8',
   wait: '#A9BCD4',
 })

@@ -459,6 +459,9 @@ export function ProblemFig() {
   )
 }
 
+/** 흐린 글자의 하한. 회색 칸 위에서도 본문 대비 4.5:1을 넘긴다 */
+const DIM_TXT = 0.72
+
 export const buildProblem: SceneBuild = (q, tl) => {
   const o = pick(q)
   init(tl, o('s2'), { opacity: 0 })
@@ -489,7 +492,7 @@ export const buildProblem: SceneBuild = (q, tl) => {
   tl.to(o('s2'), { opacity: 1, duration: 0.14 }, s2 + 0.08)
   tl.to(o('hl-h'), { opacity: 0.26, duration: 0.08 }, s2 + 0.18)
   tl.to(o('gray-disc'), { opacity: 0.16, duration: 0.08 }, s2 + 0.18)
-  tl.to(discTxt, { opacity: 0.45, duration: 0.08 }, s2 + 0.18)
+  tl.to(discTxt, { opacity: DIM_TXT, duration: 0.08 }, s2 + 0.18)
   tl.to(o('sum-s'), { opacity: 1, duration: 0.1 }, s2 + 0.2)
   const soraSegs: [number, number, number][] = []
   let acc = 0
@@ -515,7 +518,7 @@ export const buildProblem: SceneBuild = (q, tl) => {
   })
   tl.to(o('excl'), { opacity: 1, duration: 0.06 }, s3 + 0.3)
   tl.to(o('gray-ship'), { opacity: 0.16, duration: 0.08 }, s3 + 0.34)
-  tl.to(shipTxt, { opacity: 0.45, duration: 0.08 }, s3 + 0.34)
+  tl.to(shipTxt, { opacity: DIM_TXT, duration: 0.08 }, s3 + 0.34)
   tl.to(o('sum-m'), { opacity: 1, duration: 0.1 }, s3 + 0.4)
   o('dfly').forEach((d) => {
     tl.to(d, { opacity: 1, duration: 0.02 }, s3 + 0.4)
@@ -1112,7 +1115,7 @@ export const buildWarehouse: SceneBuild = (q, tl) => {
       const tc = t + (SWEEP * (rowCellX(k) - ROWX0 + CWID[k] * 0.6)) / ROW_W
       const dim = cell.querySelector('[data-el="cell-dim"]')
       const tint = cell.querySelector('[data-el="cell-tint"]')
-      if (dim) tl.to(dim, { opacity: 0.3, duration: 0.02 }, tc)
+      if (dim) tl.to(dim, { opacity: DIM_TXT, duration: 0.02 }, tc)
       if (tint) tl.to(tint, { opacity: 0.13, duration: 0.02 }, tc)
     })
     tl.to(marks[r], { opacity: 1, duration: 0.03 }, t + SWEEP)
@@ -1135,7 +1138,7 @@ export const buildWarehouse: SceneBuild = (q, tl) => {
   cells.forEach((c) => tl.to(c, { x: 0, y: 0, duration: 0.18, ease: 'power2.inOut' }, s4 + 0.06 + CK.indexOf((c as SVGElement).dataset.k as CKey) * 0.025))
   tl.to(o('chead'), { x: 0, y: 0, duration: 0.18, ease: 'power2.inOut' }, s4 + 0.1)
   tl.to(o('col-gray'), { opacity: 0.14, duration: 0.06 }, s4 + 0.34)
-  tl.to(o('cell-dim'), { opacity: 0.4, duration: 0.06 }, s4 + 0.34)
+  tl.to(o('cell-dim'), { opacity: DIM_TXT, duration: 0.06 }, s4 + 0.34)
   const beam = o('col-beam')
   init(tl, beam, { scaleY: 0, transformOrigin: '50% 0%' })
   tl.to(beam, { opacity: 0.3, duration: 0.02 }, s4 + 0.36)
@@ -1173,6 +1176,7 @@ function MiniTable({
   rowH = 26,
   size = 13,
   title,
+  bars,
 }: {
   x: number
   y: number
@@ -1183,6 +1187,8 @@ function MiniTable({
   rowH?: number
   size?: number
   title?: string
+  /** 글자 대신 막대(읽을 수 없게 작은 축소판용) */
+  bars?: boolean
 }) {
   const W = cols.reduce((a, c) => a + c.w, 0)
   const H = rowH * (rows.length + 1)
@@ -1200,17 +1206,25 @@ function MiniTable({
       {cols.slice(1).map((c, j) => (
         <RLine key={c.key} x1={cx(j + 1)} y1={y} x2={cx(j + 1)} y2={y + H} seed={`${seed}-v${j}`} rough={0.25} strokeWidth={0.9} />
       ))}
-      {cols.map((c, j) => (
-        <Txt key={c.key} x={cx(j) + 7} y={y + rowH * 0.67} size={size * 0.92} weight={750} el={`${el}-h-${c.key}`}>
-          {c.label}
-        </Txt>
-      ))}
-      {rows.map((r, i) =>
-        cols.map((c, j) => (
-          <Txt key={`${i}${c.key}`} x={cx(j) + 7} y={y + rowH * (i + 1) + rowH * 0.67} size={size} el={`${el}-c${i}-${c.key}`}>
-            {r[j]}
+      {cols.map((c, j) =>
+        bars ? (
+          <rect key={c.key} x={cx(j) + 7} y={y + rowH * 0.3} width={tw(c.label, size * 0.92)} height={rowH * 0.4} rx={3} style={{ fill: 'var(--ink)' }} />
+        ) : (
+          <Txt key={c.key} x={cx(j) + 7} y={y + rowH * 0.67} size={size * 0.92} weight={750} el={`${el}-h-${c.key}`}>
+            {c.label}
           </Txt>
-        )),
+        ),
+      )}
+      {rows.map((r, i) =>
+        cols.map((c, j) =>
+          bars ? (
+            <rect key={`${i}${c.key}`} x={cx(j) + 7} y={y + rowH * (i + 1.3)} width={tw(r[j], size)} height={rowH * 0.4} rx={3} style={{ fill: 'var(--muted)' }} />
+          ) : (
+            <Txt key={`${i}${c.key}`} x={cx(j) + 7} y={y + rowH * (i + 1) + rowH * 0.67} size={size} el={`${el}-c${i}-${c.key}`}>
+              {r[j]}
+            </Txt>
+          ),
+        ),
       )}
     </g>
   )
@@ -1272,12 +1286,12 @@ const repeats = (piece: number) =>
     }),
   )
 
-function WidePiece({ k, x, y, el, seed }: { k: number; x: number; y: number; el?: string; seed: string }) {
+function WidePiece({ k, x, y, el, seed, bars }: { k: number; x: number; y: number; el?: string; seed: string; bars?: boolean }) {
   const p = PIECES[k]
   const cx = (j: number) => x + p.cols.slice(0, j).reduce((a, c) => a + c.w, 0)
   return (
     <g data-el={el}>
-      <MiniTable x={x} y={y} cols={p.cols} rows={PIECE_ROWS[k]} el={`${seed}t`} seed={seed} />
+      <MiniTable x={x} y={y} cols={p.cols} rows={PIECE_ROWS[k]} el={`${seed}t`} seed={seed} bars={bars} />
       {repeats(k).map(([i, j]) => (
         <line
           key={`${i}${j}`}
@@ -1308,6 +1322,9 @@ const STAR_ARROWS: [number, number, number, number][] = [
   [ftMid(2), 318, 330, 370],
 ]
 const RES2 = { x: 322, y: 20, w: 108, h: 84 }
+// 팩트 → 결과 입자: 제목·측정값 라벨 오른쪽으로 올라가 결과 상자 자리에 닿는다(상자는 입자가 사라진 뒤 나타남)
+const SP2_START = [FT.x + FT_W + 10, FT.y + RH * 2.5]
+const SP2_END = [RES2.x + RES2.w / 2, RES2.y + RES2.h / 2]
 
 function DimTable({ x, y, cols, title, labels, el, seed }: { x: number; y: number; cols: number[]; title: string; labels: string[]; el: string; seed: string }) {
   const W = cols.reduce((a, b) => a + b, 0)
@@ -1380,7 +1397,7 @@ export function StarFig() {
         </Txt>
         <g transform={`translate(${MINI.x} ${MINI.y}) scale(${MINI.s})`} style={{ opacity: 0.6 }}>
           {PIECES.map((_, k) => (
-            <WidePiece key={k} k={k} x={PIECE_X[k] - WIDE_X} y={0} seed={`st-mp${k}`} />
+            <WidePiece key={k} k={k} x={PIECE_X[k] - WIDE_X} y={0} seed={`st-mp${k}`} bars />
           ))}
         </g>
         <RArrow x1={220} y1={MINI.y + 70} x2={220} y2={128} seed="st-mini-a" rough={0.4} />
@@ -1526,10 +1543,10 @@ export function StarFig() {
           key={i}
           data-el="sp2"
           data-i={i}
-          data-dx={RES2.x + 20 - (FT.x + FT_W - 30)}
-          data-dy={RES2.y + RES2.h - FT.y}
-          cx={FT.x + FT_W - 30}
-          cy={FT.y}
+          data-dx={SP2_END[0] - SP2_START[0]}
+          data-dy={SP2_END[1] - SP2_START[1]}
+          cx={SP2_START[0]}
+          cy={SP2_START[1]}
           r={4.5}
           style={{ fill: 'var(--accent)' }}
         />
@@ -1642,12 +1659,12 @@ export const buildStar: SceneBuild = (q, tl) => {
     tl.to(p, { opacity: 0, duration: 0.02 }, t + 0.1)
   })
   o('sp2').forEach((p) => {
-    const t = s4 + 0.62 + num(p, 'i') * 0.025
+    const t = s4 + 0.6 + num(p, 'i') * 0.025
     tl.to(p, { opacity: 1, duration: 0.02 }, t)
     tl.to(p, { x: num(p, 'dx'), y: num(p, 'dy'), duration: 0.08, ease: 'power1.in' }, t)
     tl.to(p, { opacity: 0, duration: 0.02 }, t + 0.08)
   })
-  tl.to(o('res2'), { opacity: 1, duration: 0.08 }, s4 + 0.7)
+  tl.to(o('res2'), { opacity: 1, duration: 0.08 }, s4 + 0.78)
 }
 
 // ─────────────────────────────────────────────────────────────

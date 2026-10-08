@@ -299,7 +299,7 @@ export function AttemptFig() {
         <Txt x={ST.x + ST.w / 2} y={stackY(600) + 42} size={15} weight={750} anchor="middle">
           {F.rowsN(600)}
         </Txt>
-        <Txt x={ST.x + ST.w / 2} y={stackY(600) + 62} size={12.5} weight={600} anchor="middle" muted>
+        <Txt x={ST.x + ST.w / 2} y={stackY(600) + 62} size={12.5} weight={600} anchor="middle">
           {F.lastNight}
         </Txt>
         {/* 방금 실행 1,200행(강조색) */}
@@ -1083,7 +1083,8 @@ function MapOverlay({ at: pos }: { at: At }) {
       {F.run6.map((r, i) => (
         <g key={i} data-el="run">
           <Badge x={runX} y={runY(i)} status={r.st} r={10} />
-          {r.st === 'retry' && <Badge x={runX + 32 + tw(r.job, 14)} y={runY(i)} status="ok" r={10} el="run-v" />}
+          {/* 재시도 성공 ✓: 이름과 시각 사이 빈칸 가운데('추출·적재' 끝 414 · 시각 시작 442) */}
+          {r.st === 'retry' && <Badge x={ph.x + ph.w - 54} y={runY(i)} status="ok" r={9.5} el="run-v" />}
           <Txt x={runX + 18} y={runY(i) + 5} size={14} weight={650}>
             {r.job}
           </Txt>

@@ -12,14 +12,14 @@ export function App() {
     <EnvProvider>
       <ProgressProvider>
         <a
-          href="#prologue"
-          className="sr-only z-50 rounded-lg bg-ink px-4 py-2 text-bg focus:not-sr-only focus:fixed focus:left-3 focus:top-3"
+          href="#main"
+          className="sr-only z-50 rounded-lg bg-ink text-bg focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus-visible:px-4 focus-visible:py-2"
         >
           {UI.skip}
         </a>
         <Hud />
         <ChapterRail />
-        <main>
+        <main id="main" tabIndex={-1} className="outline-none">
           <Hero />
           {CHAPTERS.map(({ id, steps, Component }, i) => (
             <DeferredChapter key={id} id={id} index={i} steps={steps} Component={Component} />

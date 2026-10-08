@@ -105,7 +105,6 @@ export const UI = {
     aria: (n: number) => `파이프라인 맵, 노드 ${n}개`,
     goto: (label: string, chapter: string) => `${label}: ${chapter}로 이동`,
     proposal: '제안',
-    check: '품질 검사',
   },
 
   footer: {

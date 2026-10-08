@@ -117,7 +117,7 @@ export function WorkerSlider() {
             ))}
           </ul>
           <div className="mt-2 flex flex-wrap items-center gap-x-5 gap-y-2">
-            <div className="flex h-10 min-w-0 flex-1 basis-64 overflow-hidden rounded-md border-[1.5px] border-ink bg-bg" aria-hidden="true">
+            <div className="flex h-10 min-w-0 flex-1 basis-64 overflow-hidden rounded-md border-[1.5px] border-ink bg-bg [contain:layout_paint]" aria-hidden="true">
               {KEYS.map((k) => (
                 <div key={k} className="h-full shrink-0 transition-[width] duration-300 ease-out" style={{ width: `${(r[k] / FULL) * 100}%`, ...PATTERN[k] }} />
               ))}
@@ -176,7 +176,7 @@ export function WorkerSlider() {
                       </span>
                       <button
                         type="button"
-                        className="inline-flex items-center gap-1 underline decoration-dotted underline-offset-4 md:hidden"
+                        className="-my-1.5 inline-flex min-h-10 min-w-10 items-center gap-1 underline decoration-dotted underline-offset-4 md:hidden"
                         aria-expanded={open === k}
                         aria-controls={detail}
                         onClick={() => setOpen(open === k ? null : k)}

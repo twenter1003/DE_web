@@ -483,7 +483,19 @@ function Station({ i, label, sub, el }: { i: number; label: string; sub?: string
 
 export function AnalogyFig() {
   return (
-    <Fig caption={F.transformNote}>
+    <Fig
+      captionEl="caps"
+      caption={
+        <span className="grid">
+          <span data-el="caption" className="col-start-1 row-start-1">
+            {F.transformNote}
+          </span>
+          <span data-el="cap-date" className="col-start-1 row-start-1">
+            {F.dateNote}
+          </span>
+        </span>
+      }
+    >
       {/* 컨베이어 띠: step 1에서는 화면 가운데, step 2부터 위로 */}
       <g data-el="band">
         <RLine x1={6} y1={100} x2={434} y2={100} seed="belt-a" rough={0.5} />
@@ -695,7 +707,7 @@ export const buildAnalogy: SceneBuild = (q, tl) => {
   const rows = o('row')
   const boxes = o('row-box')
   init(tl, o('band'), { y: STEP1_DY })
-  const later = ['lbl-etl', 'ends-etl', 'hl-t', 'hl-l', 'dst-ring', 'bypass-seg', 'bypass-l', 'feed', 'hdr', 'row', 'caption', 'zoom', 'store4', 'report', 'bars4', 'clean', 'miss-tag']
+  const later = ['lbl-etl', 'ends-etl', 'hl-t', 'hl-l', 'dst-ring', 'bypass-seg', 'bypass-l', 'feed', 'hdr', 'row', 'caption', 'cap-date', 'zoom', 'store4', 'report', 'bars4', 'clean', 'miss-tag']
   init(tl, later.flatMap(o), { opacity: 0 })
 
   // step 1: 상자 하나가 세 스테이션을 지나며 반듯해진다
@@ -736,9 +748,10 @@ export const buildAnalogy: SceneBuild = (q, tl) => {
   tl.to(o('clean'), { opacity: 1, duration: 0.08 }, at(2) + 0.6)
   boxes.forEach((b) => tl.to(b, { attr: { points: (b as SVGElement).dataset.neat ?? '' }, duration: 0.14 }, at(2) + 0.58))
   tl.to(cells[2], { opacity: 0.08, duration: 0.05 }, at(2) + 0.74)
+  tl.to(o('cap-date'), { opacity: 1, duration: 0.1 }, at(2) + 0.62)
 
   // step 4: 적재 → 저장소 표, 리포트가 맞아진다
-  tl.to(o('zoom'), { opacity: 0, duration: 0.1 }, at(3))
+  tl.to([...o('zoom'), ...o('cap-date')], { opacity: 0, duration: 0.1 }, at(3))
   tl.to(o('hl-t'), { opacity: 0, duration: 0.1 }, at(3))
   tl.to(o('hl-l'), { opacity: 1, duration: 0.1 }, at(3) + 0.05)
   tl.to(o('store4'), { opacity: 1, duration: 0.12 }, at(3) + 0.1)

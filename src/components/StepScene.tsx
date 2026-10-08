@@ -141,13 +141,16 @@ function ScrubScene({ id, kind, scene, diagram, build, onStep, tall }: Props) {
   )
 
   return (
-    <section ref={root} id={id} aria-labelledby={`${id}-title`} className="relative flex flex-col md:grid md:grid-cols-[minmax(0,30rem)_minmax(0,1fr)] md:gap-x-12 lg:gap-x-16">
+    <section ref={root} id={id} className="relative flex flex-col md:grid md:grid-cols-[minmax(0,30rem)_minmax(0,1fr)] md:gap-x-12 lg:gap-x-16">
+      {/* 모바일: 위쪽 띠에 고정(HUD 아래), 옆 여백을 줄여 그림을 조금이라도 크게.
+          그림 설명은 step마다 화면 밖 글자(StepBody)로 읽히므로 그림 자체는 낭독에서 뺀다 */}
       <div
-        className={`sticky top-0 z-10 -mx-4 border-b border-edge bg-bg px-4 pb-3 pt-[3.75rem] md:bg-transparent md:col-start-2 md:row-start-1 md:mx-0 md:h-svh md:self-start md:border-0 md:px-0 md:py-[7svh] ${
+        aria-hidden="true"
+        className={`sticky top-0 z-10 -mx-4 border-b border-edge bg-bg px-2 pb-3 pt-[3.5rem] md:bg-transparent md:col-start-2 md:row-start-1 md:mx-0 md:h-svh md:self-start md:border-0 md:px-0 md:py-[7svh] ${
           tall ? 'h-[60svh]' : 'h-[56svh]'
         }`}
       >
-        <div ref={diag} role="img" aria-label={scene.title} className="mx-auto h-full w-full max-w-[36rem]">
+        <div ref={diag} className="mx-auto h-full w-full max-w-[36rem]">
           {diagram()}
         </div>
       </div>
@@ -205,7 +208,7 @@ function StaticScene({ id, kind, scene, diagram, build, onStep, tall }: Props) {
   }, [n])
 
   return (
-    <section id={id} aria-labelledby={`${id}-title`}>
+    <section id={id}>
       <SceneHeader id={id} kind={kind} scene={scene} />
       <ol ref={list}>
         {scene.steps.map((s, i) => (

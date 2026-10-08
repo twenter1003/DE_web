@@ -1,5 +1,5 @@
 import type { CSSProperties, ReactNode } from 'react'
-import { rng } from './diagram'
+import { fs, rng } from './diagram'
 
 // 장면 다이어그램 작성용 작은 도구들.
 // 다이어그램은 440×480 안팎의 세로형 좌표계로 그린다(데스크톱·모바일 공용).
@@ -45,7 +45,7 @@ export function Txt({ x, y, children, size = 14, weight = 500, anchor = 'start',
       data-el={el}
       textAnchor={anchor}
       className={`${mono ? '' : 't-sans'} ${muted ? 't-muted' : ''}`}
-      style={{ fontSize: size, fontWeight: weight, ...(color ? { fill: color } : null), ...style }}
+      style={{ fontSize: fs(size), fontWeight: weight, ...(color ? { fill: color } : null), ...style }}
     >
       {children}
     </text>

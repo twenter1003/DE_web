@@ -24,11 +24,13 @@ const checks = (s) => [
   [s.muted, s.surface, 4.5, '보조/카드'],
   [s.accent, s.bg, 3, '입자/배경'],
   [s.accent, s.surface, 3, '입자/카드'],
-  [s.fail, s.bg, 3, '실패/배경'],
-  [s.ok, s.bg, 3, '성공/배경'],
+  // 실패·성공 색은 '실패', '✕ 미달', '시간 초과' 같은 글자에도 쓰이므로 글자 기준(4.5)
+  [s.fail, s.bg, 4.5, '실패 글자/배경'],
+  [s.ok, s.bg, 4.5, '성공 글자/배경'],
   [s.wait, s.bg, 3, '대기/배경'],
-  [s.fail, s.surface, 3, '실패/카드'],
-  [s.ok, s.surface, 3, '성공/카드'],
+  [s.fail, s.surface, 4.5, '실패 글자/카드'],
+  [s.ok, s.surface, 4.5, '성공 글자/카드'],
+  [s.wait, s.surface, 3, '대기/카드'],
   [s.line, s.bg, 3, '선/배경'],
 ]
 

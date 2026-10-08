@@ -988,8 +988,11 @@ export function StorageFig() {
           <g key={d}>
             <line x1={34} y1={DATE_Y(k) + 9} x2={49} y2={DATE_Y(k) + 9} style={{ stroke: 'var(--line)' }} strokeWidth={1.4} />
             {k < 6 ? (
-              <g data-el="fd">
-                <Folder x={52} y={DATE_Y(k)} seed={`s-f${k}`} />
+              <g>
+                {/* 건너뛴 폴더는 아이콘만 흐리게. 라벨은 읽혀야 한다(대비 4.5:1) */}
+                <g data-el="fd">
+                  <Folder x={52} y={DATE_Y(k)} seed={`s-f${k}`} />
+                </g>
                 <Txt x={86} y={DATE_Y(k) + 14} size={14} weight={600} mono>
                   {d}
                 </Txt>

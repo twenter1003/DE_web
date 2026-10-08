@@ -15,6 +15,12 @@ const STATUS_COLOR: Record<Status, string> = {
 }
 export const STATUS_GLYPH: Record<Status, string> = { ok: '✓', fail: '✕', wait: '⏸', retry: '↻' }
 
+/**
+ * 다이어그램 글자 크기(사용자 단위). 모바일에서는 그림이 0.7~0.85배로 줄어 작은 라벨이 9~10px이 되므로,
+ * 15보다 작은 크기를 15 쪽으로 반쯤 끌어올린다(--fs-lift, index.css). 큰 글자와 데스크톱은 그대로.
+ */
+export const fs = (n: number) => `max(${n}px, calc(${n / 2}px + var(--fs-lift, 0px)))`
+
 /** 상태 배지: 원 + 기호. 색만으로 구분하지 않도록 기호가 모두 다르다 */
 export function Badge({ x, y, status, r = 11, el, visible = true }: { x: number; y: number; status: Status; r?: number; el?: string; visible?: boolean }) {
   return (
@@ -23,7 +29,7 @@ export function Badge({ x, y, status, r = 11, el, visible = true }: { x: number;
       <text
         y={r * 0.38}
         textAnchor="middle"
-        style={{ fill: STATUS_COLOR[status], fontSize: r * 1.15, fontWeight: 700, fontFamily: 'var(--font-sans)' }}
+        style={{ fill: STATUS_COLOR[status], fontSize: `min(${fs(r * 1.15)}, ${r * 1.45}px)`, fontWeight: 700, fontFamily: 'var(--font-sans)' }}
       >
         {STATUS_GLYPH[status]}
       </text>
@@ -77,7 +83,7 @@ export function Node({ x, y, w = 160, h = 54, label, sub, kind = 'process', seed
         {bands?.map((b, i) => (
           <g key={b} data-el={`band-${i}`}>
             <RPath d={`M ${x0} ${top + bh * i} A ${rx} ${ry} 0 0 0 ${x1} ${top + bh * i}`} seed={`${s}-band${i}`} rough={0.4} strokeWidth={1} />
-            <text x={x} y={top + bh * i + bh / 2 + ry * 0.6 + 4} textAnchor="middle" className="t-muted" style={{ fontSize: 12 * scale }}>
+            <text x={x} y={top + bh * i + bh / 2 + ry * 0.6 + 4} textAnchor="middle" className="t-muted" style={{ fontSize: fs(12 * scale) }}>
               {b}
             </text>
           </g>
@@ -105,13 +111,15 @@ export function Node({ x, y, w = 160, h = 54, label, sub, kind = 'process', seed
       {shape}
       <NodeLabel
         x={x}
-        y={bands ? y0 + Math.min(9, h * 0.16) * 2 + 10 : kind === 'store' ? y + Math.min(9, h * 0.16) * 0.7 : y}
+        // 원통: 윗면 테두리 아래 ~ 바닥 사이 가운데(라벨 묶음은 기준선 기준 약 +1.25×scale 아래가 중심)
+        y={bands ? y0 + Math.min(9, h * 0.16) * 2 + 10 : kind === 'store' ? y + Math.min(9, h * 0.16) - (sub ? 1.25 * scale : 0) : y}
         label={label}
         sub={bands ? undefined : sub}
         scale={scale}
         el={labelEl}
       />
-      {status && <Badge x={x1 - 2} y={y0 + 2} status={status} />}
+      {/* statuses에 같은 상태가 있으면 그쪽이 처음 배지를 맡는다(겹쳐 그리지 않게) */}
+      {status && !statuses?.includes(status) && <Badge x={x1 - 2} y={y0 + 2} status={status} />}
       {statuses?.map((st) => (
         <Badge key={st} x={x1 - 2} y={y0 + 2} status={st} el={`${el}:${st}`} visible={st === status} />
       ))}
@@ -123,11 +131,11 @@ export function NodeLabel({ x, y, label, sub, scale = 1, el }: { x: number; y: n
   const ly = sub ? y - 3 * scale : y + 5 * scale
   return (
     <g data-el={el}>
-      <text x={x} y={ly} textAnchor="middle" className="t-sans" style={{ fontSize: 15 * scale, fontWeight: 650 }}>
+      <text x={x} y={ly} textAnchor="middle" className="t-sans" style={{ fontSize: fs(15 * scale), fontWeight: 650 }}>
         {label}
       </text>
       {sub && (
-        <text x={x} y={y + 15 * scale} textAnchor="middle" className="t-muted" style={{ fontSize: 11.5 * scale }}>
+        <text x={x} y={y + 15 * scale} textAnchor="middle" className="t-muted" style={{ fontSize: fs(11.5 * scale) }}>
           {sub}
         </text>
       )}
@@ -241,7 +249,7 @@ export function SvgTable({
           x={c.align === 'end' ? colX[j] + c.w - 8 : colX[j] + 8}
           y={y + rowH * 0.66}
           textAnchor={c.align === 'end' ? 'end' : 'start'}
-          style={{ fontSize: fontSize * 0.92, fontWeight: 700 }}
+          style={{ fontSize: fs(fontSize * 0.92), fontWeight: 700 }}
         >
           {c.label}
         </text>
@@ -255,7 +263,7 @@ export function SvgTable({
               x={c.align === 'end' ? colX[j] + c.w - 8 : colX[j] + 8}
               y={y + rowH * (i + 1) + rowH * 0.66}
               textAnchor={c.align === 'end' ? 'end' : 'start'}
-              style={{ fontSize }}
+              style={{ fontSize: fs(fontSize) }}
             >
               {row[c.key]}
             </text>
@@ -294,7 +302,7 @@ export function Gauge({ x, y, r = 60, label, el = 'gauge', value = 0, seed = 'ga
         <line x1={x} y1={y} x2={x} y2={y - r + 12} stroke="currentColor" strokeWidth={3} strokeLinecap="round" />
       </g>
       <circle cx={x} cy={y} r={5} style={{ fill: 'currentColor' }} />
-      <text x={x} y={y + 24} textAnchor="middle" className="t-sans" style={{ fontSize: 13, fontWeight: 600 }}>
+      <text x={x} y={y + 24} textAnchor="middle" className="t-sans" style={{ fontSize: fs(13), fontWeight: 600 }}>
         {label}
       </text>
     </g>

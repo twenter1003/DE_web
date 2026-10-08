@@ -66,19 +66,21 @@ export function ChapterGrowth({ id, growth }: { id: ChapterId; growth: Growth })
   const deltas = STAT_KEYS.filter((k) => delta[k])
 
   return (
-    <section ref={root} aria-labelledby={`${id}-growth`} className="pb-[16svh] pt-[6svh]">
+    <section ref={root} className="pb-[16svh] pt-[6svh]">
       <div className="flex items-center justify-between gap-4">
-        <p id={`${id}-growth`} className="font-mono text-sm text-muted">
+        <h3 id={`${id}-growth`} className="font-mono text-sm text-muted">
           {UI.growth.title}
-        </p>
+        </h3>
         {!reduced && (
           <button type="button" className="btn btn-sm" onClick={() => tl.current?.restart()}>
-            <span aria-hidden="true">↻</span> {UI.growth.replay}
+            <span aria-hidden="true">↻</span> <span className="sr-only">{toc.label} {UI.growth.title} </span>
+            {UI.growth.replay}
           </button>
         )}
       </div>
 
-      <div className="mt-6 grid gap-10 md:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)] md:gap-12">
+      {/* 위: 대사·승급·카드 | 역량. 아래: 맵을 전체 폭으로(좁은 열에 넣으면 라벨을 읽을 수 없다) */}
+      <div className="mt-6 grid gap-10 md:grid-cols-2 md:gap-12">
         <div className="min-w-0">
           <div className="max-w-[34rem]">
             <Bubble line={growth.line} />
@@ -95,16 +97,18 @@ export function ChapterGrowth({ id, growth }: { id: ChapterId; growth: Growth })
             ))}
 
           <h4 className="mt-10 font-bold">{UI.growth.cards}</h4>
-          <div className="mt-3 flex gap-4 overflow-x-auto pb-2">
+          <div className="mt-3 flex flex-wrap gap-4">
             {cards.map((c) => (
               <TermCard key={c.letter} card={c} owned={done} el="gcard" />
             ))}
           </div>
+        </div>
 
-          <h4 className="mt-10 font-bold">{UI.growth.stats}</h4>
+        <div className="min-w-0">
+          <h4 className="font-bold">{UI.growth.stats}</h4>
           {done ? (
-            <div className="mt-3 grid items-center gap-4 sm:grid-cols-[minmax(0,15rem)_1fr]">
-              <Radar values={stats} prev={before} el="gradar" className="w-full max-w-[15rem]" />
+            <div className="mt-3 space-y-4">
+              <Radar values={stats} prev={before} el="gradar" className="w-full max-w-[24rem]" />
               <ul className="space-y-1 font-mono text-sm">
                 {deltas.map((k) => (
                   <li key={k}>
@@ -118,14 +122,14 @@ export function ChapterGrowth({ id, growth }: { id: ChapterId; growth: Growth })
           )}
         </div>
 
-        <figure className="min-w-0">
+        <figure className="min-w-0 md:col-span-2">
           <figcaption>
             <span className="font-bold">{UI.growth.map}</span>
             <span className="ml-3 font-mono text-sm text-muted">{UI.growth.nodes(nPrev, nNow)}</span>
             <span className="mt-1 block text-muted">{growth.mapNote}</span>
           </figcaption>
-          <div className={`mt-4 ${mobile ? 'h-[72svh]' : 'h-[58svh]'}`}>
-            <PipelineMap t={tNow} from={tPrev} tags ghosts={id === 'ch10'} label={`${UI.growth.map}: ${growth.mapNote}`} />
+          <div className={`mt-4 ${mobile ? '' : 'h-[58svh]'}`}>
+            <PipelineMap t={tNow} from={tPrev} tags fit ghosts={id === 'ch10'} label={`${UI.growth.map}: ${growth.mapNote}`} />
           </div>
         </figure>
       </div>

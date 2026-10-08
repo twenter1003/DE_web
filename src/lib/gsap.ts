@@ -11,4 +11,18 @@ ScrollTrigger.config({ ignoreMobileResize: true })
 gsap.defaults({ ease: 'power2.out' })
 setScrollTrigger(ScrollTrigger)
 
+// 퀴즈 해설·성장 블록·인터랙션 기록처럼 마운트 뒤에 내용이 늘어나면 아래쪽 트리거가 모두 어긋난다.
+// 페이지 높이가 바뀔 때마다(잠깐 모아서) 한 번에 다시 계산한다.
+if (typeof ResizeObserver !== 'undefined') {
+  let h = 0
+  let timer = 0
+  new ResizeObserver(([e]) => {
+    const nh = Math.round(e.contentRect.height)
+    if (nh === h) return
+    h = nh
+    clearTimeout(timer)
+    timer = window.setTimeout(() => ScrollTrigger.refresh(), 150)
+  }).observe(document.body)
+}
+
 export { gsap, ScrollTrigger, useGSAP }

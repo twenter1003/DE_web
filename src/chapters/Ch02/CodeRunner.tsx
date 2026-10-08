@@ -48,7 +48,8 @@ interface Geo {
   table: { x: number; y: number }
 }
 
-function geo(wide: boolean, hasStoreChips: boolean, hasOrig: boolean): Geo {
+/** onBelt: 표가 벨트 위에 있는 동안만(좁은 그림) 벨트와 저장소 사이에 표 자리를 연다. 비었을 땐 저장소를 벨트 바로 아래로 */
+function geo(wide: boolean, hasStoreChips: boolean, hasOrig: boolean, onBelt: boolean): Geo {
   if (wide) {
     return {
       w: 920,
@@ -64,7 +65,7 @@ function geo(wide: boolean, hasStoreChips: boolean, hasOrig: boolean): Geo {
       table: { x: 601, y: 140 },
     }
   }
-  const S = 404
+  const S = onBelt ? 404 : 212
   let next = S + 32
   const storeChips = hasStoreChips ? { x0: 20, x1: 340, y: next } : null
   if (hasStoreChips) next += 62
@@ -251,7 +252,7 @@ function PipelineFig({ trace, cur, wide, reduced }: { trace: Trace; cur: number;
   const inStore = (s: Step) => s.kind !== 'extract' && s.kind !== 'load' && (s.kind === 'transform' ? s.inside : s.snap.where === 'store')
   const outside = steps.filter((s) => !inStore(s))
   const inside = steps.filter(inStore)
-  const g = geo(wide, inside.length > 0, steps.some((s) => s.snap.orig))
+  const g = geo(wide, inside.length > 0, steps.some((s) => s.snap.orig), snap.where === 'belt')
   const chipAt = (s: Step) => {
     const list = inStore(s) ? inside : outside
     const z = inStore(s) ? g.storeChips! : g.belt
@@ -318,7 +319,7 @@ function PipelineFig({ trace, cur, wide, reduced }: { trace: Trace; cur: number;
         <>
           <RLine x1={g.belt.x0} y1={g.belt.lineY} x2={g.belt.x1} y2={g.belt.lineY} seed="run-belt" rough={0.4} />
           <RLine x1={180} y1={g.src.y + g.src.h + 2} x2={180} y2={g.belt.chipY - 4} seed="run-drop" rough={0.3} strokeWidth={1.2} />
-          <RArrow x1={180} y1={g.work.y + TABLE_H} x2={180} y2={g.store.y - 2} seed="run-into" rough={0.3} head={7} />
+          <RArrow x1={180} y1={snap.where === 'belt' ? g.work.y + TABLE_H : g.belt.lineY + 22} x2={180} y2={g.store.y - 2} seed="run-into" rough={0.3} head={7} />
         </>
       )}
 
@@ -519,10 +520,17 @@ export function CodeRunner() {
       setPlaying(false)
       return
     }
+    if (reduced) {
+      // 재생 중에 모션 줄이기를 켜면 남은 줄을 한 번에 보여 준다
+      setPlaying(false)
+      setCur(last)
+      setLive(steps.slice(cur + 1).map((s) => plain(entryOf(s))).join(' '))
+      return
+    }
     const t = window.setTimeout(() => advance(cur + 1), STEP_MS)
     return () => window.clearTimeout(t)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [playing, cur, last])
+  }, [playing, cur, last, reduced])
 
   const edit = (next: string) => {
     setCode(next)
@@ -654,7 +662,7 @@ export function CodeRunner() {
             <span className="text-sm text-muted">{I.progress(cur + 1, trace.total)}</span>
           </div>
           <details className="mt-3 min-w-0 rounded-lg border-[1.5px] border-edge bg-bg px-3 py-2">
-            <summary className="cursor-pointer font-semibold">{I.helpTitle(NAMES.length)}</summary>
+            <summary className="-my-2 cursor-pointer py-2.5 font-semibold">{I.helpTitle(NAMES.length)}</summary>
             <ul className="mt-2 space-y-2">
               {(Object.keys(I.commands) as CmdName[]).map((n) => (
                 <li key={n} className="min-w-0">

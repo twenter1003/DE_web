@@ -2,10 +2,11 @@ import { useEffect, useRef, type ReactNode } from 'react'
 import { LEVELS } from '../content/people'
 import { tocOf } from '../content/toc'
 import { UI } from '../content/ui'
-import type { ChapterId, Opening } from '../content/types'
+import { CHAPTER_IDS, type ChapterId, type Opening } from '../content/types'
 import { Rich } from '../lib/rich'
 import { STAGES, stageVars } from '../lib/stages'
 import { setActive } from '../state/active'
+import { mountSoon } from '../state/mount'
 import { useProgress } from '../state/progress'
 import { Desk, type Board } from './Desk'
 import { Bubble } from './people'
@@ -27,6 +28,7 @@ export function ChapterShell({ id, children }: { id: ChapterId; children: ReactN
         if (e.isIntersecting) {
           setActive(id)
           reach(toc.stage)
+          mountSoon(CHAPTER_IDS.indexOf(id) + 1)
         }
       },
       { rootMargin: '-50% 0px -50% 0px' },
@@ -97,7 +99,7 @@ export function ChapterOpening({ id, opening, visitors, csv, newbie, board, mood
 export function Summary({ text }: { text: string }) {
   return (
     <section className="py-[10svh]">
-      <p className="font-mono text-sm text-muted">{UI.summary}</p>
+      <h3 className="font-mono text-sm text-muted">{UI.summary}</h3>
       <blockquote className="mt-3 max-w-[44rem] border-l-4 border-accent pl-5 text-[1.5rem] font-bold leading-snug md:text-[2rem]">
         <Rich text={text} />
       </blockquote>
@@ -108,7 +110,7 @@ export function Summary({ text }: { text: string }) {
 /** 인터랙션 틀: 제목·안내 + 조작부 + 결과(aria-live) */
 export function InteractionFrame({ title, hint, note, children }: { title: string; hint: string; note?: string; children: ReactNode }) {
   return (
-    <section className="py-[8svh]" aria-label={`${UI.interaction.label}: ${title}`}>
+    <section className="py-[8svh]">
       <div className="rounded-2xl border-[1.5px] border-edge bg-surface p-5 md:p-8">
         <p className="font-mono text-sm text-muted">{UI.interaction.label}</p>
         <h3 className="mt-1 text-[1.375rem] font-bold md:text-[1.625rem]">{title}</h3>

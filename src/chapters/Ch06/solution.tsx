@@ -143,7 +143,7 @@ function SolOverlay({ at: pos }: { at: At }) {
         data-c3={box(gMin - 8, app.y0 - 18, maxX, bi.y1 + 18)}
         data-m1={box(minX, app.y0 - 14, maxX, stock.y1 + 14)}
         data-m2={box(minX, oltp.y0 - 14, maxX, card.y1 + 12)}
-        data-m3={box(gMin - 6, app.y0 - 14, maxX, kafka.y1 + 24)}
+        data-m3={box(gMin - 6, app.y0 - 14, maxX, stock.y1 + 14)}
         data-rr={ids.join(',')}
         x={minX}
         y={app.y0}

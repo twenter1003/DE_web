@@ -1341,12 +1341,13 @@ const parseBox = (s: string | undefined) => {
   const [x, y, w, h] = (s ?? '0 0 100 100').split(' ').map(Number)
   return { x, y, w, h }
 }
-/** 영역 r을 화면 비율(aspect) 안에 가운데 맞춘 viewBox */
-const fitBox = (s: string | undefined, aspect: number) => {
+/** 영역 r을 화면 비율(aspect) 안에 맞춘 viewBox. 남는 높이는 가운데 나눠 두거나(topAlign이면) 아래로만 보낸다 */
+const fitBox = (s: string | undefined, aspect: number, topAlign = false) => {
   const r = parseBox(s)
   const h = Math.max(r.h, r.w / aspect)
   const w = h * aspect
-  return `${(r.x + r.w / 2 - w / 2).toFixed(1)} ${(r.y + r.h / 2 - h / 2).toFixed(1)} ${w.toFixed(1)} ${h.toFixed(1)}`
+  const y = topAlign ? r.y : r.y + r.h / 2 - h / 2
+  return `${(r.x + r.w / 2 - w / 2).toFixed(1)} ${y.toFixed(1)} ${w.toFixed(1)} ${h.toFixed(1)}`
 }
 
 export const buildSolution: SceneBuild = (q, tl, { mobile }) => {
@@ -1357,7 +1358,8 @@ export const buildSolution: SceneBuild = (q, tl, { mobile }) => {
   const rect = svg.getBoundingClientRect()
   const aspect = rect.width > 0 && rect.height > 0 ? rect.width / rect.height : 0.8
   const d = cams.dataset
-  const cam = (k: 'full' | 'badges' | 'top' | 'bottom') => fitBox(d[k], aspect)
+  // 'bottom'은 이벤트 브로커 바로 아래에서 시작한다. 위로 늘리면 그 노드가 반쯤 잘린 채 맨 위에 걸린다
+  const cam = (k: 'full' | 'badges' | 'top' | 'bottom') => fitBox(d[k], aspect, k === 'bottom')
   const edge = (id: string) => q(`[data-edge="${id}"]`)
   const node = (id: string) => q(`[data-node="${id}"]`)
   const ring = (id: string) => q(`[data-node="${id}"] > .node-focus`)

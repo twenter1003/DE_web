@@ -5,7 +5,7 @@ import type { ChapterId } from '../content/types'
 import { boundsOf, mapStateAt, type Box, type MapEdge, type MapNode } from '../state/derive'
 import { useEnv } from '../state/env'
 import type { Q } from './StepScene'
-import { Node, NodeLabel } from './diagram'
+import { fs, Node, NodeLabel } from './diagram'
 import { RArrow } from './sketch'
 
 // 진화하는 파이프라인 맵. 보일 노드는 시간축 t에서 파생된다(src/content/map.ts).
@@ -26,6 +26,11 @@ interface Props {
   className?: string
   /** 강제로 세로(모바일) 배치 */
   vertical?: boolean
+  /**
+   * 세로 배치일 때 맵을 틀의 폭에 꽉 채우고 높이는 맵 비율대로 둔다(성장 블록처럼 고정 높이 틀이 아닌 곳).
+   * 고정 높이 틀에 넣으면 노드가 늘수록 맵이 홀쭉하게 줄어 글자를 읽을 수 없다.
+   */
+  fit?: boolean
   label?: string
   /**
    * 맵 위에 덧그릴 장면 전용 주석(태그·칩·카드). 지금 배치(가로/세로)에서의 노드 위치를 받아 SVG로 그린다.
@@ -33,6 +38,8 @@ interface Props {
    */
   overlay?: (at: (id: string) => { x: number; y: number; w: number; h: number } | undefined) => ReactNode
 }
+
+const LAKE_BANDS = ['Bronze', 'Silver', 'Gold']
 
 // ── 모바일: 열(소스→수집→저장→처리→활용)을 위→아래 띠로 바꾼다 ──
 const MW = 150
@@ -96,13 +103,13 @@ function EdgeView({ e, a, b, change, vertical }: { e: MapEdge; a: MapNode; b: Ma
       {e.label && (
         <g>
           <rect x={mx - e.label.length * 4.2 - 8} y={my - 11} width={e.label.length * 8.4 + 16} height={20} rx={4} style={{ fill: 'var(--bg)' }} />
-          <text x={mx} y={my + 4} textAnchor="middle" style={{ fontSize: 11.5, fill: e.kind === 'warn' ? 'var(--fail)' : 'var(--ink)' }}>
+          <text x={mx} y={my + 4} textAnchor="middle" style={{ fontSize: fs(11.5), fill: e.kind === 'warn' ? 'var(--fail)' : 'var(--ink)' }}>
             {e.label}
           </text>
         </g>
       )}
       {e.check && (
-        <g data-check transform={`translate(${mx} ${my})`} aria-label={UI.map.check}>
+        <g data-check transform={`translate(${mx} ${my})`}>
           <path d="M0 -10 L9 -6 L8 4 Q5 10 0 12 Q-5 10 -8 4 L-9 -6 Z" style={{ fill: 'var(--surface)', stroke: 'var(--ok)' }} strokeWidth={2} />
           <path d="M-4 1 L-1 4 L4 -3" style={{ stroke: 'var(--ok)', fill: 'none' }} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" />
         </g>
@@ -111,14 +118,19 @@ function EdgeView({ e, a, b, change, vertical }: { e: MapEdge; a: MapNode; b: Ma
   )
 }
 
-export function PipelineMap({ t, from, interactive, onNavigate, ghosts, tags, className = '', vertical: forceVertical, label, overlay }: Props) {
+export function PipelineMap({ t, from, interactive, onNavigate, ghosts, tags, className = '', vertical: forceVertical, fit, label, overlay }: Props) {
   const { mobile } = useEnv()
   const vertical = forceVertical ?? mobile
+  const fitW = Boolean(fit && vertical)
 
   const model = useMemo(() => {
     const now = mapStateAt(t)
     const before = from === undefined ? now : mapStateAt(from)
-    const layout = (ns: MapNode[]) => (vertical ? verticalLayout(ns) : ns)
+    // 세로 배치는 노드 수에 맞춰 자리를 다시 매긴다. 걷어낸 노드를 흐릿하게 남길 때(ghosts)는 두 시점을 합쳐 한 번만 배치해
+    // 남은 노드와 같은 자리에 겹쳐 그려지지 않게 한다(자리만 가져오고 라벨은 각 시점 것을 쓴다).
+    const slots = vertical && ghosts ? new Map(verticalLayout([...now.nodes, ...before.nodes.filter((b) => !now.nodes.some((n) => n.id === b.id))]).map((n) => [n.id, n])) : null
+    const layout = (ns: MapNode[]) =>
+      slots ? ns.map((n) => { const p = slots.get(n.id)!; return { ...n, x: p.x, y: p.y, w: p.w, h: p.h } }) : vertical ? verticalLayout(ns) : ns
     const nowL = layout(now.nodes)
     const beforeL = layout(before.nodes)
     const nowIds = new Set(nowL.map((n) => n.id))
@@ -134,8 +146,9 @@ export function PipelineMap({ t, from, interactive, onNavigate, ghosts, tags, cl
       ...now.edges.map((e) => ({ e, change: (beforeE.has(e.id) ? 'stay' : 'enter') as Change })),
       ...before.edges.filter((e) => !nowE.has(e.id)).map((e) => ({ e, change: 'exit' as Change })),
     ]
-    return { nodes, edges, byId, boxFrom: boundsOf(beforeL, 30, vertical ? 0.62 : 2.4), boxTo: boundsOf(nowL, 30, vertical ? 0.62 : 2.4), count: nowL.length }
-  }, [t, from, vertical])
+    const box = (ns: MapNode[]) => boundsOf(ns, 30, vertical ? 0.62 : 2.4, fitW ? 0 : 1.1)
+    return { nodes, edges, byId, boxFrom: box(beforeL), boxTo: box(slots ? nodes : nowL), count: nowL.length }
+  }, [t, from, vertical, fitW, ghosts])
 
   const go = (id: ChapterId) => (ev: MouseEvent) => {
     if (onNavigate) {
@@ -150,7 +163,8 @@ export function PipelineMap({ t, from, interactive, onNavigate, ghosts, tags, cl
       data-vb-from={vb(model.boxFrom)}
       data-vb-to={vb(model.boxTo)}
       viewBox={vb(model.boxFrom)}
-      className={`diagram h-full w-full ${className}`}
+      className={`diagram w-full ${fitW ? 'h-auto' : 'h-full'} ${className}`}
+      style={fitW ? { aspectRatio: `${model.boxTo.w} / ${model.boxTo.h}` } : undefined}
       role={interactive ? 'group' : 'img'}
       aria-label={label ?? UI.map.aria(model.count)}
       preserveAspectRatio="xMidYMid meet"
@@ -181,13 +195,13 @@ export function PipelineMap({ t, from, interactive, onNavigate, ghosts, tags, cl
                 kind={n.kind}
                 seed={`map-${n.id}`}
                 labelEl={labelChanged ? 'lbl-new' : undefined}
-                bands={n.id === 'lakehouse' ? ['Bronze', 'Silver', 'Gold'] : undefined}
+                bands={n.id === 'lakehouse' ? LAKE_BANDS : undefined}
               />
               {labelChanged && n.prev && <NodeLabel x={n.x} y={n.y} label={n.prev.label} sub={n.prev.sub} el="lbl-old" />}
               {tags && n.change === 'enter' && (
                 <g data-el="tag-new">
-                  <rect x={n.x - n.w / 2} y={n.y - n.h / 2 - 22} width={38} height={18} rx={3} style={{ fill: 'var(--accent)' }} />
-                  <text x={n.x - n.w / 2 + 19} y={n.y - n.h / 2 - 9} textAnchor="middle" style={{ fontSize: 11, fill: '#fff', fontWeight: 700 }} className="t-sans">
+                  <rect x={n.x - n.w / 2} y={n.y - n.h / 2 - 23} width={42} height={20} rx={4} style={{ fill: 'var(--surface)', stroke: 'var(--accent)' }} strokeWidth={2} />
+                  <text x={n.x - n.w / 2 + 21} y={n.y - n.h / 2 - 8.5} textAnchor="middle" style={{ fontSize: 13, fontWeight: 700 }} className="t-sans">
                     {UI.growth.newTag}
                   </text>
                 </g>
@@ -205,7 +219,7 @@ export function PipelineMap({ t, from, interactive, onNavigate, ghosts, tags, cl
           if (!interactive || n.change === 'exit') return <g key={n.id}>{body}</g>
           const ch = tocOf(n.chapter)
           return (
-            <a key={n.id} href={`#${n.chapter}`} onClick={go(n.chapter)} aria-label={UI.map.goto(n.label, `${ch.label} ${ch.title}`)} className="map-link">
+            <a key={n.id} href={`#${n.chapter}`} onClick={go(n.chapter)} aria-label={UI.map.goto([n.label, ...(n.id === 'lakehouse' ? LAKE_BANDS : n.sub ? [n.sub] : [])].join(' '), `${ch.label} ${ch.title}`)} className="map-link">
               {body}
             </a>
           )

@@ -89,8 +89,8 @@ export interface Box {
   h: number
 }
 
-/** 노드들을 감싸는 뷰박스. 너무 납작하지 않게 최소 높이를 둔다. */
-export function boundsOf(nodes: MapNode[], pad = 36, maxAspect = 2.4): Box {
+/** 노드들을 감싸는 뷰박스. 너무 납작하지 않게 최소 높이를, 너무 홀쭉하지 않게 최소 폭(높이 × minAspect)을 둔다. */
+export function boundsOf(nodes: MapNode[], pad = 36, maxAspect = 2.4, minAspect = 1.1): Box {
   if (!nodes.length) return { x: 0, y: 0, w: 400, h: 200 }
   let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity
   for (const n of nodes) {
@@ -107,7 +107,7 @@ export function boundsOf(nodes: MapNode[], pad = 36, maxAspect = 2.4): Box {
     y -= (minH - h) / 2
     h = minH
   }
-  const minW = h * 1.1
+  const minW = h * minAspect
   let x = x0 - pad
   if (w < minW) {
     x -= (minW - w) / 2

@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { CARDS } from '../content/cards'
 import { T } from '../content/map'
 import { LEVELS } from '../content/people'
@@ -77,13 +77,24 @@ function Panel({ close }: { close: () => void }) {
   }
   const onKey = (e: React.KeyboardEvent) => {
     const i = tabs.indexOf(tab)
-    if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
-      e.preventDefault()
-      const next = tabs[(i + (e.key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length]
-      setTab(next)
-      document.getElementById(`hud-tab-${next}`)?.focus()
-    }
+    const next =
+      e.key === 'ArrowRight' ? tabs[(i + 1) % tabs.length]
+      : e.key === 'ArrowLeft' ? tabs[(i + tabs.length - 1) % tabs.length]
+      : e.key === 'Home' ? tabs[0]
+      : e.key === 'End' ? tabs[tabs.length - 1]
+      : undefined
+    if (!next) return
+    e.preventDefault()
+    setTab(next)
+    document.getElementById(`hud-tab-${next}`)?.focus()
   }
+  // 확인 상자를 닫으면(초기화·취소) 그 안의 버튼이 사라진다 → 포커스를 '진행도 초기화' 버튼으로 되돌린다
+  const resetBtn = useRef<HTMLButtonElement>(null)
+  const wasConfirm = useRef(false)
+  useEffect(() => {
+    if (wasConfirm.current && !confirm) resetBtn.current?.focus()
+    wasConfirm.current = confirm
+  }, [confirm])
   return (
     <div className="flex h-full flex-col">
       <div className="flex items-center justify-between gap-4 border-b border-edge px-5 py-4">
@@ -100,7 +111,7 @@ function Panel({ close }: { close: () => void }) {
             role="tab"
             type="button"
             aria-selected={tab === t}
-            aria-controls={`hud-panel-${t}`}
+            aria-controls={tab === t ? `hud-panel-${t}` : undefined}
             tabIndex={tab === t ? 0 : -1}
             onClick={() => setTab(t)}
             className={`shrink-0 rounded-t-lg px-4 py-2.5 font-semibold ${tab === t ? 'bg-ink text-bg' : 'text-muted hover:text-ink'}`}
@@ -165,7 +176,7 @@ function Panel({ close }: { close: () => void }) {
             <MotionToggle />
             <div>
               {!confirm ? (
-                <button type="button" className="btn" onClick={() => (setConfirm(true), setResetDone(false))}>
+                <button ref={resetBtn} type="button" className="btn" onClick={() => (setConfirm(true), setResetDone(false))}>
                   {UI.panel.reset}
                 </button>
               ) : (
@@ -210,10 +221,10 @@ export function Hud() {
     <StageCtx.Provider value={stage}>
       <div className="fixed right-3 top-3 z-40 flex items-center gap-2 text-ink md:right-5 md:top-4" style={stageVars(stage) as React.CSSProperties}>
         <MotionToggle compact />
+        {/* 이름은 보이는 글자(Lv·카드 수)로 시작하고, 나머지 안내는 화면 밖 글자로 덧붙인다 */}
         <button
           type="button"
           aria-haspopup="dialog"
-          aria-label={`${UI.hud.open}. ${UI.hud.level(p.level, LEVELS[p.level])}, ${UI.hud.progress(Math.round(p.ratio * 100))}, ${UI.hud.cards(p.cards.size)}`}
           onClick={() => {
             dialog.current?.showModal()
             setOpen(true)
@@ -222,10 +233,14 @@ export function Hud() {
         >
           <span className="font-mono font-bold">Lv{p.level}</span>
           <span className="hidden sm:inline">{LEVELS[p.level]}</span>
-          <span className="relative h-1.5 w-12 overflow-hidden rounded-full bg-edge" aria-hidden="true">
-            <span className="absolute inset-y-0 left-0 rounded-full bg-accent" style={{ width: `${Math.round(p.ratio * 100)}%` }} />
+          {/* 진행 막대: 테두리 + 채움 모두 글자색(currentColor)이라 어느 스테이지·hover에서도 3:1 이상 */}
+          <span className="relative h-2 w-12 overflow-hidden rounded-full border border-current" aria-hidden="true">
+            <span className="absolute inset-y-0 left-0 bg-current" style={{ width: `${Math.round(p.ratio * 100)}%` }} />
           </span>
           <span className="font-mono text-xs">{p.cards.size}/26</span>
+          <span className="sr-only">
+            , {UI.hud.cards(p.cards.size)}, {UI.hud.progress(Math.round(p.ratio * 100))}. {UI.hud.open}
+          </span>
         </button>
       </div>
       <dialog
@@ -248,7 +263,8 @@ export function ChapterRail() {
   const { completed } = useProgress()
   return (
     <nav aria-label={UI.rail.label} className="fixed left-0 top-1/2 z-30 hidden w-[var(--rail-w)] -translate-y-1/2 lg:block" style={stageVars(stage) as React.CSSProperties}>
-      <ol className="flex flex-col items-center gap-1">
+      {/* 자기 배경을 깔아 둔다: 스테이지가 바뀌는 그라디언트 띠 위에서도 글자가 묻히지 않게 */}
+      <ol className="flex flex-col items-center gap-1 rounded-r-xl bg-bg/95 py-2">
         {TOC.map((t) => {
           const here = active === t.id
           return (

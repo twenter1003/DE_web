@@ -61,7 +61,7 @@ export function Hero() {
           </div>
 
           <div className="mt-14">
-            <ol className="flex flex-wrap gap-1.5" aria-label={UI.hero.cardsCaption}>
+            <ol className="flex flex-wrap gap-1.5">
               {CARDS.map((c) => {
                 const owned = cards.has(c.letter)
                 return (

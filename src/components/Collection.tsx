@@ -7,14 +7,12 @@ import { RRect } from './sketch'
 /** A–Z 용어 카드. tall = 성장 연출용 세로 카드, row = 도감 목록용 가로 카드 */
 export function TermCard({ card, owned, variant = 'tall', el }: { card: Card; owned: boolean; variant?: 'tall' | 'row'; el?: string }) {
   const from = tocOf(card.chapter).label
-  const label = owned ? `${card.letter}: ${card.term}${card.ko ? ` (${card.ko})` : ''}. ${card.def}` : `${card.letter} 카드: ${UI.panel.cardLocked(from)}`
+  // 보이는 글자를 그대로 읽게 한다(aria-label은 li·article 같은 정적 요소에서 화면 낭독기가 자주 무시한다)
   if (variant === 'row')
     return (
-      <li data-el={el} className={`flex gap-4 rounded-xl border-[1.5px] p-3 ${owned ? 'border-edge bg-surface' : 'border-dashed border-edge'}`} aria-label={label}>
-        <span className={`w-10 shrink-0 text-center font-mono text-3xl font-bold leading-10 ${owned ? '' : 'text-muted'}`} aria-hidden="true">
-          {card.letter}
-        </span>
-        <span className="min-w-0" aria-hidden="true">
+      <li data-el={el} className={`flex gap-4 rounded-xl border-[1.5px] p-3 ${owned ? 'border-edge bg-surface' : 'border-dashed border-edge'}`}>
+        <span className={`w-10 shrink-0 text-center font-mono text-3xl font-bold leading-10 ${owned ? '' : 'text-muted'}`}>{card.letter}</span>
+        <span className="min-w-0">
           {owned ? (
             <>
               <span className="block font-bold leading-snug">
@@ -31,11 +29,11 @@ export function TermCard({ card, owned, variant = 'tall', el }: { card: Card; ow
       </li>
     )
   return (
-    <article data-el={el} aria-label={label} className="relative w-[11.5rem] shrink-0">
+    <article data-el={el} className="relative w-[11.5rem] shrink-0">
       <svg viewBox="0 0 184 252" className="diagram absolute inset-0 h-full w-full" aria-hidden="true">
         <RRect x={3} y={3} w={178} h={246} rough={0.5} seed={`card-${card.letter}`} fill={owned ? 'var(--surface)' : undefined} dash={owned ? undefined : '6 6'} />
       </svg>
-      <div className="relative flex aspect-[184/252] flex-col p-4" aria-hidden="true">
+      <div className="relative flex aspect-[184/252] flex-col p-4">
         <span className={`font-mono text-[3.25rem] font-bold leading-none ${owned ? '' : 'text-muted'}`}>{card.letter}</span>
         {owned ? (
           <>
@@ -63,7 +61,7 @@ export const radarPoints = (vals: Record<StatKey, number>) =>
 export function Radar({ values, prev, el = 'radar', className = '' }: { values: Record<StatKey, number>; prev?: Record<StatKey, number>; el?: string; className?: string }) {
   const label = STAT_KEYS.map((k) => `${STAT_LABELS[k]} ${values[k]}`).join(', ')
   return (
-    <svg viewBox="-66 -6 452 280" className={`diagram ${className}`} role="img" aria-label={label}>
+    <svg viewBox="-36 -10 450 284" className={`diagram ${className}`} role="img" aria-label={label}>
       {[25, 50, 75, 100].map((r) => (
         <polygon key={r} points={STAT_KEYS.map((_, i) => pt(i, r).join(',')).join(' ')} style={{ fill: 'none', stroke: 'var(--edge)' }} strokeWidth={1} />
       ))}
@@ -77,7 +75,7 @@ export function Radar({ values, prev, el = 'radar', className = '' }: { values: 
         const [x, y] = pt(i, 124)
         const anchor = Math.abs(x - CX) < 8 ? 'middle' : x > CX ? 'start' : 'end'
         return (
-          <text key={k} x={x} y={y + 4} textAnchor={anchor} className="t-sans" style={{ fontSize: 12.5, fontWeight: 600 }}>
+          <text key={k} x={x} y={y + 4} textAnchor={anchor} className="t-sans" style={{ fontSize: 16, fontWeight: 600 }}>
             {STAT_LABELS[k]}
           </text>
         )

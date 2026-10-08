@@ -94,12 +94,15 @@ interface Phase {
   f: Frame
   dur: number
   ease?: string
+  /** 이 장면이 끝났을 때 그림의 아래 끝(viewBox 높이) */
+  h: number
 }
 interface Stage {
   defs: Map<string, Def>
   order: [string, Def][]
   steps: Phase[][]
   w: number
+  /** 실행 전(첫 단계 크기) viewBox 높이. 단계마다의 높이는 Phase.h */
   h: number
 }
 
@@ -133,7 +136,6 @@ function buildStage(run: Run): Stage {
   const defs = new Map<string, Def>()
   const steps: Phase[][] = []
   let cur: Frame = new Map()
-  let maxY = 0
   const def = (k: string, d: Def) => {
     if (!defs.has(k)) defs.set(k, d)
     return k
@@ -146,8 +148,10 @@ function buildStage(run: Run): Stage {
     for (const [k, p] of cur) f.set(k, { x: p.x, y: p.y, w: p.w, h: p.h, o: p.o })
     edit(f)
     cur = f
-    for (const p of f.values()) maxY = Math.max(maxY, p.y + (p.h ?? 6))
-    return { f, dur, ease }
+    // 노드(묶음 테두리·결과 틀)는 y=0에 두고 h에 아래 끝을 적어 둔다
+    let bottom = 0
+    for (const p of f.values()) bottom = Math.max(bottom, p.y + (p.h ?? 6))
+    return { f, dur, ease, h: Math.ceil(bottom + 8) }
   }
   const drop = (f: Frame, test: (k: string) => boolean) => {
     for (const k of [...f.keys()]) if (test(k)) f.delete(k)
@@ -287,9 +291,8 @@ function buildStage(run: Run): Stage {
         run.groups.forEach((g, gi) => {
           if (!g.ids.length) return
           const top = rowTop(slot.get(g.ids[0])![0]) + gi * GAP
-          maxY = Math.max(maxY, top + RH * g.ids.length + 4)
           const box = <RRect x={X0 - 1} y={top - 1} w={wW + 2} h={RH * g.ids.length + 2} rough={0.4} seed={`sr-go${gi}`} stroke="var(--accent)" strokeWidth={1.6} />
-          f.set(N(`go:${gi}`, box, 1), { x: 0, y: 0 })
+          f.set(N(`go:${gi}`, box, 1), { x: 0, y: 0, h: top + RH * g.ids.length + 4 })
         })
       }),
       phase(0.3, (f) => {
@@ -343,12 +346,12 @@ function buildStage(run: Run): Stage {
   )
   const rW = width(RL)
   const resHeads = run.cols.map((c, j) => [c.label, RL[j]] as [string, LCol])
-  maxY = Math.max(maxY, HY + RH * (out.length + 1) + 6)
   const rf = N('rf', <RRect x={X0 - 3} y={HY - 3} w={rW + 6} h={RH * (out.length + 1) + 6} rough={0.5} seed="sr-rf" stroke="var(--accent)" strokeWidth={2} />, 1)
+  const rfAt: Place = { x: 0, y: 0, h: HY + RH * (out.length + 1) + 6 }
   const finish = (f: Frame, frame = true) => {
     title(f, s, I.titles.result(out.length))
     heads(f, resHeads, rW)
-    if (frame) f.set(rf, { x: 0, y: 0, d: 0.15 })
+    if (frame) f.set(rf, { ...rfAt, d: 0.15 })
   }
   const compact = (): Phase => phase(0.3, (f) => {
     cleanup(f)
@@ -399,7 +402,7 @@ function buildStage(run: Run): Stage {
         drop(f, (k) => /^(c|bg):/.test(k))
         run.cols.forEach((c, j) => f.set(T(`a:0:${c.agg}#${j}`, fmt(undefined, g.aggs[c.agg!]), 'agg', true), { x: tx(RL[j]), y: base(rowTop(0)) }))
         f.set(R('gb:0', 'bg'), bgAt(rowTop(0), rW))
-        f.set(rf, { x: 0, y: 0 })
+        f.set(rf, rfAt)
       }),
     )
     steps.push(phases)
@@ -428,7 +431,7 @@ function buildStage(run: Run): Stage {
 
   const w = Math.max(BASE_W, X0 + wW + (run.cond && !run.join ? TAGW + 8 : 0), X0 + gW + 4, X0 + rW + 6)
   const order = [...defs].sort((a, b) => zOf(a[1]) - zOf(b[1]))
-  return { defs, order, steps, w, h: Math.ceil(maxY + 8) }
+  return { defs, order, steps, w, h: steps[0][0].h }
 }
 
 // ── 재생 ──
@@ -438,6 +441,9 @@ const same = (a: Place, b: Place) => a.x === b.x && a.y === b.y && a.w === b.w &
 function vars(d: Def, p: Place, dx = 0, dy = 0, o = p.o ?? 1): gsap.TweenVars {
   return d.kind === 'rect' ? { attr: { x: p.x + dx, y: p.y + dy, width: p.w ?? 0, height: p.h ?? 0 }, opacity: o } : { x: p.x + dx, y: p.y + dy, opacity: o }
 }
+const viewBox = (stage: Stage, h: number) => ({ attr: { viewBox: `0 0 ${stage.w} ${h}` } })
+/** 지금 단계의 그림 높이(실행 전이면 첫 단계 크기) */
+const heightAt = (stage: Stage, cursor: number) => (cursor ? stage.steps[cursor - 1].at(-1)!.h : stage.h)
 function setFrame(stage: Stage, nodes: Map<string, Element>, f: Frame) {
   for (const [k, el] of nodes) {
     const p = f.get(k)
@@ -446,10 +452,14 @@ function setFrame(stage: Stage, nodes: Map<string, Element>, f: Frame) {
   }
 }
 /** from 상태에서 단계의 장면들을 차례로 타임라인에 싣는다 */
-function playPhases(tl: gsap.core.Timeline, stage: Stage, nodes: Map<string, Element>, from: Frame, phases: Phase[]) {
+function playPhases(tl: gsap.core.Timeline, stage: Stage, svg: SVGSVGElement, nodes: Map<string, Element>, from: Frame, fromH: number, phases: Phase[]) {
   let at = 0
   let prev = from
+  let prevH = fromH
   for (const ph of phases) {
+    // 그림 틀 높이도 장면마다 맞춘다: 커질 땐 먼저 빨리, 작아질 땐 내용이 옮겨 가는 동안 함께
+    if (ph.h !== prevH) tl.to(svg, { ...viewBox(stage, ph.h), duration: ph.h > prevH ? Math.min(0.25, ph.dur) : ph.dur, ease: 'power2.inOut' }, at)
+    prevH = ph.h
     let len = ph.dur
     for (const k of new Set([...prev.keys(), ...ph.f.keys()])) {
       const el = nodes.get(k)
@@ -514,14 +524,20 @@ export function SqlRunner() {
       const fresh = s.stage !== stage
       if (!fresh && !reduced && cursor > 0 && cursor !== s.cursor && (cursor === s.cursor + 1 || cursor === 1)) {
         let from = s.frame
+        let fromH = heightAt(stage, s.cursor)
         if (cursor === 1 && s.cursor !== 0) {
           setFrame(stage, nodes, EMPTY)
           from = EMPTY
+          fromH = stage.h
+          gsap.set(svg.current, viewBox(stage, fromH))
         }
         const t = gsap.timeline()
-        playPhases(t, stage, nodes, from, stage.steps[cursor - 1])
+        playPhases(t, stage, svg.current, nodes, from, fromH, stage.steps[cursor - 1])
         tl.current = t
-      } else setFrame(stage, nodes, target)
+      } else {
+        setFrame(stage, nodes, target)
+        gsap.set(svg.current, viewBox(stage, heightAt(stage, cursor)))
+      }
       shown.current = { stage, cursor, frame: target }
     },
     { scope: root, dependencies: [stage, cursor, reduced] },

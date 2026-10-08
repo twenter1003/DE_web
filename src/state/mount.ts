@@ -16,6 +16,17 @@ export function ensureMounted(index: number) {
 
 export const mountedUpTo = () => upTo
 
+/**
+ * 한가할 때 미리 마운트. 챕터 마운트는 무거운 동기 작업(수십~백여 ms)이라,
+ * 스크롤이 자리에 닿을 때(IntersectionObserver) 하면 그 스크롤이 끊긴다. 지금 챕터에 들어서면 다음 챕터를 미리 그려 둔다.
+ */
+export function mountSoon(index: number) {
+  if (index <= upTo || typeof window === 'undefined') return
+  const run = () => ensureMounted(index)
+  if ('requestIdleCallback' in window) requestIdleCallback(run, { timeout: 3000 })
+  else setTimeout(run, 300)
+}
+
 export function useMountedUpTo() {
   return useSyncExternalStore(
     (l) => {
@@ -45,4 +56,8 @@ function arm() {
 if (typeof window !== 'undefined') {
   for (const ev of ['scroll', 'keydown', 'pointerdown', 'touchstart', 'wheel'] as const) addEventListener(ev, arm, { passive: true, once: true })
   setTimeout(arm, 4000)
+  // 첫 챕터(프롤로그)는 첫 스크롤을 기다리지 않고 첫 화면을 다 그린 뒤 한가할 때 마운트
+  const first = () => mountSoon(0)
+  if (document.readyState === 'complete') first()
+  else addEventListener('load', first, { once: true })
 }

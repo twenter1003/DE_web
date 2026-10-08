@@ -1,0 +1,1254 @@
+{
+ "note": "Phase 3 audit findings (run wf_15d4b1b3-60b). fixed = applied by fix:shared or a partial chapter fix; check git diff before redoing.",
+ "audits": {
+  "content3": {
+   "findings": [
+    {
+     "file": "src/content/chapters/ch8.ts",
+     "chapter": "ch8",
+     "severity": "medium",
+     "problem": "The content frames the warehouse as having expensive storage per unit ('저장 비쌈'), and the storage meter backs this up with a warehouse segment longer than the lake segment. That is out of date and nothing discloses the simplification. Managed storage in today's cloud warehouses costs about the same per TB as object storage. The real cost of keeping two copies is double storage plus duplicate loading and compute, sync jobs, and proprietary formats. Minjae's line in the solution scene repeats the same framing.",
+     "evidence": "L108 whTag: '정리됨 · 저장 비쌈'; L259 problem step 3: '저장 비용도 두 벌만큼 들었고요.'; L337 minjae: '웨어하우스 저장 비용도 빠졌네요.'; problem step 3 alt: '짧은 레이크분 구간 위에 더 긴 웨어하우스분 구간'",
+     "fix": "L108 → whTag: '정리됨 · 비쌈'. L259 third sentence → '저장과 계산 비용도 두 벌만큼 들었고요(실제 단가는 서비스마다 달라요).' L337 → { who: 'minjae', text: '웨어하우스에 따로 내던 비용이 빠졌네요.' }"
+    },
+    {
+     "file": "src/content/chapters/ch10.ts",
+     "chapter": "ch10",
+     "severity": "medium",
+     "problem": "The note on the 1-hour step says running the batch more often leaves the load 'almost unchanged'. That contradicts the step's own bars, which double cost (1→2) and ops (1→2). It is also wrong in practice: if every run recomputes everything, compute cost grows with the number of runs, which is 24 times a day here. Only the orchestration effort stays roughly the same.",
+     "evidence": "L34 rows[1].note: '더 자주 돌릴 뿐이라 부담은 거의 그대로예요. 하지만 아직 기준보다 느려요.' while L30-31 cost: 2, ops: 2 (vs 1/1 for '하루')",
+     "fix": "L34 → note: '일정만 바꾸면 돼서 운영 부담은 조금 늘 뿐이에요. 다만 매번 전체를 다시 계산하면 비용은 실행 횟수만큼 늘고, 아직 기준보다 느려요.'"
+    },
+    {
+     "file": "src/content/chapters/ch10.ts",
+     "chapter": "ch10",
+     "severity": "medium",
+     "problem": "The ML training data reads review text straight from Bronze, the raw layer, while the text promises that customer info leaves only as pseudonymized columns. Raw review rows usually carry the reviewer's customer ID, and the free text can include names or phone numbers. Reading Bronze directly skips both the Silver cleanup taught in Ch8 and the Ch9 privacy controls. As written, the 'pseudonymized columns only' promise is not guaranteed, and nothing in the scene mentions it.",
+     "evidence": "L356 serve step 1: '…Ch5부터 쌓아 온 리뷰 글·상품 이미지가 들어가요. … 고객 정보는 Ch9의 가명처리 열로만 나가요.'; L201 bronze: 'Bronze: 리뷰 글·상품 이미지'; L204 mlNote covers only labeling and splitting",
+     "fix": "L356 third sentence → '고객 정보는 Ch9의 가명처리 열로만 나가고, 리뷰 글 속 개인정보도 걸러 낸 뒤 넘겨요.' L204 → mlNote: '실제로는 리뷰 글 속 이름·연락처 같은 개인정보를 걸러 내고, 라벨 달기·학습용·검증용 나누기 같은 일도 더 해요.'"
+    },
+    {
+     "file": "src/content/chapters/ch8.ts",
+     "chapter": "ch8",
+     "severity": "low",
+     "problem": "Minjae says storage costs exactly double. That is a quantitative claim, and the chapter's own meter contradicts it: the lake segment is short and the warehouse segment is longer, so the total is more than twice the lake alone. The point being made is 'two copies', not '×2'.",
+     "evidence": "L242 opening: '같은 데이터를 두 군데 저장하느라 저장 비용도 두 배예요.'; L260 alt: '짧은 레이크분 구간 위에 더 긴 웨어하우스분 구간이 쌓여 있고'",
+     "fix": "L242 → { who: 'minjae', text: '같은 데이터를 두 군데 저장하느라 저장 비용도 두 벌로 나가요.' }"
+    },
+    {
+     "file": "src/content/chapters/ch8.ts",
+     "chapter": "ch8",
+     "severity": "low",
+     "problem": "The upsert figure shows the full status history (결제완료 → 배송중 → 취소) under the row's status cell. That suggests MERGE keeps history inside the row. In fact upsert overwrites the row, and earlier states survive only in older table versions (the time travel taught in the same chapter) or in a separate history table.",
+     "evidence": "L217 history: '결제완료 → 배송중 → 취소' shown under the 1001 status cell (medallion step 3 alt L318: '상태 칸 아래 이력 결제완료 → 배송중 → 취소')",
+     "fix": "L217 → history: '지난 버전: 결제완료 → 배송중'. Or extend L219 mergeNote: '업서트는 행을 덮어써요. 이전 상태는 테이블의 지난 버전에 남고, 순서가 뒤바뀐 변경을 가려내는 규칙도 함께 써요.'"
+    },
+    {
+     "file": "src/content/chapters/ch8.ts",
+     "chapter": "ch8",
+     "severity": "low",
+     "problem": "Gold is described only as holding aggregates. In common practice Gold also holds business-ready modeled tables, such as the Ch4 star schema facts and dimensions. Mentioning that ties the layer back to Ch4 and avoids the idea that Gold holds nothing but summary numbers.",
+     "evidence": "L321 medallion step 4: '맨 위 Gold엔 Ch4에서 정의한 순매출처럼 비즈니스 질문에 맞춘 집계를 두고, 대시보드는 여기서 읽어요.'",
+     "fix": "L321 → '맨 위 Gold엔 Ch4의 스타 스키마 표와 순매출 같은, 비즈니스 질문에 맞춘 표·집계를 두고 대시보드는 여기서 읽어요. 원수가 생수가 되듯 위로 갈수록 맑아지죠.'"
+    },
+    {
+     "file": "src/content/chapters/ch9.ts",
+     "chapter": "ch9",
+     "severity": "low",
+     "problem": "Full scan is defined as reading the 'entire table'. Ch4 taught that column storage reads only the columns a query needs, so a full scan really means reading every row or partition of the referenced columns. Without that, the definition contradicts Ch4. A note does exist (pricingNote), but it only appears two scenes later.",
+     "evidence": "L207 problem step 1: '풀스캔(Full scan, 건너뛰는 부분 없이 테이블 전체를 읽는 것)'",
+     "fix": "L207 term gloss → '풀스캔(Full scan, 건너뛰는 구역 없이 테이블의 모든 행을 읽는 것)'"
+    },
+    {
+     "file": "src/content/chapters/ch9.ts",
+     "chapter": "ch9",
+     "severity": "low",
+     "problem": "Ch8 has just taught that dashboards read from Gold. Here the BI dashboard full-scans the 3-year Silver order table, and the text never says this breaks the Ch8 rule. A learner may wonder why the dashboard isn't reading Gold. Saying so explicitly makes the cost leak a clear design mistake instead of a contradiction.",
+     "evidence": "L207 '대시보드가 몇 분마다 거대한 주문 테이블 전체를 훑고 있었거든요.'; L47 orders: '주문 테이블 (Silver · 3년 치)'; ch8.ts L321 '대시보드는 여기서(Gold) 읽어요'",
+     "fix": "L207 second sentence → '주문 현황 대시보드가 5분마다 Gold 집계 대신 Silver의 거대한 주문 테이블 전체를 훑고 있었거든요.'"
+    },
+    {
+     "file": "src/content/chapters/ch9.ts",
+     "chapter": "ch9",
+     "severity": "low",
+     "problem": "The old orders are said to sit in 'the most expensive storage'. Ch8 described the lakehouse floor as cheap object storage ('싸고 넓음'). What is actually meant is the most expensive tier within that storage, its default hot tier. Without that wording the two chapters seem to contradict each other.",
+     "evidence": "L215 problem step 3: '그런데도 가장 비싼 저장 공간에 그대로 있었죠.'; ch8.ts L148 storage: '오브젝트 스토리지 (싸고 넓음)'",
+     "fix": "L215 third sentence → '그런데도 저장소 안에서 가장 비싼 기본 계층에 그대로 있었죠.'"
+    },
+    {
+     "file": "src/content/chapters/ch9.ts",
+     "chapter": "ch9",
+     "severity": "low",
+     "problem": "The text says any date condition triggers pruning. Pruning only happens when the filter is on the partition column, here the order date, and is written in a form the engine can prune on. A filter on another date column, such as 배송일, still scans every partition.",
+     "evidence": "L255 cost step 2: '쿼리에 날짜 조건을 주면 필요 없는 파티션은 아예 읽지 않아요.'",
+     "fix": "L255 second sentence → '쿼리에 파티션을 나눈 기준인 주문일로 조건을 주면 필요 없는 파티션은 아예 읽지 않아요.'"
+    },
+    {
+     "file": "src/content/chapters/ch9.ts",
+     "chapter": "ch9",
+     "severity": "low",
+     "problem": "The access-control gloss covers only role-based read permissions. Access control also covers who can write or change data, and it is not always role-based. Since Ch8 just showed a bad batch overwriting the amount column, leaving out write permissions is a missed link.",
+     "evidence": "L272 security step 2: '접근 제어(Access control, 역할마다 볼 수 있는 테이블·열을 정해 두는 것)'",
+     "fix": "L272 gloss → '접근 제어(Access control, 누가 어떤 테이블·열을 보거나 고칠 수 있는지 역할별로 정해 두는 것)'"
+    },
+    {
+     "file": "src/content/chapters/ch9.ts",
+     "chapter": "ch9",
+     "severity": "low",
+     "problem": "The catalog lists the customer-center team as owner of the customer table, yet in the same chapter that team sees only masked values. The data owner is usually the producing domain (member service) or the data team, which is accountable for the data and approves access. A consuming team that can't see the full values is an odd owner and blurs the governance lesson.",
+     "evidence": "L182 catalogCards[1]: ['주인', '고객센터팀']; L119 grid row 고객센터: { ok: true, note: ['일부 가림'] }",
+     "fix": "L182 → ['주인', '회원 서비스팀'] (or '데이터팀', matching the order table card at L172)"
+    },
+    {
+     "file": "src/content/chapters/ch10.ts",
+     "chapter": "ch10",
+     "severity": "low",
+     "problem": "Each step's 'max delay' equals the run interval. Worst-case freshness is really the run interval plus processing time: a 15-minute schedule with a 3-minute job can be 18 minutes stale. That would fail the '15분 이내' criterion the scale marks as met. The model is labeled simplified, but this particular gap is not mentioned.",
+     "evidence": "L20/29/38/47 gain: '최대 하루 늦음' / '최대 1시간 늦음' / '최대 15분 늦음' / '최대 1분 늦음'; L69 notice mentions only relative bars",
+     "fix": "L69 → notice: '단순화한 모델이에요. 막대는 상대적인 크기이고, 늦는 시간엔 실행 간격에 처리 시간이 더해져요. 실제 비용과 복잡도는 데이터 양·쓰는 서비스·팀 상황에 따라 달라져요.'"
+    },
+    {
+     "file": "src/content/chapters/ch10.ts",
+     "chapter": "ch10",
+     "severity": "low",
+     "problem": "Gap in the reasoning: 'budgets change a few times a day, so 15 minutes is enough' would justify 1 hour just as well, yet the scale marks 1 hour as not meeting the criterion. The 15-minute line comes from the criterion agreed with Sora. The text should say that, so learners don't conclude the number follows from 'a few times a day'.",
+     "evidence": "L310 decision step 1: '예산은 하루 몇 번 바뀌니 15분이면 충분해요.'; L396 quiz feedback same; L24/L33 '1시간' row ok: false",
+     "fix": "L310 first sentence → '예산은 하루 몇 번 바뀌어서, 소라와 15분 이내를 기준으로 정했어요.' L396 → '소라와 정한 기준은 15분 이내였어요. 기준을 먼저 확인했기에 제안 노드 네 개를 만들지 않아도 됐어요.'"
+    },
+    {
+     "file": "src/content/chapters/ch10.ts",
+     "chapter": "ch10",
+     "severity": "low",
+     "problem": "Reverse ETL sends a coupon segment to the CRM. To send coupons, the CRM needs real customer identifiers, and Korean law requires prior consent to receive advertising. Sora works only with pseudonymized keys (Ch9), so the scene reads as if pseudonymized data is being re-identified. Nothing mentions consent or that an authorized pipeline does the linking.",
+     "evidence": "L361 serve step 2: '소라는 대시보드에서 본 고객 묶음에 바로 쿠폰을 보내고 싶어요. 그래서 그 묶음(세그먼트)을 CRM…으로 보내요.'; L215 crmNote: '정해진 주기로, 꼭 필요한 열만 보내요.'",
+     "fix": "L215 → crmNote: '정해진 주기로, 광고 수신에 동의한 고객의 꼭 필요한 열만 보내요. 이것도 실시간일 필요는 없어요.'"
+    },
+    {
+     "file": "src/content/chapters/epilogue.ts",
+     "chapter": "epilogue",
+     "severity": "low",
+     "problem": "Trustworthy data is credited to Ch7 alone (quality checks and data contracts). The course also built trust through idempotent reruns (Ch3), one shared metric definition (Ch4 SSOT) and atomic writes (Ch8 transactions). Crediting a single chapter undersells the recap.",
+     "evidence": "L146 sentence step 2: \"'믿을 수 있는'은 Ch7의 품질 검사와 데이터 계약이 지켜 줘요.\"",
+     "fix": "L146 last sentence → \"'믿을 수 있는'은 Ch7의 품질 검사·데이터 계약을 중심으로, Ch3의 멱등성과 Ch4의 한곳에서 정한 지표가 함께 지켜 줘요.\""
+    }
+   ],
+   "summary": "I read all of ch8, ch9, ch10 and the epilogue content, and checked them against SPEC §3–5/9–10 and the cross-chapter references (Ch4 net-revenue rules, Ch5 date partitions, Ch6 CDC and fraud-detection wiring in map.ts). Accuracy is high overall. Nothing is factually wrong (no high findings), and most simplifications already carry a note.\n\n**Medium (3):**\n- **Ch8:** the warehouse is framed as having expensive storage, which is out of date and not disclosed.\n- **Ch10, 1-hour step:** the note says the load stays the same, but the step's own bars double.\n- **Ch10, ML training data:** review text comes from raw Bronze, which conflicts with the promise that customer info leaves only as pseudonymized columns.\n\n**Low (13):** wording that could be clearer. Examples: the full-scan definition versus Ch4's column storage, pruning working only on the partition column, schedule interval versus worst-case delay, the upsert figure implying the row keeps its history, the catalog owner of the customer table, and marketing consent for Reverse ETL.\n\n**Invented real-world statistics:** none. Every number is in-story (1,204,310건, 1,000만 명, 182,400명, …), labeled '(가상)', or explicitly relative (scale bars, with a note). I checked the arithmetic: Gold 56,400 − 32,000 = 24,400; 288 = 24 × 12; node counts 17→21→16→14→16.\n\n**Lead's Epilogue zoom step 4 overlap:** not reproduced on the current build. A Playwright check of all 16 chapter tags against every visible node label found no overlap above 4px², at both 1440×900 and 390×844 mobile (step 4, 0.85 point). Shots: /Users/kimtaewoo/DE_web/shots/ca-epi-zoom-b-01.png and /Users/kimtaewoo/DE_web/shots/ca-epi-zoom-m-01-m.png. The 'Ch8 · 호수와 창고를 합치다 →' tooltip only sits over arrow lines below 레이크하우스, not over labels. The Ch1, Ch2 and Ch4 known issues are outside this audit's chapters and were not checked.\n\nScript: /private/tmp/claude-501/-Users-kimtaewoo-DE-web/87f927fd-5f5a-4ca9-8840-608bdfafed08/scratchpad/ca-ch8-epi/overlap.cjs"
+  },
+  "content2": {
+   "summary": "I audited the content for ch4, ch5, ch6 and ch7: every step text, dialogue line, figure label, alt text, interaction string and quiz in src/content/chapters/ch4–ch7.ts. I also read the matching A–Z cards in src/content/cards.ts and the '정확성 메모' notes in docs/storyboard/05–08. I checked all the arithmetic and none of it is wrong: Ch4's 119,000/72,000 order sums, the 30/30 vs 12/30 cell counts and the dictionary codes; every row and delta in Ch5's worker-slider model (960/n + (n−1) + 20); Ch6's job timings and the ~19h gap; Ch7's daily figures and the SUM(NULL)-shown-as-0 logic. Invented real-world statistics: none. Every number is labelled 가상 or belongs to the fictional company. Nothing is outright factually wrong (no high severity). There are 7 medium findings. Six are content issues: (1) Ch4's '총매출' includes cancelled and refunded orders, unlike the real accounting term, and the on-screen disclaimer is only generic; (2) Ch4 says '분석용 DB' is row-oriented and bad at big aggregations, which reads as a general rule; (3) Ch4 star-schema step 4 gives 욕실 40,000 / 주방 16,000, but the three fact rows on screen add up to 24,000 / 8,000; (4) Ch5 implies 'file bigger than RAM → you need distributed processing' and never mentions reading in chunks on one machine; (5) Ch6 says the detector '결제를 보류' (holds the payment), but it reads payments that have already completed; (6) Ch6's subway example presents a payment event as created on the phone. The seventh is the lead's Ch4 dot-overlap issue, which is real (details below). There are 14 low findings covering term precision and clarity: dbt vs version control, the shuffle's partial aggregation, the slider's cost note, micro-batch nuance in the summary, Kafka consumer-group wording, the processing-time definition, tumbling windows vs the '5분 안에' rule, the broker's 'in order' definition, the timing of the 18:05 test, the idempotent rerun, the gate metaphor, YAML vs the test tool, the Ch4 back-reference, and the breaking-rename practice. One low finding is on card Q. The lead's Ch4 issue: on mobile, the accent particles (circle[data-el=\"sp2\"]) sit over '주문 항목 팩트' and '1~3일치만 담은 예시' partway through step 4 (screenshot /Users/kimtaewoo/DE_web/shots/acc47/starm-01-m.png). At desktop near step end (@0.95) the dots have faded. I did not check the other known issues (Epilogue, Ch1, Ch2) because they are outside ch4–7. Screenshots are in /Users/kimtaewoo/DE_web/shots/acc47/.",
+   "findings": [
+    {
+     "file": "src/content/chapters/ch4.ts",
+     "chapter": "ch4",
+     "severity": "medium",
+     "problem": "\"총매출 … 주문된 금액 그대로의 합계 · 할인 전 · 배송비 포함 · 취소·환불 포함\" (figures.defs[0], solution step 1 alt, scene 2 soraRules). In real accounting, 총매출 normally leaves out cancelled orders. A total that includes cancelled and refunded orders plus shipping is usually called 거래액(GMV) or 주문 금액. The only disclaimer is the generic \"실제 회계 기준은 더 복잡하지만, 여기서는 바구니가 정한 정의예요.\" A beginner will leave thinking 총매출 includes cancellations. The storyboard (05-ch4 정확성 메모) admits this but nothing on screen says it.",
+     "evidence": "ch4.ts figures.defs[0].rules = '할인 전 · 배송비 포함 · 취소·환불 포함'; figures.accountingNote; storyboard 05-ch4.md 정확성 메모: \"실제 회계의 총매출은 보통 취소된 주문을 넣지 않고…\"",
+     "fix": "Make accountingNote specific: \"실제 회계의 총매출은 보통 취소된 주문을 빼요. 여기서는 바구니가 내부에서 정한 정의예요.\" (Alternative: rename the metric to '주문 금액(거래액)' wherever '총매출' appears.)"
+    },
+    {
+     "file": "src/content/chapters/ch4.ts",
+     "chapter": "ch4",
+     "severity": "medium",
+     "problem": "Attempt step 3 says \"분석용 DB는 한 건씩 다루기 좋은 구조라, 큰 집계에 약했거든요.\" Warehouse step 3 says \"분석용 DB는 운영 DB와 같은 행 기반 저장(…)을 써요.\" Both read as general facts: a database named 'for analytics' that is built for single rows and is bad at analytics. That contradicts itself for a beginner. It is really a story assumption: Ch2 loaded into the same kind of DB engine as the operational DB. Ch2's code runner even accepts 'warehouse' as an alias for 분석용 DB (ch2.ts targets).",
+     "evidence": "ch4.ts scenes.attempt.steps[2].text; scenes.warehouse.steps[2].text; ch2.ts line 97 targets: ['분석용 DB', '분석용 저장소', 'warehouse']",
+     "fix": "attempt step 3: \"게다가 데이터가 쌓이면서 쿼리가 점점 느려졌어요. 바구니의 분석용 DB는 운영 DB와 같은 종류의 DB를 그대로 쓰고 있어서, 한 건씩 다루기엔 좋아도 큰 집계엔 약했거든요.\" / warehouse step 3: \"웨어하우스가 큰 집계에 빠른 비결 하나는 저장 방식이에요. 바구니의 분석용 DB는 운영 DB와 같은 종류라 행 기반 저장(Row-oriented storage, 한 건의 값을 한데 붙여 저장하는 방식)을 써요. 한 건을 넣고 꺼내기엔 좋지만, 상품과 금액만 필요해도 주문을 통째로 읽어요.\""
+    },
+    {
+     "file": "src/content/chapters/ch4.ts",
+     "chapter": "ch4",
+     "severity": "medium",
+     "problem": "In star step 4 the figure gives the answer '10월 · 욕실 40,000원 / 주방 16,000원 (1~3일치만 담은 예시)'. The fact table on screen (factRows) has only 3 rows: 10-01 P1 12,000; 10-01 P2 8,000; 10-02 P1 12,000. Those add up to 욕실 24,000 / 주방 8,000. The text invites learners to '팩트에서 선 두 개만 따라가면 돼요', but the visible data can't produce the stated result. The numbers come from the 6-row SALES6 table in the earlier warehouse scene, which is not on screen here.",
+     "evidence": "ch4.ts figures.factRows (3 rows) vs figures.monthRows ['욕실','40,000원'],['주방','16,000원']; screenshot /Users/kimtaewoo/DE_web/shots/acc47/star9-01.png (#ch4-star step 4 @0.95) shows both together",
+     "fix": "Lazy fix: monthRows → [['욕실','24,000원'],['주방','8,000원']], monthNote → '위 3행만 더한 예시', and update the star step 4 alt to \"10월 · 욕실 24,000원 / 주방 8,000원, 아래 위 3행만 더한 예시\". (Or add SALES6 rows 204–206 to factRows if the layout has room.)"
+    },
+    {
+     "file": "src/chapters/Ch04/scenes.tsx",
+     "chapter": "ch4",
+     "severity": "medium",
+     "problem": "Lead's known issue, confirmed. In star step 4 the accent particles that travel from the fact table to the result box (circle[data-el=\"sp2\"], r=4.5) start at (FT.x+FT_W−30, FT.y) and end at (RES2.x+20, RES2.y+RES2.h). Those points sit right on the '주문 항목 팩트' title and the '1~3일치만 담은 예시' caption. Partway through the step the dots are visible on top of those labels.",
+     "evidence": "Mobile screenshot /Users/kimtaewoo/DE_web/shots/acc47/starm-01-m.png at \"#ch4-star [data-step]:nth-of-type(4)@0.5\": one dot over '팩트' in '주문 항목 팩트', one over '1~' in '1~3일치만 담은 예시'. At @0.95 the dots have faded (starm-02-m.png, star9-01.png). Code at scenes.tsx ~L1525–1536 (sp2 cx/cy/data-dx/dy) and ~L1644–1649 (tween).",
+     "fix": "Start sp2 inside the 금액 column (cy = FT.y + 40) and end it inside the result box (RES2.y + RES2.h/2 instead of RES2.y + RES2.h). Alternatively fade it out before arrival: opacity 0 at t+0.06."
+    },
+    {
+     "file": "src/content/chapters/ch5.ts",
+     "chapter": "ch5",
+     "severity": "medium",
+     "problem": "The problem scene goes straight from \"하루치 파일을 메모리에 통째로 올리려 해요\" → OOM → 빅데이터 → scale-up/scale-out. A beginner will conclude 'a file bigger than RAM means you need a bigger server or a cluster'. In practice the first fix a senior would try is reading the file in chunks or streaming it, or using a single-machine out-of-core engine, which can handle hundreds of millions of rows. The storyboard (06-ch5 정확성 메모) admits this but nothing on screen says it.",
+     "evidence": "ch5.ts scenes.problem.steps[0].text and steps[1].text ('절반쯤 읽자 게이지가 끝까지 차고, 스크립트가 멈췄어요. 메모리 부족(...)이에요.' is only 2 sentences); storyboard: \"실제로는 조금씩 나눠 읽는 방법도 있지만…\"",
+     "fix": "problem step 2: \"절반쯤 읽자 게이지가 끝까지 차고, 스크립트가 멈췄어요. 메모리 부족(Out of Memory, 메모리를 다 써서 프로그램이 멈추는 것)이에요. 조금씩 나눠 읽으면 당장은 버틸 수 있지만, 데이터는 계속 불어나고 있어요.\""
+    },
+    {
+     "file": "src/content/chapters/ch6.ts",
+     "chapter": "ch6",
+     "severity": "medium",
+     "problem": "Solution step 1 says \"같은 카드로 5분 안에 다섯 번 이상 결제되면, 결제를 보류하고 알림을 보내요.\" (figures.hold '결제 보류 · 카드 A'). The detector is a stream consumer that reads payment events after they are recorded. By the time it counts the 5th payment, those payments have already gone through. It can't hold them. What it can do is hold the orders or shipment, which is exactly the harm from scene 2 ('그사이 물건은 이미 출고됐어요'), or block further payments. Blocking a payment as it happens is a synchronous check at approval time, which is a different design.",
+     "evidence": "ch6.ts scenes.solution.steps[0].text; figures.hold; scenes.problem.steps[1].text ('출고'); storyboard 07-ch6 정확성 메모: \"'결제 보류 + 알림'은 단순화다… 화면 고지 없음\"",
+     "fix": "\"이제 앱은 결제가 생기는 즉시 이벤트 브로커에 기록해요. 이상 결제 탐지는 같은 카드로 5분 안에 다섯 번 이상 결제되면, 그 주문들의 출고를 멈추고 알림을 보내요.\" and figures.hold → ['출고 보류 · 카드 A', '5분 안에 5회']"
+    },
+    {
+     "file": "src/content/chapters/ch6.ts",
+     "chapter": "ch6",
+     "severity": "medium",
+     "problem": "Window step 3 says \"지하철에서 10시 4분에 한 결제의 이벤트가 신호가 약해 10시 6분에야 도착하면요?\" A payment is approved and recorded on the server. A weak phone signal delays the payment itself, not an event about a payment that already happened. The example teaches that payment events are created on the user's phone, with the phone's clock. That is a wrong mental model, and trusting client timestamps for fraud detection is an anti-pattern. 'Phone offline, event sent later' fits app click or view logs, not payments.",
+     "evidence": "ch6.ts scenes.window.steps[2].text; figures.events last item {at:4, got:6}",
+     "fix": "\"결제 서버와 브로커 사이 네트워크가 잠깐 막혀, 10시 4분에 일어난 결제 이벤트가 10시 6분에야 도착하면요? 일어난 시각으론 10:00–10:05 상자 몫인데, 상자가 이미 닫혔을 수 있어요. 그래서 상자를 몇 분 더 열어 두는데, 오래 기다릴수록 결과는 늦어져요.\""
+    },
+    {
+     "file": "src/content/chapters/ch4.ts",
+     "chapter": "ch4",
+     "severity": "low",
+     "problem": "Solution step 2 says \"정의는 dbt(...) 같은 도구로 관리해요. 정의가 코드 파일이 되니, 누가 언제 바꿨는지 남고 바꾸기 전에 함께 검토할 수 있어요.\" Being a file doesn't record history, and dbt isn't what records it either. The change history and review come from version control (Git) plus code review. The storyboard knows this ('변경 기록·검토는 dbt 자체 기능이라기보다…'), but the text credits the file or the tool.",
+     "evidence": "ch4.ts scenes.solution.steps[1].text; figures.logTitle '순매출.sql 변경 기록'",
+     "fix": "\"정의는 dbt(data build tool, SQL로 쓴 변환을 파일로 관리하고 실행하는 도구) 같은 도구로 코드 파일로 만들어요. 이 파일을 버전 관리(Git 등)에 두면, 누가 언제 바꿨는지 남고 바꾸기 전에 함께 검토할 수 있어요.\""
+    },
+    {
+     "file": "src/content/chapters/ch5.ts",
+     "chapter": "ch5",
+     "severity": "low",
+     "problem": "The slider notice says \"워커를 늘린 만큼 장비 요금도 들어요\". Cost is roughly workers × run time, not worker count alone. Doubling workers that halve the time costs about the same. Cost only climbs once the gains shrink. By the model's own numbers: 1×980=980, 8×147=1,176, 32×81=2,592, 64×98=6,272 worker-minutes. As written, learners may think scale-out always multiplies cost.",
+     "evidence": "ch5.ts interaction.notice; interaction.rows",
+     "fix": "\"실제로는 더 복잡해요. 처리 시간은 데이터 모양, 네트워크, 설정에 따라 크게 달라지고, 요금은 대략 '워커 수 × 실행 시간'만큼 들어서 효과가 줄어든 뒤엔 요금만 늘어요. 이 모델은 시간만 봐요.\""
+    },
+    {
+     "file": "src/content/chapters/ch5.ts",
+     "chapter": "ch5",
+     "severity": "low",
+     "problem": "Distributed step 4 says \"같은 상품끼리 세려면 그 상품의 로그가 한 워커에 모여야 해요.\" For counting, engines first count locally on each worker and move only those partial counts. Not every log row crosses the network. The storyboard admits this but nothing on screen says it.",
+     "evidence": "ch5.ts scenes.distributed.steps[3].text; storyboard 06-ch5: \"각 워커가 먼저 자기 몫을 일부 세어 둔 뒤 중간 결과만 옮겨…\"",
+     "fix": "\"같은 상품끼리 세려면 그 상품의 로그(또는 워커마다 먼저 세 둔 중간 합계)가 한 워커에 모여야 해요. 이렇게 워커끼리 네트워크로 데이터를 주고받는 걸 셔플(Shuffle, 같은 기준의 데이터를 한 워커로 모으는 과정)이라고 해요. 네트워크로 옮기고 중간에 디스크에도 쓰니, 옮길 양이 많을수록 비싸요.\""
+    },
+    {
+     "file": "src/content/chapters/ch6.ts",
+     "chapter": "ch6",
+     "severity": "low",
+     "problem": "The summary says \"스트리밍은 배치를 더 자주 돌리는 게 아니라, 이벤트가 생기는 대로 흘려보내 바로 처리하는 방식이에요.\" The quiz explanation repeats it. Common stream engines (e.g., Spark Structured Streaming) process in micro-batches internally, so learners will soon read that streaming is 'small batches'. The real difference from the failed attempt is a job that stays on and processes only new events, instead of re-scanning tables on a timer. microNote covers this only partly.",
+     "evidence": "ch6.ts summary; quiz.explanation; storyboard 07-ch6: \"마이크로배치로 처리하는 것도 있어 경계가 늘 칼같지는 않다. 화면 고지 없음\"",
+     "fix": "summary: \"스트리밍은 같은 배치를 더 자주 돌리는 게 아니라, 계속 켜져 있으면서 새로 생긴 이벤트만 그때그때 이어서 처리하는 방식이에요.\""
+    },
+    {
+     "file": "src/content/chapters/ch6.ts",
+     "chapter": "ch6",
+     "severity": "low",
+     "problem": "Broker step 4 says \"한 컨슈머 안의 워커 여러 개가 레인을 나눠 맡아 읽어요\". In Kafka terms each reader is itself a consumer, and the set that splits partitions is a consumer group. 'A consumer containing workers' turns that around, and learners will hit the real terms right away in any doc or on card K.",
+     "evidence": "ch6.ts scenes.broker.steps[3].text; cards.ts K def '여러 컨슈머가 각자 속도로 읽게'",
+     "fix": "\"토픽은 여러 파티션(Partition, 토픽을 나눈 레인)으로 쪼개져, 같은 일을 맡은 컨슈머 여러 개(컨슈머 그룹)가 레인을 나눠 맡아 읽어요. Ch5에서 날짜별로 나눈 저장 파티셔닝과는 이름은 같아도 쓰임이 달라요. 순서는 한 레인 안에서만 지켜지니, 같은 카드의 결제는 같은 레인으로 보내요.\""
+    },
+    {
+     "file": "src/content/chapters/ch6.ts",
+     "chapter": "ch6",
+     "severity": "low",
+     "problem": "Window step 2 says \"이벤트에는 시각이 둘 있어요. … 처리 시간(Processing time, 시스템이 받은 시각)\". Processing time is when the processing system handles the event. The time the broker received it is a third time, ingestion time. Also, the event doesn't carry processing time; only event time is in the record.",
+     "evidence": "ch6.ts scenes.window.steps[1].text",
+     "fix": "\"이벤트를 다룰 땐 시각이 둘이에요. 이벤트 시간(Event time, 실제로 일어난 시각)과 처리 시간(Processing time, 시스템이 받아 처리하는 시각)이에요. 이상 결제 탐지는 결제를 이벤트 시간 기준으로 윈도우(Window, 5분처럼 시간으로 나눈 상자)에 담아 횟수를 세어요.\""
+    },
+    {
+     "file": "src/content/chapters/ch6.ts",
+     "chapter": "ch6",
+     "severity": "low",
+     "problem": "The rule is \"같은 카드로 5분 안에 다섯 번 이상\" (solution step 1), but it is shown with fixed 10:00–10:05 / 10:05–10:10 boxes (tumbling windows). Five payments from 14:03 to 14:07 straddle a box edge and would be missed. Real rules use sliding or hopping windows. Nothing on screen says this (the storyboard notes '화면 고지 없음').",
+     "evidence": "ch6.ts figures.windows; scenes.solution.steps[0].text; figures.ruleNote",
+     "fix": "ruleNote: \"이 규칙은 이야기를 위한 가상 예시예요. 실제 탐지는 여러 신호를 함께 보고, 상자 경계에 걸친 결제도 놓치지 않게 상자를 겹쳐 밀어 가며 세기도 해요.\""
+    },
+    {
+     "file": "src/content/chapters/ch6.ts",
+     "chapter": "ch6",
+     "severity": "low",
+     "problem": "Broker step 2 defines 이벤트 브로커 as \"이벤트를 받은 순서대로 기록해 두는 중간 저장소\". Order is only kept within a partition, which step 4 itself says later ('레인끼리는 순서 약속 없음', quiz d). The first definition sets up an overgeneralisation that has to be taken back two steps later.",
+     "evidence": "ch6.ts scenes.broker.steps[1].text vs steps[3].text and quiz option d feedback",
+     "fix": "\"흐르는 물에는 관이 필요해요. 이벤트 브로커(Event broker, 이벤트를 차례로 기록해 두는 중간 저장소)가 그 관이고, Kafka 같은 도구가 대표적이에요. 프로듀서(Producer, 이벤트를 쓰는 쪽)인 앱은 결제마다 '결제' 토픽(Topic, 이벤트 종류별 통로)에 기록해요.\""
+    },
+    {
+     "file": "src/content/chapters/ch7.ts",
+     "chapter": "ch7",
+     "severity": "low",
+     "problem": "Test step 3 says \"검문소가 있었다면 금요일 저녁에 이미 알았을 거예요.\" (figures.rewind '금 18:05'). That only works if the 주문 이벤트 테이블 is loaded and tested every few minutes. The chapter only shows one '주문 이벤트 적재' run per day (실행 이력 grid 금·토·일·월), and Ch6's lake consumer reads in bundles. With a daily load the alert would come early Saturday. The freshness label ('마지막 행: 12분 전, 기준 1시간') hints at near-real-time loading, but the text never says so.",
+     "evidence": "ch7.ts scenes.test.steps[2].text; figures.rewind; figures.historyTitle/historyDays; figures.freshness",
+     "fix": "Say how often the table loads in test step 2: \"…신선도(Freshness, 최근 데이터가 제때 들어왔는지)도 봐서, 몇 분마다 채워지는 이 테이블에 1시간 넘게 새 주문이 없으면 의심해요.\" (Or soften step 3 to \"검문소가 있었다면 첫 빈 값이 적재된 직후, 회의 한참 전에 알았을 거예요.\")"
+    },
+    {
+     "file": "src/content/chapters/ch7.ts",
+     "chapter": "ch7",
+     "severity": "low",
+     "problem": "Attempt step 4 says \"…금요일 18시 이후 치를 다시 돌려요. 회의 2분 전, 매출이 돌아왔어요.\" Re-running three days of loads is only safe because the pipeline is idempotent (Ch3) and the raw events are still kept. Otherwise it repeats Ch3's double-load bug. The storyboard assumes this but nothing on screen says it. It's a missed chance to show judgment.",
+     "evidence": "ch7.ts scenes.attempt.steps[3].text; storyboard 08-ch7: \"Ch3에서 파이프라인을 멱등하게 만들어 둔 덕분이라는 전제… 화면 고지 없음\"",
+     "fix": "\"주니는 이벤트를 테이블로 옮기는 쿼리 한 줄을 고쳐 `amount`도 읽게 하고, 금요일 18시 이후 치를 다시 돌려요. Ch3에서 멱등하게 만들어 둔 덕분에 두 번 들어갈 걱정은 없어요. 회의 2분 전, 매출이 돌아왔어요.\""
+    },
+    {
+     "file": "src/content/chapters/ch7.ts",
+     "chapter": "ch7",
+     "severity": "low",
+     "problem": "Test step 1 says \"길목마다 검문소를 세워 조건을 지킨 데이터만 통과시키는 것\". That describes filtering row by row. Step 3 then says a failed test stops the whole pipeline ('파이프라인을 멈추고'), which is how most data tests work. The two descriptions of the same gate don't match.",
+     "evidence": "ch7.ts scenes.test.steps[0].text vs steps[2].text",
+     "fix": "\"다음엔 사람보다 파이프라인이 먼저 알아채야 해요. 길목마다 검문소를 세워 데이터가 조건을 지키는지 자동으로 확인하는 것, 데이터 품질 테스트(Data quality test, 데이터가 지켜야 할 조건을 자동으로 검사하는 것)예요.\""
+    },
+    {
+     "file": "src/content/chapters/ch7.ts",
+     "chapter": "ch7",
+     "severity": "low",
+     "problem": "Test step 4 says \"YAML(…)로 어느 열에 어떤 검사를 할지 선언하면, 파이프라인이 돌 때마다 자동으로 검사해요.\" YAML is just a file format. A quality-test tool reads the file and runs the checks. As written, it suggests YAML itself does the testing (card Y has a similar risk).",
+     "evidence": "ch7.ts scenes.test.steps[3].text; cards.ts Y",
+     "fix": "\"이 규칙들은 코드로 적어 둬요. YAML(사람이 읽기 쉬운 설정 파일 형식)로 어느 열에 어떤 검사를 할지 적어 두면, 품질 검사 도구가 그 파일을 읽어 파이프라인이 돌 때마다 자동으로 검사해요.\""
+    },
+    {
+     "file": "src/content/chapters/ch7.ts",
+     "chapter": "ch7",
+     "severity": "low",
+     "problem": "Attempt step 2 says \"Ch4에서 '매출'을 한곳에 정의해 둔 덕분에, 대시보드에서 찾아갈 정의는 하나뿐이에요.\" Ch4 ended with two named metrics (총매출, 순매출), and its lesson was that a bare '매출' was the problem. Calling it '매출' here quietly undoes that lesson.",
+     "evidence": "ch7.ts scenes.attempt.steps[1].text; ch4.ts figures.tiles ['총매출','순매출']",
+     "fix": "\"주니는 숫자가 지나온 길, 리니지(Lineage, 데이터가 어디서 와서 어떻게 바뀌어 어디로 가는지의 계보)를 거꾸로 따라가요. Ch4에서 지표를 이름 붙여 한곳에 정의해 둔 덕분에, 대시보드 숫자에서 찾아갈 정의는 하나뿐이에요. 매출 쿼리가 다섯 개였던 그때라면 다섯 곳을 다 뒤졌을 거예요.\""
+    },
+    {
+     "file": "src/content/chapters/ch7.ts",
+     "chapter": "ch7",
+     "severity": "low",
+     "problem": "Solution step 3 says \"두 팀이 계약과 파이프라인을 함께 고친 뒤에 배포해요.\" For a breaking rename (discount → coupon_discount), the usual senior practice is a backward-compatible change: send both names for a while, move the consumers over, then drop the old name. Fixing both sides and deploying them together is the riskier pattern, and this course says it teaches senior judgment.",
+     "evidence": "ch7.ts scenes.solution.steps[2].text; figures.agree '계약 v2 합의'",
+     "fix": "\"다음 주 금요일, 태오가 `discount`를 `coupon_discount`로 바꾸려 해요. 이번엔 CI가 배포 전에 계약 위반을 잡아요. 두 팀은 계약 v2를 합의하고, 한동안 두 이름을 함께 보내다가 파이프라인을 옮긴 뒤 옛 이름을 지워요.\""
+    },
+    {
+     "file": "src/content/cards.ts",
+     "chapter": "ch7",
+     "severity": "low",
+     "problem": "Card Q is defined as \"데이터가 비거나 겹치지 않고 허용 범위 안에서 제때 도착해, 믿고 쓸 수 있는 정도\". It lists completeness, uniqueness, validity and timeliness but leaves out accuracy (the values are actually right), the dimension most tied to the chapter's 'quietly wrong data' message.",
+     "evidence": "cards.ts line 32 (Q)",
+     "fix": "def: \"데이터가 비거나 겹치지 않고, 허용 범위 안의 맞는 값으로 제때 도착해 믿고 쓸 수 있는 정도\""
+    }
+   ]
+  },
+  "content1": {
+   "summary": "Content accuracy audit of prologue, ch1, ch2 and ch3. I read src/content/chapters/{prologue,ch1,ch2,ch3}.ts in full, plus the backing strings in src/content/map.ts and src/content/cards.ts. Nothing is factually wrong enough to rate high. Every acronym expansion is correct (CSV, JSON, SQL, OLTP/OLAP, ETL/ELT, DAG), and so are the definitions (idempotency, backfill, retry, schema, structured/semi-structured/unstructured data). The cards S, U, J, O, E, B, A, D and I are fine. The in-story arithmetic all checks out: 1,532 − 5 = 1,527; 9 items with P1 = 4; raw revenue 10,000 vs real 19,000 won; the 3/2/1 date split; 1,800/1,200 = 1.5×. No invented real-world statistics: all numbers are in-story, and the exaggerated DB-load gauge is already disclosed (ch1 loadNote). The Ch1 SQL runner's aggregate behaviour matches real SQL: SUM over no rows gives NULL, COUNT gives 0, GROUP BY over no rows returns no rows (sql.ts:477). Four medium findings: (1) a Prologue note that teaches a wrong rule for what gets stored (\"장바구니는 돈이 안 오가서 이벤트 로그에만\"); (2) after Ch1 shows the CSV is an export of 운영 DB, the map still draws it as coming from the app (map.ts:130); (3) the Ch2 운영 DB holds '4,000원' and three date formats, which contradicts the typed schema taught in the Prologue, with no disclosure; (4) the Ch3 DAG has no load step, yet the text sets \"적재: 그날 치 덮어쓰기\". The rest are low-severity clarity or senior-practice notes (backfill needs a date parameter, alert policy is inconsistent, ETL vs batch blurred, PII missing as a reason to choose ETL, value case sensitivity in the SQL runner help, and others). Of the lead's known issues, I verified the two in my chapters on a 390×844 mobile viewport. Both are real. The Ch2 runner has a 185px empty band in the finished state in BOTH ETL and ELT (not only ELT). The Ch1 runner leaves 127px empty at step 1 (FROM); the gap shrinks to 7px by the last step. The Ch4 star-schema and Epilogue tag issues are outside prologue–ch3 and I did not verify them. Measurement scripts and screenshots are in /private/tmp/claude-501/-Users-kimtaewoo-DE-web/87f927fd-5f5a-4ca9-8840-608bdfafed08/scratchpad/content-p03/ (m3.cjs, ch2-etl-s.png, ch2-elt-s.png).",
+   "findings": [
+    {
+     "file": "src/content/chapters/prologue.ts",
+     "chapter": "prologue",
+     "severity": "medium",
+     "problem": "interaction.notes.cart (L41) says \"장바구니는 아직 돈이 오가지 않아서 이벤트 로그에만 남아요.\" The causal rule is wrong. Whether something is stored in the service DB depends on whether the service needs to remember it, not on whether money moves. In a real shop the cart contents are persisted in the operational DB (or a session store) so the cart survives a page reload. Ch1 then shows the ops DB holding products and customers tables, which aren't money either, so learners hit a contradiction. The real distinction is: the add_to_cart *action* goes to the event log, the cart *state* is stored by the service, and neither is a confirmed transaction.",
+     "evidence": "prologue.ts:41 notes.cart, shown when the user presses 장바구니 담기 in the '가게 직접 이용해보기' interaction; contrast ch1.ts:247-248 (cardOrders/cardProducts) and ch1.ts:272 (customers table in 운영 DB).",
+     "fix": "Replace notes.cart with: \"장바구니에 담는 행동은 이벤트 로그에 남아요. 담아 둔 목록 자체는 가게 시스템에도 저장되지만, 아직 주문이 확정되지 않아서 트랜잭션은 아니에요.\""
+    },
+    {
+     "file": "src/content/map.ts",
+     "chapter": "ch1",
+     "severity": "medium",
+     "problem": "Wrong lineage. Ch1 problem step 1 shows the CSV being exported from 운영 DB (arrow labelled 내보내기), and the Ch1 quiz feedback says \"CSV는 운영 DB에서 뽑은 사본이에요\". Yet from the Ch1 solution until the CSV disappears in Ch2, the map still draws 쇼핑몰 앱·웹 → CSV 파일 and has no 운영 DB → CSV edge. That teaches an impossible data flow (the app writing the CSV directly), right in the course whose theme is data flow.",
+     "evidence": "map.ts:130 `{ from: 'app', to: 'csv', kind: 'data', start: 0, until: 2 }` with no oltp→csv edge; ch1.ts:444 alt: \"쇼핑몰 앱·웹 → CSV 파일 → 주니의 노트북 실선은 그대로\"; ch2.ts:310 and ch2.ts:397 alts repeat \"쇼핑몰 앱·웹에서 CSV 파일을 거쳐\"; ch1.ts:343 alt shows 운영 DB → 주문내역.csv (내보내기); ch1.ts:482 quiz feedback.",
+     "fix": "Keep app→csv for t<1 (Juni's naive first drawing). Set it to `until: 1` and add `{ from: 'oltp', to: 'csv', kind: 'data', start: 1, until: 2 }`. Update the alts at ch1.ts:444, ch2.ts:310 and ch2.ts:397 to say \"운영 DB → CSV 파일 → 주니의 노트북\". Optionally change ch1.ts:443 to: \"파이프라인 맵에 운영 DB가 생겼어요. 앱의 주문이 쌓이는 곳이고, CSV도 사실 여기서 내보낸 사본이었죠. 운영 DB에서 노트북으로 곧장 가는 '직접 쿼리' 점선엔 경고가 붙었어요.\""
+    },
+    {
+     "file": "src/content/chapters/ch2.ts",
+     "chapter": "ch2",
+     "severity": "medium",
+     "problem": "The source table is labelled '운영 DB · 주문' (srcTable), but it holds prices like '4,000원' and dates in three formats (2026-06-09, 06/09/2026, 2026.6.9). A typed OLTP column (금액: 숫자, 주문시각: 시각, which is exactly the schema the Prologue taught at prologue.ts:104) cannot store these. Mixed formats really come from text-typed columns, spreadsheets/CSV exports, or several input channels. The text never says why the ops DB allows this, so it quietly contradicts the Prologue's schema lesson. It also presents the 'text is skipped by SUM' behaviour as universal. That's spreadsheet behaviour: Postgres errors, and MySQL coerces '4,000원' to 4. sumNote covers only part of this.",
+     "evidence": "ch2.ts:14-21 RAW_ORDERS (price '4,000원', three date formats); ch2.ts:235 srcTable '운영 DB · 주문'; ch2.ts:337 attempt step 3 text; prologue.ts:104 schema ['금액: 숫자', '주문시각: 시각']; ch2.ts:246 sumNote.",
+     "fix": "Rewrite ch2.ts:337 as: \"매출은 10,000원으로 나왔어요. 바구니의 초기 주문 표는 가격과 날짜를 글자 칸에 받아서, '4,000원' 같은 값이 합계에서 빠졌거든요. 날짜도 모양이 제각각이라 날짜별로 묶으니 같은 6월 9일이 세 칸으로 쪼개졌어요.\" Change sumNote (L246) to: \"엑셀처럼 글자를 건너뛰는 도구도 있고, 합계가 아예 오류로 멈추는 도구도 있어요.\""
+    },
+    {
+     "file": "src/content/chapters/ch3.ts",
+     "chapter": "ch3",
+     "severity": "medium",
+     "problem": "The five-job DAG (추출 → 주문 정리·상품 정리 → 매출 집계 → 리포트) has no load step. Yet the solution configures \"적재: 그날 치 덮어쓰기\", and the closing step credits the overwrite for there being no duplicates after 추출 failed. Learners who just learned E-T-L in Ch2 can't see where loading happens, or why an *extract* failure would leave partial rows in 분석용 DB. Implicitly, '추출' copies rows into 분석용 DB, and the cleaning steps run inside it (EL then T), but this is never said.",
+     "evidence": "ch3.ts:8-14 JOBS (no load); ch3.ts:135 tags '적재: 그날 치 덮어쓰기'; ch3.ts:270 \"적재는 그날 치 덮어쓰기로 바꿨어요\"; ch3.ts:279 \"추출이 중간에 끊겼다 다시 돌았지만, 그날 치를 덮어써서 중복이 없어요\"; docs/storyboard/04-ch3.md:68 has the same five nodes.",
+     "fix": "Rename JOBS.extract from '추출' to '추출·적재' (two-word label, so no layout change elsewhere). Otherwise, add a sentence to analogy step 2 (ch3.ts:232). Rewrite L279 as: \"아침 리포트는 평소처럼 1,200건, 1,200만 원이에요. 어제 주문을 분석용 DB에 싣던 추출·적재가 중간에 끊겼다 다시 돌았지만, 그날 치를 덮어써서 중복이 없어요.\""
+    },
+    {
+     "file": "src/chapters/Ch02/CodeRunner.tsx",
+     "chapter": "ch2",
+     "severity": "medium",
+     "problem": "Lead-reported issue, confirmed and broader than reported. On mobile the runner diagram reserves a fixed work band between the belt and 분석용 DB (store y is hard-coded to S = 404). That band is empty whenever no transform is in progress: before running, after a finished ETL run, and for the whole ELT run, because in ELT transforms happen inside the store. The result is a 185px empty band.",
+     "evidence": "Playwright on 390×844 (isMobile, ?mount=all) after ▶ 실행 completes. svg.diagram is 316×625 (ETL) / 316×650 (ELT). The largest empty vertical gap is 185px (y 156→341 from the svg top) in BOTH modes, with both normal and reduced motion. See scratchpad/content-p03/ch2-etl-s.png and ch2-elt-s.png. Code: CodeRunner.tsx:67 `const S = 404`, :81 `work: { x0: 30, x1: 30, y: 188 }`.",
+     "fix": "In geo() (mobile branch), size the work band by use. When no transform runs outside the store (ELT, or a copy with no transform lines), set S to about belt.lineY + 40 (~200). Otherwise keep 404. If the band should also collapse after a finished ETL run, tween the viewBox height (attr tweens are allowed by CHAPTER_GUIDE)."
+    },
+    {
+     "file": "src/content/chapters/ch3.ts",
+     "chapter": "ch3",
+     "severity": "low",
+     "problem": "Backfill is called safe purely because the load is idempotent. But the Ch2/Ch3 job extracts \"어제\" relative to the run time (ch2.ts:57 `날짜=\"어제\"`). Re-running it can't recompute last week unless the job takes the target date as a parameter (Airflow's logical date). This is the most common real backfill pitfall. The existing disclaimer is vague about it.",
+     "evidence": "ch3.ts:261 \"멱등하면 백필(...)도 안전해요. 숫자가 틀렸던 지난 일주일을 다시 계산해도 중복이 안 생기거든요.\"; ch2.ts:57 extract(..., 날짜=\"어제\").",
+     "fix": "Rewrite L261 as: \"멱등하면 백필(Backfill, 지난 날짜들의 데이터를 다시 처리해 채워 넣는 일)도 안전해요. 작업이 '어제' 대신 '처리할 날짜'를 받아 돌게 해 두면, 틀렸던 지난 일주일을 날짜마다 다시 계산해도 중복이 안 생기거든요. 실제로는 더 복잡하지만, 여기선 '그날 치 지우고 다시 쓰기'만 봐요.\""
+    },
+    {
+     "file": "src/content/chapters/ch3.ts",
+     "chapter": "ch3",
+     "severity": "low",
+     "problem": "The alert policy is inconsistent. The definition scene says people are alerted only after every retry fails, but the solution alerts on the first failure. In the story that wakes someone at 03:05 for a failure that heals itself at 03:10, which is the alert-fatigue anti-pattern a senior would avoid. In a course about senior judgement this should be deliberate.",
+     "evidence": "ch3.ts:253 \"재시도까지 다 실패하면 사람에게 알림을 보내요.\" vs ch3.ts:135 tag '첫 실패부터 알림', ch3.ts:270 and ch3.ts:275 \"이번엔 바로 알림이 왔고\".",
+     "fix": "Change the L253 text to: \"재시도까지 다 실패하면 꼭 사람에게 알려야 해요. 몇 번째 시도에서 언제 실패했는지는 실행 이력에 남아요.\" Change the L135 tag to '재시도까지 실패하면 알림'. Alternatively, keep first-failure alerts and relabel them as '확인용 알림 · 자동 재시도 중' (notify6 already says 03:10 자동 재시도)."
+    },
+    {
+     "file": "src/content/chapters/ch2.ts",
+     "chapter": "ch2",
+     "severity": "low",
+     "problem": "The duplicate 2042 order sits in the *operational* DB with the same order number. A normal orders table has a primary key that rejects this. A double-click usually creates two orders with different numbers, which a by-order-number dedupe would miss. dupNote half-discloses this but doesn't say it's unusual.",
+     "evidence": "ch2.ts:332 \"결제 버튼이 두 번 눌려, 2042번 주문이 두 줄로 저장돼 있었거든요.\"; ch2.ts:245 dupNote; RAW_ORDERS L16-17.",
+     "fix": "Change dupNote (L245) to: \"바구니의 초기 주문 표에는 같은 주문번호를 막는 규칙이 아직 없었어요. 보통은 주문 표에 이 규칙을 걸어 둬요.\""
+    },
+    {
+     "file": "src/content/chapters/ch2.ts",
+     "chapter": "ch2",
+     "severity": "low",
+     "problem": "'06/09/2026' is ambiguous: 9 June in US format, 6 September in DD/MM format. The content treats it as certainly 6월 9일, with no hint that cleansing dates means knowing each source's format. That is a classic cleansing trap worth one clause.",
+     "evidence": "ch2.ts:16-17 date '06/09/2026'; ch2.ts:337 \"같은 6월 9일이 세 칸으로 쪼개졌어요\"; ch2.ts:86 fix_dates desc.",
+     "fix": "Add a figure note to the analogy scene (next to transformNote, L264): \"'06/09/2026'은 나라에 따라 6월 9일도, 9월 6일도 돼요. 정리할 땐 원본이 어떤 모양을 쓰는지 먼저 확인해요.\""
+    },
+    {
+     "file": "src/content/chapters/ch2.ts",
+     "chapter": "ch2",
+     "severity": "low",
+     "problem": "The ETL-vs-ELT choice leaves out one of the most common real reasons to transform before loading: sensitive data (PII) that must not land in the warehouse raw. That ties directly to Ch9. Separately, \"저장·연산이 싸고\" overstates things. Cloud warehouses made storage cheap and compute elastic, not necessarily cheap.",
+     "evidence": "ch2.ts:220 common: \"원본을 다시 쓸 일이 있는지, 저장소가 넉넉한지에 따라 골라요.\"; ch2.ts:377 \"저장·연산이 싸고 쉽게 늘릴 수 있는 분석용 저장소가 흔해지면서\".",
+     "fix": "L220: \"어느 쪽도 틀리지 않아요. 원본을 다시 쓸 일이 있는지, 저장소가 넉넉한지, 개인정보처럼 저장소에 그대로 두면 안 되는 값이 있는지에 따라 골라요.\" L377: \"저장은 싸고 연산은 필요할 때 늘릴 수 있는 분석용 저장소가 흔해지면서 ELT가 많이 쓰이게 됐어요. 원본을 넉넉히 쌓아 두고, 저장소 안에서 필요할 때 다시 정리할 수 있거든요.\""
+    },
+    {
+     "file": "src/content/chapters/ch2.ts",
+     "chapter": "ch2",
+     "severity": "low",
+     "problem": "ETL and batch get blurred. The nightly copy in the attempt scene was already a batch, but \"복사를 ETL로 바꿨어요. 이렇게 … 배치라고 해요\" reads as if batch were the new thing, or part of ETL. They are independent choices: what you do (ETL) versus when you do it (batch). The summary also over-generalises \"옮기기만 해서는 숫자가 틀리니\"; copying is only wrong when the source is dirty.",
+     "evidence": "ch2.ts:391 solution step 1; ch2.ts:327 nightly copy already scheduled; ch2.ts:416 summary.",
+     "fix": "L391: \"주니는 밤마다 돌리던 복사를 ETL로 바꿨어요. 하루치를 모아 정해진 때 한꺼번에 처리하는 이 방식은 배치(Batch, 데이터를 모아 두었다가 정해진 때 한꺼번에 처리하는 방식)라고 하고, ETL과는 따로 고르는 '언제'의 선택이에요. 주문이 드문 시간에 운영 DB를 한 번만 읽으니 결제 부담도 적어요.\" L416: \"원본이 지저분하면 옮기기만 해서는 숫자가 틀려요. 꺼내고·정리하고·싣는 과정(ETL)을 정해진 때 한꺼번에(배치) 돌려야 믿을 수 있는 리포트가 매일 아침 나와요.\""
+    },
+    {
+     "file": "src/content/chapters/ch1.ts",
+     "chapter": "ch1",
+     "severity": "low",
+     "problem": "The SQL runner help says case never matters. That's true for keywords and column names, but string values are compared exactly: product_id = 'p1' returns 0 rows with no explanation. Most databases (e.g. Postgres) are also case-sensitive for values. Relatedly, err.textOp states a runner limitation as if it were a SQL rule; real SQL compares text with <, > and LIKE.",
+     "evidence": "ch1.ts:222 help item \"대소문자는 상관없어요.\"; src/chapters/Ch01/sql.ts:381 `case '=': return a === b`; ch1.ts:191 textOp \"글자 열은 = 나 <> 로 같은지만 비교해요.\"",
+     "fix": "L222: \"`SELECT`·`FROM` 같은 낱말과 열 이름은 대소문자를 가리지 않아요. 작은따옴표 안의 값은 가려서 `'p1'`과 `'P1'`은 달라요. `--` 뒤는 사람이 읽는 메모(주석)라 실행하지 않고, 맨 끝 `;`는 있어도 없어도 돼요.\" L191: \"이 실행기에서는 ${c} 같은 글자 열을 = 나 <> 로 같은지만 비교해요.\""
+    },
+    {
+     "file": "src/content/chapters/ch1.ts",
+     "chapter": "ch1",
+     "severity": "low",
+     "problem": "The lead's first advice is to run SQL straight on the production DB, with no guardrail. Two scenes later the same lead is uneasy about it. As written, the senior character models the anti-pattern the chapter then warns against.",
+     "evidence": "ch1.ts:341 seok: \"운영 DB에 다 있어요. SQL 써 봐요.\"; ch1.ts:384 seok: \"이걸 운영 DB에 직접요? 음…\"",
+     "fix": "L341: { who: 'seok', text: '운영 DB에 다 있어요. 작은 질문부터 SQL로 물어봐요.' }"
+    },
+    {
+     "file": "src/content/chapters/ch1.ts",
+     "chapter": "ch1",
+     "severity": "low",
+     "problem": "\"데이터베이스에는 표가 여러 개 담겨 있어요\" presents tables as true of all databases. Only relational databases work that way; document and key-value stores don't. One qualifier keeps it accurate without adding a new term.",
+     "evidence": "ch1.ts:346 problem step 2 text.",
+     "fix": "\"데이터베이스(Database, 데이터를 정리해 저장하고 꺼내 쓰게 해 주는 시스템) 중 바구니가 쓰는 종류는 데이터를 표 여러 개에 나눠 담아요. 표 하나하나는 테이블(Table, 엑셀 시트 같은 표)이라고 해요. 바구니가 장사에 쓰는 이 데이터베이스를 '운영 DB'라고 불러요(DB는 데이터베이스의 줄임말).\""
+    },
+    {
+     "file": "src/content/chapters/ch1.ts",
+     "chapter": "ch1",
+     "severity": "low",
+     "problem": "The 'big query' shown to learners groups revenue by customers.name. Two customers with the same name would be merged into one, so it should group by the customer key. The output also has two columns both called name.",
+     "evidence": "ch1.ts:272 bigQuery: \"SELECT customers.name, products.name, … GROUP BY customers.name, products.name;\"",
+     "fix": "bigQuery: 'SELECT customers.customer_id, customers.name AS 고객, products.name AS 상품, SUM(qty * price) AS 매출\\nFROM orders\\nJOIN products ON orders.product_id = products.product_id\\nJOIN customers ON orders.customer_id = customers.customer_id\\nGROUP BY customers.customer_id, customers.name, products.name;  -- 기간 조건 없음: 전체 기간'. Check that the code panel width still fits on mobile."
+    },
+    {
+     "file": "src/chapters/Ch01/SqlRunner.tsx",
+     "chapter": "ch1",
+     "severity": "low",
+     "problem": "Lead-reported issue, confirmed. The stage SVG's viewBox height is the maximum over all steps, so early steps leave a large empty area under the table on mobile.",
+     "evidence": "Playwright on 390×844 (isMobile, ?mount=all), pressing 한 줄씩 in SQL 실행기. svg.diagram is 298×351 with viewBox 0 0 356 419. After step 1 (FROM, 10 rows) visible content ends at 223px, leaving 127px empty. After the last step only 7px is empty. Code: SqlRunner.tsx:346 maxY accumulates over every step, and :729 viewBox uses stage.h.",
+     "fix": "Record the max Y per step in buildStage, and tween the svg viewBox height to the current step's value inside playPhases/setFrame (attr tweens are allowed). Or set the svg height style per cursor so the frame shrinks to fit the current step."
+    },
+    {
+     "file": "src/content/chapters/prologue.ts",
+     "chapter": "prologue",
+     "severity": "low",
+     "problem": "\"어디에도 남지 않고 사라졌죠\" is absolute, and the scene's own figure note (lostNote) contradicts it: web-server request logs and stored carts usually keep some trace. The step text should match the disclaimer.",
+     "evidence": "prologue.ts:177 attempt step 3; prologue.ts:85 lostNote \"※ 실제로는 가게 시스템 어딘가에 흔적이 조금 남기도 하지만…\"",
+     "fix": "\"CSV에 담긴 건 결제까지 끝난 주문 5건뿐이었어요. 나머지 1,527번의 클릭·검색·장바구니는 분석에 쓸 수 있는 곳 어디에도 남지 않았죠.\""
+    },
+    {
+     "file": "src/content/chapters/prologue.ts",
+     "chapter": "prologue",
+     "severity": "low",
+     "problem": "The data scientist is defined only as someone who predicts the future. Running experiments (A/B tests), statistical inference and modelling are just as central, and 'experimenting' is exactly the lab analogy used here. There's a general disclaimer about roles, but the gloss itself is narrow.",
+     "evidence": "prologue.ts:228 \"데이터 사이언티스트(Data Scientist, 데이터에서 규칙을 찾아 앞일을 예측하는 사람)\"",
+     "fix": "Change the gloss to: \"데이터 사이언티스트(Data Scientist, 실험과 통계·모델로 데이터에서 규칙을 찾고 앞일을 예측하는 사람)\""
+    },
+    {
+     "file": "src/content/chapters/prologue.ts",
+     "chapter": "prologue",
+     "severity": "low",
+     "problem": "The chapter summary says data *is* the trace of people's actions. In a shop, much data comes from systems: inventory, shipping, suppliers, server logs. The chapter is titled '데이터는 어디서 오는가', so the takeaway shouldn't overgeneralise.",
+     "evidence": "prologue.ts:249 summary \"데이터는 사람들의 행동이 남긴 흔적이고, …\"",
+     "fix": "\"바구니의 데이터는 손님들의 행동이 남긴 흔적에서 시작해요. 무엇을 어떤 모양으로 남길지 정하는 데서 데이터 엔지니어링이 시작돼요.\""
+    }
+   ]
+  },
+  "keyboard": {
+   "summary": "I tested keyboard and screen-reader use at 1440x900 and 390x844 (mobile), in normal and reduced-motion modes, against http://localhost:5288/?mount=all. A full Tab pass from the top reaches 157 stops on desktop and 160 on mobile, and wraps back to the skip link with no keyboard trap. Focus order is logical: skip link, motion toggle, HUD button, 12 rail links, hero, then each chapter's interaction, quiz and growth replay, then the epilogue map, dex, links and restart.\n\nWhat works: almost every focused element shows a visible 3px accent ring, including on the dark blueprint chapters. In the HUD dialog, the tabs work with Left/Right arrows, Esc closes it and focus goes back to the opener. TOC links and map nodes close the dialog and move focus to the chapter h2. Quiz radios work with arrow keys, and Enter submits. The ranges have aria-valuetext. Ch3 keeps focus on the retry button by using aria-disabled, and Ch8 moves focus to the slider when it disables a button. The epilogue restart dialog focuses 취소 and Esc returns focus. There are no unnamed buttons, no broken ARIA id references, no duplicate ids and no focusable elements inside aria-hidden. All 102 role=img elements (289 in reduced mode) have labels, and plain scrolling fires no live-region announcements. The heading outline is one h1, an h2 per chapter and an h3 per scene.\n\nThe most serious problem: the skip link is invisible when focused (1x1px, clipped). The root cause is that the unlayered global .sr-only and :focus-visible rules in src/styles/index.css beat Tailwind's layered utilities. The same cause hides the selected state of the motion-preference options and produces double focus rings in the Ch2 editor and on the epilogue map nodes. Other confirmed problems: focus is lost to the page body after a quiz is submitted and after the HUD reset confirm or cancel; the growth card rows become unnamed tab stops when they overflow; card tiles carry their text only in aria-label while the visible text is aria-hidden; the quiz, summary and growth blocks have no headings; there are 106 region landmarks; and turning on 모션 줄이기 moves the reader about two scenes back.\n\nThe lead's known issues, checked: Ch1 SQL runner on mobile is real (svg 351px tall, only 118px visible after the JOIN query runs, so 233px is empty). Ch2 ELT on mobile is real (about 200px empty belt band). The epilogue zoom step 4 issue is partly real: tags and the Ch8 callout overlap node borders and edges, but not the label text. The Ch4 star-schema step 4 dot overlap did not reproduce in frames sampled at 0.15, 0.3, 0.45, 0.5, 0.7 and 0.9 of step 4; the dots only move along the arrows, so it may only happen briefly in between. A flaky case where Tab sometimes stopped on two radios in one quiz group (seen once in Ch3, Ch6, Ch7 and Ch9) did not reproduce consistently, so I left it out. Scripts and screenshots are in /private/tmp/claude-501/-Users-kimtaewoo-DE-web/87f927fd-5f5a-4ca9-8840-608bdfafed08/scratchpad/a11y/ and /Users/kimtaewoo/DE_web/shots/a11y/.",
+   "findings": [
+    {
+     "file": "src/styles/index.css",
+     "chapter": "shared",
+     "severity": "high",
+     "problem": "The skip link '본문으로 건너뛰기' stays invisible when focused. The unlayered .sr-only rule (index.css:113) beats Tailwind's layered focus:not-sr-only / focus:fixed utilities on the link in App.tsx:16, so it never expands.",
+     "evidence": "After the first Tab, document.activeElement is the skip link with computed position:absolute, width:1px, height:1px, clip rect(0,0,0,0), rect [11,11,1,1]. Screenshot scratchpad/a11y/skip.png shows nothing in the top-left. Same 1x1 rect on mobile 390x844.",
+     "fix": "Move the custom .sr-only (and :focus-visible, .btn) into @layer base/components in index.css so utilities can override them. Or add an unlayered rule: .sr-only:focus, .sr-only:focus-visible { position:fixed; width:auto; height:auto; clip:auto; overflow:visible; white-space:normal; margin:0; }"
+    },
+    {
+     "file": "src/components/Quiz.tsx",
+     "chapter": "shared",
+     "severity": "medium",
+     "problem": "Submitting a quiz loses focus. The focused submit button is unmounted ({!done && ...}, line 73) and the fieldset becomes disabled (line 30), so focus falls to <body> right when the result is announced.",
+     "evidence": "In the Ch3 quiz: ArrowDown x2, Tab to '정답 확인', Shift+Tab, Enter. activeElement is then BODY. The aria-live region announces '✓ 정답이에요. 해설 …', but screen-reader focus position is lost. Same for all 11 quizzes.",
+     "fix": "After answer(id, pick), move focus to the result box: give the result <div> tabIndex={-1} and an id, then focus it in an effect when done turns true. Or keep the submit button rendered as aria-disabled instead of removing it."
+    },
+    {
+     "file": "src/components/Hud.tsx",
+     "chapter": "shared",
+     "severity": "medium",
+     "problem": "In the HUD settings tab, pressing 초기화 (reset) or 취소 (cancel) unmounts the focused button with the alertdialog, so focus drops to <body> inside the modal.",
+     "evidence": "hud2.cjs: after '진행도 초기화' → Enter → '초기화', focus is BODY. Same after '취소'. Lines 176-187 call setConfirm(false) with no focus restore.",
+     "fix": "Keep a ref to the '진행도 초기화' button and focus it after setConfirm(false), e.g. in a useEffect on confirm. Optionally focus the resetDone message."
+    },
+    {
+     "file": "src/components/Hud.tsx",
+     "chapter": "shared",
+     "severity": "medium",
+     "problem": "The selected motion preference (시스템 설정 따르기 / 줄이기 / 모두 보기) has no visual checked state. The unlayered .btn background/color beats has-[:checked]:bg-ink / has-[:checked]:text-bg (line 54). Once focus leaves, sighted keyboard users cannot tell which option is active.",
+     "evidence": "Computed label backgrounds for checked and unchecked radios are both rgb(247,248,243), text rgb(32,37,43). Screenshot scratchpad/a11y/hud-settings-radio.png: '줄이기' is checked but looks like the others apart from the focus ring.",
+     "fix": "Same root fix as the skip link (put .btn in @layer components). Or add an unlayered rule: .btn:has(input:checked) { background: var(--ink); color: var(--bg); }"
+    },
+    {
+     "file": "src/components/Growth.tsx",
+     "chapter": "shared",
+     "severity": "medium",
+     "problem": "The '얻은 카드' row (div.overflow-x-auto, line 98) overflows on most chapters. Chrome then makes it a focusable scroll container with no role or name, adding an unexplained tab stop. At desktop it also clips the third card.",
+     "evidence": "Tab walk stops on DIV 'A 위 퀴즈를 풀면 이 카드를 얻어요 D …' in Ch3-Ch7. clientWidth/scrollWidth: 1440px wide → ch3-ch7 477/584; 1024px → 365/584 (and 365/384 for 1- or 2-card chapters); 390px → 358/584.",
+     "fix": "Use flex-wrap so the row never scrolls. Or, if scrolling stays, give it tabIndex={0} role=\"region\" aria-label={UI.growth.cards} so the stop is announced."
+    },
+    {
+     "file": "src/components/Collection.tsx",
+     "chapter": "shared",
+     "severity": "medium",
+     "problem": "TermCard puts all text in aria-label on a static <li> (row variant, line 13) or <article> (tall variant, line 34) and hides every visible child with aria-hidden. Screen readers often ignore aria-label on static elements (e.g. NVDA browse mode on li/generic), so card names and definitions in the HUD 도감 tab, the epilogue dex detail and growth may be read as empty list items.",
+     "evidence": "Every child span of the li/article has aria-hidden=\"true\". The only text is the label, e.g. 'A 카드: Ch3 퀴즈를 풀면 열려요'. The AX tree shows 26 article nodes whose content is fully hidden.",
+     "fix": "Drop aria-hidden from the visible term/def spans and remove aria-label; keep only the decorative letter and SVG hidden. Or render the label string in a <span className=\"sr-only\"> inside the element."
+    },
+    {
+     "file": "src/components/Quiz.tsx",
+     "chapter": "shared",
+     "severity": "medium",
+     "problem": "Quiz, summary and growth blocks have no headings ('확인 퀴즈', '한 줄 요약' and '성장' are <p>). Heading navigation cannot reach a quiz, and the growth h4s ('얻은 카드', '역량 변화') end up nested under the solution scene's h3.",
+     "evidence": "Outline per chapter: H2 chapter > H3 scenes … > H3 '<solution title>' > H4 '얻은 카드' > H4 '역량 변화', with no quiz heading. Quiz.tsx:20-22 and Growth.tsx:71-73 use <p id=…>; Chapter.tsx:100 uses <p> for UI.summary.",
+     "fix": "Make the labels <h3> with the same classes (Quiz.tsx line 20, Growth.tsx line 71, Chapter.tsx Summary line 100), so growth h4s sit under the '성장' h3 and quizzes are reachable by heading."
+    },
+    {
+     "file": "src/state/env.tsx",
+     "chapter": "shared",
+     "severity": "medium",
+     "problem": "Turning 모션 줄이기 on or off swaps every ScrubScene for StaticScene (very different heights) and does not keep the reader's place. Keyboard and screen-reader users who toggle mid-chapter land several scenes earlier.",
+     "evidence": "With #ch5-distributed step 2 centred (scrollY 109432), pressing the HUD toggle moves the viewport to ch5-problem step 1 (scrollY 87483). Toggling back gives scrollY 103824.",
+     "fix": "Before setPref, record the [data-step] element (or scene section id) nearest the viewport centre. After the re-render (rAF + refreshTriggers), scroll it back to the centre with scrollIntoView({block:'center'})."
+    },
+    {
+     "file": "src/components/StepScene.tsx",
+     "chapter": "shared",
+     "severity": "low",
+     "problem": "Landmark overload: every scene, quiz and growth <section> with aria-labelledby becomes a region landmark, so screen-reader landmark lists hold about 106 entries. The HUD controls sit outside any landmark.",
+     "evidence": "106 region nodes in the CDP AX tree. Sources: StepScene.tsx:144/208, Quiz.tsx:19, Growth.tsx:69, Chapter.tsx InteractionFrame aria-label, Epilogue blocks sections, plus 12 chapter sections.",
+     "fix": "Keep regions only on the 12 chapter sections. Drop aria-labelledby/aria-label from scene, quiz, growth and interaction <section>s (headings already structure them), or turn those into <div>s."
+    },
+    {
+     "file": "src/components/Hud.tsx",
+     "chapter": "shared",
+     "severity": "low",
+     "problem": "The HUD tablist does not support Home/End, and the aria-controls on 4 of 5 tabs point to ids that do not exist, because only the active tabpanel is rendered.",
+     "evidence": "Pressing Home/End on the tabs does nothing. aria-controls checks: hud-panel-stats/map/toc/settings → not in the DOM; only hud-panel-cards exists (lines 95-110).",
+     "fix": "Handle Home/End in onKey (tabs[0] / tabs.at(-1)). Set aria-controls only on the selected tab, or render all panels with hidden."
+    },
+    {
+     "file": "src/components/Growth.tsx",
+     "chapter": "shared",
+     "severity": "low",
+     "problem": "The 12 growth replay buttons all have the same accessible name '다시 보기', so they cannot be told apart in a button list.",
+     "evidence": "The tab walk lists '↻ 다시 보기' (↻ is aria-hidden) once per chapter, at Prologue and Ch1-Ch10 (line 75-77).",
+     "fix": "Add aria-label={`${toc.label} ${UI.growth.title} ${UI.growth.replay}`} or an sr-only chapter label inside the button."
+    },
+    {
+     "file": "src/chapters/Ch08/TimeTravel.tsx",
+     "chapter": "ch8",
+     "severity": "low",
+     "problem": "The per-version guide line (cur.guide, line 103), e.g. \"여기예요. '금액 보정' 배치가 금액을 모두 0으로 덮어썼어요. 한 칸 더 되감아 볼까요?\", sits outside the aria-live region, so screen-reader users never hear the prompt when they change version.",
+     "evidence": "The live capture on ◀ 이전 버전 / ArrowLeft announces only '변경 기록 v3 … 이 버전 기준 순매출 …'. The guide <p> is not inside the aria-live div (line 191).",
+     "fix": "Move the guide <p> into the aria-live/aria-atomic container, or reference it with aria-describedby on the range input."
+    },
+    {
+     "file": "src/styles/index.css",
+     "chapter": "shared",
+     "severity": "low",
+     "problem": "The unlayered :focus-visible rule (line 102) also overrides focus-visible:outline-none / [&_a]:outline-none. The Ch2 editor shows two nested rings (container plus textarea), and epilogue map nodes show the outline plus the .node-focus rect.",
+     "evidence": "scratchpad/a11y/f39.png (Ch2 textarea, outer and inner orange rings); f87.png and f98.png (epilogue map nodes 쇼핑몰 앱·웹 and 레이크하우스 with doubled rings). Classes at CodeRunner.tsx:638 and Epilogue/blocks.tsx:71.",
+     "fix": "Put the global :focus-visible in @layer base so the outline-none utilities apply. Or use :where(:focus-visible) to drop its specificity and let component rules override it."
+    },
+    {
+     "file": "src/chapters/Epilogue/blocks.tsx",
+     "chapter": "epilogue",
+     "severity": "low",
+     "problem": "In the dex, the selected cell keeps an accent outline (line 111) that looks the same as the keyboard focus ring, so after Tabbing on two cells may look focused. The 26 cells are also 26 separate tab stops with no arrow-key navigation.",
+     "evidence": "Focusing C sets sel=C. ArrowRight does nothing (focus stays on 'C Ch6에서 얻어요'). scratchpad/a11y/dex-s.png.",
+     "fix": "Show selection with a different cue (filled background or thicker border, plus aria-current=\"true\"), and use a roving tabindex with arrow keys across the grid."
+    },
+    {
+     "file": "src/chapters/Prologue/ShopPlayground.tsx",
+     "chapter": "prologue",
+     "severity": "low",
+     "problem": "'처음부터' resets the playground but clears the live region to an empty string, so nothing tells a screen-reader user the logs were cleared.",
+     "evidence": "The live capture after the reset button shows the aria-live <p> text changing to ''. The button is at line 213 and INIT has no live message.",
+     "fix": "Set a live message on reset, e.g. setS({ ...INIT, live: I.resetDone }), with the string added to content/chapters/prologue.ts."
+    },
+    {
+     "file": "src/components/Hero.tsx",
+     "chapter": "shared",
+     "severity": "low",
+     "problem": "The hero card strip <ol> is labelled with UI.hero.cardsCaption (line 64), and the same sentence is repeated as a visible <p> right after it, so screen readers read it twice. The skip link also targets #prologue, skipping the hero h1 and the '처음부터 시작하기' button even though it says 본문 (main content).",
+     "evidence": "aria-label and the following <p> are both '챕터를 마칠 때마다 용어 카드를 한 장씩 모아요. 26장이면 A부터 Z까지.' App.tsx:15 href=\"#prologue\".",
+     "fix": "Give the <p> an id and use aria-labelledby on the <ol> (or drop the aria-label). Point the skip link at <main id=\"main\" tabIndex={-1}> so it lands on the hero."
+    },
+    {
+     "file": "src/components/StepScene.tsx",
+     "chapter": "shared",
+     "severity": "low",
+     "problem": "In scrub mode the sticky diagram (role=img, aria-label=scene.title, line 150) comes before the scene <h3> in the DOM, so screen readers read the title twice ('image, <title>' then 'heading, <title>'). The image adds nothing because per-step descriptions are already in the sr-only '그림 설명' paragraphs.",
+     "evidence": "Every ScrubScene: the DIV role=img labelled e.g. '행동이 흔적을 남긴다' comes before H3 '행동이 흔적을 남긴다'.",
+     "fix": "Mark the sticky diagram wrapper aria-hidden=\"true\", since step alts are already in StepBody; or move SceneHeader before the sticky div in DOM order."
+    },
+    {
+     "file": "src/chapters/Ch01/SqlRunner.tsx",
+     "chapter": "ch1",
+     "severity": "medium",
+     "problem": "Lead's issue confirmed: on mobile the SQL runner stage svg keeps the height of the tallest step, leaving a large empty block under the result.",
+     "evidence": "At 390x844 with the default JOIN query: after '한 줄씩' step 1 the svg is 351px tall with 223px visible (127px empty); after a full run, 118px visible (233px empty). The svg is at line 729 with viewBox 0 0 stage.w stage.h.",
+     "fix": "Size the viewBox height (or a gsap attr tween) to the current step's content bottom instead of the stage maximum, or top-align and cap the container's max-height per step on mobile."
+    },
+    {
+     "file": "src/chapters/Ch02/CodeRunner.tsx",
+     "chapter": "ch2",
+     "severity": "low",
+     "problem": "Lead's issue confirmed: in the mobile layout with the ELT preset ('load를 위로 올리기'), the belt band between 수거/배송 and 분석용 DB stays empty (about 200px), because chips go straight into the store.",
+     "evidence": "390x844 after running ELT: svg 650px tall, with a blank gap of about 200px between the 1 수거 / 2 배송 row and the 분석용 DB cylinder (scratchpad/a11y/ch2m2-s.png). The mobile geometry belt is chipY 118 / lineY 160 (line 80).",
+     "fix": "When snap.where === 'store' in the mobile layout, shift the store group up by the belt height (or use the shorter mobile geometry) and shrink the viewBox to match."
+    },
+    {
+     "file": "src/components/PipelineMap.tsx",
+     "chapter": "epilogue",
+     "severity": "low",
+     "problem": "Lead's issue partly confirmed: at the end of epilogue zoom step 4, chapter tags sit on node top borders and edge lines. The 'Ch8 · 호수와 창고를 합치다 →' callout covers the lakehouse's bottom edge and its incoming arrows, and the Ch10/Prologue tags cover edge lines. No label text is overlapped in the frame checked.",
+     "evidence": "shots/a11y/known2-02.png (#epilogue-zoom step 4 @0.9). Crop scratchpad/a11y/k4crop.png shows the Ch8 callout over the lakehouse's lower edge and arrows, and the Prologue tag on BI 대시보드 over the ✓ edge.",
+     "fix": "Offset tags above the node box (y - h/2 - 22 → clear of the border) and place the epilogue callout below the lakehouse's outgoing edges, or route it beside the node."
+    }
+   ]
+  },
+  "contrast": {
+   "summary": "I audited color and contrast across all 12 stage palettes and found 1 high, 12 medium and 9 low findings.\n\n**How it was checked**\n- `node scripts/contrast.mjs` passes on every stage (exit 0).\n- I wrote a Playwright scanner that does three things on desktop 1440x900 and mobile 390x844:\n  - It scrolls each scrub step to its end state (t ≈ i+0.93) and sweeps the whole page at 0.6-viewport intervals.\n  - For every visible HTML or SVG text it takes the fill/color and the product of ancestor opacity, and reads the background as the pixel mode around the text in a screenshot.\n  - It records the rendered font size in pixels.\n- A second pass ran every interaction (Prologue shop, Ch1 SQL examples, Ch2 code examples, Ch3 DAG fail and retry, Ch5/Ch8/Ch10 sliders, Ch10 toggles), answered every quiz, and replayed every growth sequence.\n- A third pass scanned SVG strokes at each step end.\n\n**What passes**\n- Every colored word drawn in fail/ok (실패, 시간 초과, 품절, 실제와 달라요, ✕ 미달, ✓ 충족, …) passes 4.5:1 where it actually sits. The one borderline case is Ch6 at 4.49.\n- The accent color is only ever used for glyphs (↻ ▶). The lowest is 3.30 on the stage-7 card color, which still passes the 3:1 rule for non-text.\n- Proposal and dashed elements pass: dashed lines at 0.78 opacity reach 5.6–7.5:1, and the muted '제안' label reaches 4.8:1 in stage 10.\n- I found no status shown by color alone. Badges, DagSimulator, Quiz, TimeTravel and TradeoffScale all pair a glyph with text. The Ch4 star step-4 join lines also differ in width (3.4 vs ~1.55).\n- Disabled controls at opacity 0.55 are exempt. That covers 정답 확인, 이전/다음 버전 and the DAG 재시도 button with `aria-disabled`.\n\n**Real problems**\n1. **NEW tag on blueprint stages (high):** the '새로' tag is white text on the accent color, which gives 2.35:1 in Ch7–Ch10 growth maps. It renders at 5.6px on desktop and 3.6–4px on mobile.\n2. **Chapter rail over the Ch6→Ch7 band:** the rail's numbers use stage-6 ink but sit over the dark gradient band, giving 2.23–4.45:1.\n3. **Deliberately dimmed text you still need to read** falls to 1.9–4.0:1:\n   - Ch1 excluded rows: 1.86\n   - Ch4 discount/shipping values: 2.46–2.57\n   - Ch4 warehouse cells: 1.86–2.37\n   - Ch9 original PII table: 3.99\n   - Ch10 plan board: 2.33\n   - Ch10 recall label: 3.61\n   - Ch5 partition paths: 2.59\n   - Ch8 sync: 1.88\n   - background-ghost layers in Prologue, Ch2, Ch6, Ch7, Ch10 and the Epilogue: as low as 1.37\n4. **Muted text on tinted fills:** Ch3 '지난밤' is 3.99:1 and Ch6 '품절인데' is 4.49:1.\n5. **HUD progress bar:** the accent fill against its track is 1.80–3.02:1, failing 3:1 in stages 2–11.\n6. **Very small text in growth and thumbnail maps:** labels render at 5–8px on desktop and 3.6–5.4px on mobile.\n7. **`contrast.mjs` blind spots:** it checks fail/ok only at 3:1 even though they are used for words. It never checks white-on-accent, wait-on-card, or muted text at 0.78 opacity.\n8. **Text selection** is white on accent, which is also 2.35:1 on blueprint stages.\n\n**Lead's known issues — all four are real**\n- **Ch4 star step 4:** the dot overlap is transient. At step position ~0.75–0.80 the `sp2` particles sit on top of '주문 항목 팩트' and on the '3' of '1~3일치만 담은 예시'. They are gone by the end of the step.\n- **Epilogue zoom step 4:** the chapter tags overlap node tops. The Ch8 tag covers the 레이크하우스 cylinder top, and the Ch5 and Ch3 tags are clipped at the right edge.\n- **Ch1 SQL runner on mobile:** after a run finishes, the empty space under the result is 96–233px. Examples 4 and 5 leave a 351px-tall SVG with content ending at 118px.\n- **Ch2 code runner on mobile, ELT example:** there is about a 190px empty band between the belt and the 분석용 DB.\n\n**Lighthouse 12.8.2 accessibility**\n- Five runs: desktop, mobile, desktop scrolled to `#ch7`, `#ch10` and `#epilogue`. All scored 0.93, and the color-contrast audit passed every time. That audit does not check SVG `<text>` or opacity states, so it misses everything above.\n- Three audits failed:\n  - `aria-prohibited-attr`: 48 items, all from `<g data-check aria-label=\"품질 검사\">` in `PipelineMap.tsx:105`.\n  - `label-content-name-mismatch`: 48 items, covering the HUD button, the 5 DAG nodes, 19 map links and 26 dex buttons.\n  - `definition-list`: 1 item, at `Ch10/scenes.tsx:747`.\n\n**Files**\nAll scratch files are in `/private/tmp/claude-501/-Users-kimtaewoo-DE-web/87f927fd-5f5a-4ca9-8840-608bdfafed08/scratchpad/color/`:\n- scripts: `scan.mjs`, `interact.mjs`, `lib.mjs`, `strokes.mjs`, `stepshot.mjs`, `runners.mjs`, `agg.mjs`, `tok.mjs`, `combos.mjs`\n- results: `out/scan-d.json`, `out/scan-m.json`, `out/interact-d.json`, `out/interact-m.json`, `out/strokes-d.txt`\n- screenshots: `out/shots/`, `out/ishots/`, `known/`\n- Lighthouse reports: `lh/*.json`\n\n**False positives I ruled out**\n- Ch1 '■ 중지': two overlapping elements cross-fade.\n- Ch2 'data =': text inside a closed `<details>`.\n- Ch1 transparent mirror text in the SQL editor.\n- Mobile step text that had scrolled underneath the sticky diagram.\n- Mid-transition frames, such as the Epilogue dex 'Ch6' row at 0.53 opacity.",
+   "findings": [
+    {
+     "file": "src/components/PipelineMap.tsx",
+     "chapter": "shared",
+     "severity": "high",
+     "problem": "The '새로' (NEW) tag is white text (#fff) on an accent-filled rect. On blueprint stages (accent #FF8A3D) that is 2.35:1 against the 4.5:1 required. It is also tiny: 11 user units, which renders at 5.6px on desktop and 3.6–4px on mobile. It shows on every growth map for Ch7, Ch8, Ch9 and Ch10.",
+     "evidence": "PipelineMap.tsx:188-193 (rect fill var(--accent); text fill '#fff', fontSize 11). Measured after the growth replay: ch7-growth 2.34:1, ch8 2.35, ch9 2.34/2.35, ch10 2.35, at 5.6px desktop and 3.6px (ch8) / 3.9px (ch10) mobile. Screenshots /private/tmp/claude-501/-Users-kimtaewoo-DE-web/87f927fd-5f5a-4ca9-8840-608bdfafed08/scratchpad/color/out/ishots/d-135-ch8-growth.png and d-131-ch7-growth.png. Palette math: white/accent is 5.00 on stages 0–6 but 2.35 on stages 7–11.",
+     "fix": "Restyle the tag like Badge: rect fill var(--surface) with stroke var(--accent) (≥3.3:1 on every stage) and text fill var(--ink) (≥6.99:1). Alternatively keep the accent fill and use dark text #0B1A2E (about 7.5:1 on #FF8A3D). Make the tag about 14 user units tall with a matching rect so it renders at 10px or more on desktop."
+    },
+    {
+     "file": "src/components/Hud.tsx",
+     "chapter": "shared",
+     "severity": "medium",
+     "problem": "The fixed ChapterRail (lg and up) takes its text color from the active stage. While the 50svh dark gradient band between Ch6 (paper) and Ch7 (blueprint) passes the middle of the screen, the active stage is still 6, so dark #15213A numbers sit on navy. The labels 7, 8, 9, 10 and E become nearly invisible.",
+     "evidence": "Hud.tsx:250-264 (nav uses stageVars(stage); links use text-ink with no background); band from Chapter.tsx:39-44. Sweep at scrollY 138780 (1440x900): 'E' 2.23:1 on #365983, '10' 2.64, '9' 3.18, '8' 3.66, '7' 4.45 (12px, need 4.5). Screenshot /private/tmp/claude-501/-Users-kimtaewoo-DE-web/87f927fd-5f5a-4ca9-8840-608bdfafed08/scratchpad/color/out/shots/d-467-sweep138780.png",
+     "fix": "Give the rail its own backdrop so it never depends on the page behind it: add 'rounded-r-xl bg-bg/90 py-2' (or bg-surface) to the nav/ol in Hud.tsx:250-251. Or switch the active stage when the band reaches mid-screen, for example by observing the band div in ChapterShell as part of the following chapter."
+    },
+    {
+     "file": "src/chapters/Ch09/scenes.tsx",
+     "chapter": "ch9",
+     "severity": "medium",
+     "problem": "ch9-security step 4 draws the '원본' table (고객번호·이름·전화번호 rows that the pseudonymization arrow transforms) at opacity 0.55. The ink falls to 3.99:1 on 15–16px text, which is meant to be read and compared with the pseudonymized table.",
+     "evidence": "Ch09/scenes.tsx:826 <g style={{ opacity: 0.55 }}>. Measured 3.99:1 (#EEF4FB at 0.55 on #1C426F), 15.1–16.4px desktop and 9.3–10.1px mobile. Screenshot /private/tmp/claude-501/-Users-kimtaewoo-DE-web/87f927fd-5f5a-4ca9-8840-608bdfafed08/scratchpad/color/out/shots/d-172-ch9-security-s3.png",
+     "fix": "Raise the opacity to at least 0.65 (ink at 0.63 reaches 4.5:1 on the stage-9 card), or show the de-emphasis with fill var(--muted) at full opacity (7.30:1)."
+    },
+    {
+     "file": "src/chapters/Ch01/scenes.tsx",
+     "chapter": "ch1",
+     "severity": "medium",
+     "problem": "In ch1-attempt step 2 (WHERE), the excluded order rows are tweened to opacity 0.3, which puts all 25 cells (order_id, price, ordered_at) at 1.86:1. Those dates (6/1, 6/3) are exactly what the reader needs to see to understand why the rows are excluded. The '제외' labels avoid a color-only problem, but the values become unreadable.",
+     "evidence": "Ch01/scenes.tsx:469 tl.to(r, { opacity: 0.3 }). Measured 1.86:1 (ink at 0.3 on #F6F8F3), 17px rendered. Screenshot /private/tmp/claude-501/-Users-kimtaewoo-DE-web/87f927fd-5f5a-4ca9-8840-608bdfafed08/scratchpad/color/out/shots/d-022-ch1-attempt-s1.png",
+     "fix": "Dim to opacity 0.65 or more (computed floor 0.63 for 4.5:1 on paper surface), or recolor the excluded rows' text to var(--muted) at full opacity (7.44:1) and keep the '제외' tag."
+    },
+    {
+     "file": "src/chapters/Ch04/scenes.tsx",
+     "chapter": "ch4",
+     "severity": "medium",
+     "problem": "Dimmed data cells in Ch4 become hard to read: the ch4-problem discount/shipping values (할인 3,000 / 0 / 5,000) are set to 0.45 in steps 2–3, and the ch4-warehouse 'cell-dim' store cells are set to 0.3 and 0.4 in steps 3–4.",
+     "evidence": "Ch04/scenes.tsx:492 and 518 (discTxt/shipTxt opacity 0.45): 2.46–2.57:1 at 17px (shots d-074-ch4-problem-s1.png, d-075-ch4-problem-s2.png). Ch04/scenes.tsx:1115 and 1138 (cell-dim 0.3 then 0.4): 1.86 and 2.37:1 at 17px, 18 cells (d-081-ch4-warehouse-s2.png, d-082-ch4-warehouse-s3.png). All shots are in /private/tmp/claude-501/-Users-kimtaewoo-DE-web/87f927fd-5f5a-4ca9-8840-608bdfafed08/scratchpad/color/out/shots/",
+     "fix": "Use an opacity floor of 0.65 for any group containing text, or recolor to var(--muted) at full opacity. If a column should read as 'not counted', add a strike line or a '제외' tag, as Ch1 does."
+    },
+    {
+     "file": "src/chapters/Ch10/scenes.tsx",
+     "chapter": "ch10",
+     "severity": "medium",
+     "problem": "In ch10-attempt step 3, the whole '새로 만들 것' plan board (title, count 5, items ①–⑤, '실시간 재고 화면') fades to 0.3, giving 2.33:1 at 19px. The dashed recall bubble label 'Ch6의 혼잣말' sits at 0.6 in muted, giving 3.61:1. The faded maps behind memos in ch10-decision step 2, ch10-buy step 3 and ch10-serve step 4 fall to 1.53–2.74:1.",
+     "evidence": "Ch10/scenes.tsx:389 (board opacity 0.3), :391 (recall opacity 0.6), :1057 (old map opacity 0.2). Measured board 2.33:1 at 19–31px (#EEF4FB at 0.3 on #163861); recall 3.61:1 at 15.1px; ch10-buy 'CDC / 야간 ETL 배치' 1.77:1; ch10-serve memo map 1.53–1.77:1. Screenshot /private/tmp/claude-501/-Users-kimtaewoo-DE-web/87f927fd-5f5a-4ca9-8840-608bdfafed08/scratchpad/color/out/shots/d-181-ch10-attempt-s2.png",
+     "fix": "Keep the board readable at opacity 0.65 or more, or swap it to var(--muted) text. Raise the recall group to 0.85 (muted at 0.85 is about 4.6:1 on stage 10). Purely backdrop maps can stay faint if the alt text and memo carry the content; otherwise use 0.65 or more."
+    },
+    {
+     "file": "src/chapters/Ch03/scenes.tsx",
+     "chapter": "ch3",
+     "severity": "medium",
+     "problem": "In ch3-attempt step 2, the muted '지난밤' label (12.5 units) sits on the 600-row block, which stacks a wait fill at 0.28 and a fail fill at 0.12 (the dup box). The result is 3.99:1, below 4.5.",
+     "evidence": "Ch03/scenes.tsx:296 (wait fill opacity 0.28), :318 (fail fillOpacity 0.12), :302 (Txt muted 12.5). Measured #434F5E on #BBB1B3 = 3.99:1 at 16.4px desktop and 10.2px mobile. Screenshot /private/tmp/claude-501/-Users-kimtaewoo-DE-web/87f927fd-5f5a-4ca9-8840-608bdfafed08/scratchpad/color/out/shots/d-059-ch3-attempt-s1.png",
+     "fix": "Draw '지난밤' in var(--ink) (about 9:1 on that tint), or lower the dup box fillOpacity to 0.06 and the wait fill to 0.2."
+    },
+    {
+     "file": "src/components/Growth.tsx",
+     "chapter": "shared",
+     "severity": "medium",
+     "problem": "Growth maps, and the map thumbnails inside scenes, render their labels far below a legible size. This is where the NEW/걷어냄 tags and the muted sub-labels live. On desktop, node labels are 7.6px, subs 5.8px and tags 5.6–6.1px. On mobile (vertical map, h-[72svh]), labels are 5.4px and subs and tags 3.6–4.3px. The ch10-problem thumbnail map renders '제안' at 5.4px.",
+     "evidence": "Growth.tsx:126-128 (PipelineMap in h-[58svh] / h-[72svh]); PipelineMap.tsx:99 (edge labels 11.5u), :190 (tag 11u). Scan records: ch10-growth '야간 ETL 배치' 7.6px desktop / 5.4px mobile; 'tag-new' 5.6px desktop / 3.6px mobile (ch8). Screenshot /private/tmp/claude-501/-Users-kimtaewoo-DE-web/87f927fd-5f5a-4ca9-8840-608bdfafed08/scratchpad/color/out/shots/m-556-sweep175076.png (mobile map is about 120px wide).",
+     "fix": "Give the growth map a minimum render scale (labels at 10px or more): on mobile, let the figure scroll horizontally with a fixed-width SVG (e.g. min-width 560px), or crop the viewBox to the changed nodes. On desktop, widen the map column or raise the label scale for this view."
+    },
+    {
+     "file": "src/components/Hud.tsx",
+     "chapter": "shared",
+     "severity": "medium",
+     "problem": "The HUD progress bar is a graphical object and its percentage is not shown as visible text. The accent fill against its bg-edge track is 1.80–3.02:1 (fails 3:1 on stages 2–11), and the track against the button surface is only 1.5–2.1:1, so the unfilled part is nearly invisible.",
+     "evidence": "Hud.tsx:225-227 (track bg-edge, fill bg-accent). Computed per stage: accent vs track is 3.02 on stage 0, 2.80 on stage 6, 1.80 on stage 7 and 2.29 on stage 11; track vs surface is 1.55 on paper stages and 1.83–2.08 on blueprint stages.",
+     "fix": "Use track bg-[color-mix(in_srgb,var(--ink)_30%,transparent)] with fill bg-ink, or keep the accent fill and add a 1px ink outline to the track. Optionally show the percentage as visible text next to Lv."
+    },
+    {
+     "file": "src/chapters/Epilogue/scenes.tsx",
+     "chapter": "epilogue",
+     "severity": "medium",
+     "problem": "Lead's known issue confirmed. In epilogue-zoom step 4, the ChapterTags sit 4 units into each node's top edge and 6 units past its right edge. They overlap node borders and labels: the Ch8 tag covers the 레이크하우스 cylinder top and focus ring, and the Ch7 tag covers 데이터 계약. Tags on right-column nodes are clipped by the frame: Ch5 on 분산 처리, and Ch3 on 오케스트레이터 and 모니터링·알림.",
+     "evidence": "Epilogue/scenes.tsx:128-141 (x = n.x + n.w/2 - w + 6; y = n.y - n.h/2 - 12; height 16). Screenshot /private/tmp/claude-501/-Users-kimtaewoo-DE-web/87f927fd-5f5a-4ca9-8840-608bdfafed08/scratchpad/color/known/k2c.png (desktop, step 4 at 0.93).",
+     "fix": "Place each tag fully above its node (y = n.y - n.h/2 - 20; add the cylinder ry for kind 'store') and clamp x so x + w ≤ W - 2. Where neighbours collide, offset alternate tags to the left (x = n.x - n.w/2)."
+    },
+    {
+     "file": "src/chapters/Ch01/SqlRunner.tsx",
+     "chapter": "ch1",
+     "severity": "medium",
+     "problem": "Lead's known issue confirmed. On mobile, the SQL runner stage SVG keeps a viewBox sized to the tallest phase (stage.h). After a run finishes, the final result is much shorter, leaving an empty band inside the bordered card.",
+     "evidence": "SqlRunner.tsx:729 viewBox={`0 0 ${stage.w} ${stage.h}`}. Measured at 390x844 after each example ran: example 2 shows a 232px SVG with content ending at 136px (96px empty); example 3: 114px empty; examples 4 and 5: 351px SVG with content ending at 118px (233px empty). Script /private/tmp/claude-501/-Users-kimtaewoo-DE-web/87f927fd-5f5a-4ca9-8840-608bdfafed08/scratchpad/color/runners.mjs",
+     "fix": "Tween the viewBox height per phase (attr tweens are allowed) to the current phase's content height, or size stage.h to the final phase and let earlier phases overflow upward."
+    },
+    {
+     "file": "src/chapters/Ch02/CodeRunner.tsx",
+     "chapter": "ch2",
+     "severity": "medium",
+     "problem": "Lead's known issue confirmed. In the narrow (mobile) layout, the store drum always starts at y=404 to leave room for a belt-side 'work' chip row at y=188. The ELT trace has no belt-side transform chips, so an empty band of about 190px appears between the 수거/배송 belt and the 분석용 DB.",
+     "evidence": "CodeRunner.tsx:67 (const S = 404), :81 (work y 188). Screenshot after running 'load를 위로 올리기 (ELT로 바꾸기)' at 390x844: /private/tmp/claude-501/-Users-kimtaewoo-DE-web/87f927fd-5f5a-4ca9-8840-608bdfafed08/scratchpad/color/known/m-ch2-ex1s.png (gap from the belt line to the drum top is about 230px in the 481px-wide image, about 187 CSS px).",
+     "fix": "Make S depend on whether the trace has belt-side work steps, e.g. geo(wide, hasStoreChips, hasOrig, hasBeltWork) with S = hasBeltWork ? 404 : 200, and shift the store, storeChips and table y values accordingly."
+    },
+    {
+     "file": "src/chapters/Ch04/scenes.tsx",
+     "chapter": "ch4",
+     "severity": "medium",
+     "problem": "Lead's known issue confirmed (it is transient). In ch4-star step 4, the four sp2 accent particles fly from the fact-table top edge to the result box's bottom edge. Their straight path crosses the '측정값' tag and the '주문 항목 팩트' title, and they finish exactly on '1~3일치만 담은 예시' (covering the '3'). This is visible when scroll stops at about 0.70–0.80 of the step; they fade out by the end of the step.",
+     "evidence": "Ch04/scenes.tsx:1524-1535 (cx = FT.x+FT_W-30, cy = FT.y, dy to RES2.y+RES2.h) and :1644-1649 (tween at s4+0.62, fade at +0.08). Screenshots at 0.76 and 0.80: /private/tmp/claude-501/-Users-kimtaewoo-DE-web/87f927fd-5f5a-4ca9-8840-608bdfafed08/scratchpad/color/known/d-ch4-78-c.png and known/d-ch4-80c.png. No overlap at 0.93 or in reduced mode.",
+     "fix": "End the particles inside the result box (dy to RES2.y + RES2.h - 14, not the bottom edge) and start them right of the title text (cx = FT.x + FT_W + 10), or route them along a 2-point path that clears the title row. Alternatively fade them out before res2 appears (s4+0.7)."
+    },
+    {
+     "file": "src/chapters/Ch06/scenes.tsx",
+     "chapter": "ch6",
+     "severity": "low",
+     "problem": "In ch6-problem step 3, the fail-colored '품절인데 / 광고 중' (12.5u, bold) sits on the towel row's fail tint (fillOpacity 0.14), giving 4.49:1, just under 4.5.",
+     "evidence": "Ch06/scenes.tsx:210 (towel-hl fillOpacity 0.14), :246-251 (Txt color var(--fail)). Measured #B42318 on #DFD2D8 = 4.49:1 at 16.4px desktop and 10.2px mobile. Screenshot /private/tmp/claude-501/-Users-kimtaewoo-DE-web/87f927fd-5f5a-4ca9-8840-608bdfafed08/scratchpad/color/out/shots/d-109-ch6-problem-s2.png",
+     "fix": "Lower the tint to fillOpacity 0.10, or draw the two words in var(--ink) next to the existing fail Badge."
+    },
+    {
+     "file": "scripts/contrast.mjs",
+     "chapter": "shared",
+     "severity": "low",
+     "problem": "The palette check misses combinations the app actually uses. fail and ok are checked only at 3:1, yet they are used for words (DagSimulator '실패' at text-sm, TradeoffScale '✕ 미달', CodeRunner '실제와 달라요', SVG '시간 초과', '품절'). White on accent (the NEW tag) is never checked, nor are surface on accent, wait on surface, muted at 0.78 opacity (proposal/muted Node), or a dimming floor for text. Blueprint fail on card (3.51 on stage 7, 3.84 on 8, 4.16 on 9) and accent on card (3.30–4.29) would fail any future word drawn on a card.",
+     "evidence": "contrast.mjs checks(): fail/ok/wait use min 3. Computed extras: white/accent 2.35 on stages 7–11; surface/accent 4.31 on stage 6; muted at 0.78 on surface 3.71 (stage 7) to 4.46 (stage 3); wait/surface 3.99 on stage 7. All 12 stages currently pass the existing script (exit 0).",
+     "fix": "Add rows: [s.fail, s.bg, 4.5, '실패 글자/배경'], [s.fail, s.surface, 4.5, '실패 글자/카드'] (stages 7–9 need a lighter fail such as #FFB0A8, or keep fail words on bg only), the same for ok; ['#ffffff', s.accent, 4.5, '태그 글자/강조']; [s.wait, s.surface, 3, '대기/카드']; and muted mixed at 0.78 over surface at 4.5."
+    },
+    {
+     "file": "src/styles/index.css",
+     "chapter": "shared",
+     "severity": "low",
+     "problem": "::selection uses white text on var(--accent). On blueprint stages (Ch7 to the Epilogue and the footer), selected text drops to 2.35:1.",
+     "evidence": "index.css:118-121 (::selection { background: var(--accent); color: #fff }). white/#FF8A3D = 2.35:1; paper stages are 5.00:1.",
+     "fix": "Use color: #10131a (about 7:1 on #FF8A3D and 4.5:1 or better on #C24705 is not met, so scope it), e.g. [data-dark] ::selection { color: #0B1A2E }, or set the selection background to var(--ink) with color var(--bg)."
+    },
+    {
+     "file": "src/chapters/Ch04/scenes.tsx",
+     "chapter": "ch4",
+     "severity": "low",
+     "problem": "In ch4-star step 1, the '흐린 축소판' mini table is scaled down and set to opacity 0.6. Its text renders at 7.8–8.5px on desktop and 4.9–5.3px on mobile, at 4.01:1. The content repeats the full table shown just before, so it is low impact.",
+     "evidence": "Ch04/scenes.tsx:1377-1385 (g data-el='mini', scale MINI.s, opacity 0.6). Measured 4.01:1 for '주문/상품번호/12,000…' at 7.8px desktop and 4.9px mobile. Screenshot /private/tmp/claude-501/-Users-kimtaewoo-DE-web/87f927fd-5f5a-4ca9-8840-608bdfafed08/scratchpad/color/out/shots/d-083-ch4-star-s0.png",
+     "fix": "Either treat it as a picture (keep it but replace the cell text with grey bars), or raise the opacity to 0.75 or more and MINI.s so the text renders at 10px or more."
+    },
+    {
+     "file": "src/chapters/Ch05/scenes.tsx",
+     "chapter": "ch5",
+     "severity": "low",
+     "problem": "In ch5-storage step 3, the partition folder labels (date=03-08/, date=03-09/, date=03-10/) are dimmed to 0.45 while the reader is asked which folders get skipped. They measure 2.59:1 at 18.3px.",
+     "evidence": "Ch05/scenes.tsx:1086 tl.to(o('fd'), { opacity: 0.45 }). Measured 2.59:1. Screenshot /private/tmp/claude-501/-Users-kimtaewoo-DE-web/87f927fd-5f5a-4ca9-8840-608bdfafed08/scratchpad/color/out/shots/d-103-ch5-storage-s2.png",
+     "fix": "Dim the skipped folders' outline only and keep labels at 0.65 or more (or var(--muted)), or add a '건너뜀' tag."
+    },
+    {
+     "file": "src/chapters/Ch08/scenes.tsx",
+     "chapter": "ch8",
+     "severity": "low",
+     "problem": "In ch8-attempt step 3, the '동기화 (매시 정각)' label and its arrow fade to 0.3, giving 1.88:1 at 19.6px and arrow strokes at 2.15:1 against 3:1. In ch7-solution step 4, the off-lineage map nodes are dimmed to 0.4, giving 2.19:1 at 12.6px; the traced path is also marked with accent rings, so meaning is not color-only.",
+     "evidence": "Ch08/scenes.tsx:441 (sync opacity 0.3); Ch07/scenes.tsx:1495 (dim nodes/edges 0.4). Screenshots /private/tmp/claude-501/-Users-kimtaewoo-DE-web/87f927fd-5f5a-4ca9-8840-608bdfafed08/scratchpad/color/out/shots/d-147-ch8-attempt-s2.png and d-141-ch7-solution-s3.png",
+     "fix": "If the faded label should still be legible, use 0.65 or more. If it is meant as background, keep it but make sure the step text names it, which ch8 already does."
+    },
+    {
+     "file": "src/chapters/Prologue/scenes.tsx",
+     "chapter": "prologue",
+     "severity": "low",
+     "problem": "Background-ghost layers drop text far below AA:\n- prologue-solution step 1: kitchen/lab groups at 0.25 ('부엌', '어제 뭐가 제일 많이 팔렸지?', '데이터 분석가') measure 1.65:1 at 19px.\n- prologue-solution steps 3–4: '남지 않음' at 0.45 measures 2.11:1.\n- Similar ghosts appear in ch2-problem step 1 (warn-line '직접 쿼리' at 0.3, 1.64:1, Ch02/scenes.tsx:130), ch6-window step 4 (skipped duplicates 'P-1042' at 0.35, 1.37:1, Ch06/scenes.tsx:1224) and epilogue-sentence/zoom/cycle (0.15–0.28, 1.42–1.95:1).",
+     "evidence": "Prologue/scenes.tsx:720 (kitchen/lab opacity 0.25), :752 (gone opacity 0.45). Screenshots /private/tmp/claude-501/-Users-kimtaewoo-DE-web/87f927fd-5f5a-4ca9-8840-608bdfafed08/scratchpad/color/out/shots/d-014-prologue-solution-s0.png, d-016-prologue-solution-s2.png, d-037-ch2-problem-s0.png, d-120-ch6-window-s3.png, d-200-epilogue-sentence-s0.png",
+     "fix": "Decide per layer. Where the faded words carry meaning ('남지 않음', the 직접 쿼리 warning), use 0.65 or more or var(--muted). Where they are pure backdrop, replace the text with shapes or grey bars so no illegible text remains."
+    },
+    {
+     "file": "src/components/PipelineMap.tsx",
+     "chapter": "shared",
+     "severity": "low",
+     "problem": "Lighthouse flags aria-prohibited-attr 48 times: <g data-check aria-label='품질 검사'> has no role. The parent SVG is aria-hidden, so the label is never announced anyway.",
+     "evidence": "PipelineMap.tsx:105. Lighthouse 12.8.2 (desktop, mobile, #ch7, #ch10, #epilogue): accessibility score 0.93, color-contrast passed, aria-prohibited-attr failing with 48 items. Reports in /private/tmp/claude-501/-Users-kimtaewoo-DE-web/87f927fd-5f5a-4ca9-8840-608bdfafed08/scratchpad/color/lh/",
+     "fix": "Remove aria-label from the data-check <g> (the map's figure label and alt carry the meaning), or add role='img' if the SVG is ever exposed."
+    },
+    {
+     "file": "src/chapters/Epilogue/blocks.tsx",
+     "chapter": "shared",
+     "severity": "low",
+     "problem": "Lighthouse flags label-content-name-mismatch 48 times (WCAG 2.5.3): the aria-label does not include or start with the visible text. Affected: 26 dex buttons (blocks.tsx:108), 5 DagSimulator nodes (Ch03/DagSimulator.tsx:170), 19 map-link anchors (PipelineMap interactive) and the HUD button (Hud.tsx:216). Separately, definition-list fails once at Ch10/scenes.tsx:747 (a <dl> with div > span children).",
+     "evidence": "lh/desk.json audits['label-content-name-mismatch'].details.items (48), audits['definition-list'] (1, selector 'div.rounded-xl > dl.mt-3').",
+     "fix": "Start each aria-label with the visible text, e.g. `${x.letter} ${x.term}: …` and `${name}, ${S[st]}. …`, or drop aria-label and use aria-describedby for the extra hint. Wrap dt/dd pairs in <div> only, or switch that <dl> to a <ul>."
+    }
+   ]
+  },
+  "mobile": {
+   "summary": "I audited mobile layout at 390×844 and 360×740 (isMobile, DPR 2, ?mount=all). I measured the end state of all 209 scene steps in the DOM: rendered SVG text size, text overlap, clipping, step text height against the strip left visible below the sticky diagram, and horizontal overflow. I took screenshots of the first and last step of every scene, every opening, every interaction (I operated each one: ran SqlRunner/CodeRunner with every experiment, moved sliders to both ends, clicked nodes and buttons), every quiz (answer submitted) and every growth block, plus the epilogue MapNav, DexBoard and Restart blocks. There was no horizontal page scroll in any state (scrollWidth == innerWidth at both widths) and there were 0 console errors.\n\nAll four issues the lead flagged are real. (1) Ch4 star step 4: the sp2 particles cross '주문 항목 팩트' and '1~3일치만 담은 예시' while they travel (f 0.75–0.85). (2) Epilogue zoom step 4: the chapter tags sit on node outlines (Ch8 over the lakehouse rim and highlight ring), and the right column is clipped by about 3px at 390. No tag covers label text. (3) Ch1 SqlRunner: the stage keeps the height of its tallest phase, leaving about 220px blank under a 4-row result. (4) Ch2 CodeRunner: a fixed band of about 200px sits empty for the whole ELT run, and also after an ETL run.\n\nThe biggest problem is text size across the whole page. 54% of visible diagram text renders below 11px at 390, and 70% at 360. The cause is the 440-wide viewBox drawn into a 358px or 328px box. Pipeline-map overviews are unreadable: in the growth blocks from Ch5 on they render at 3.6–5.6px, and they are just as small inside scenes. Two layout problems appear only at 360×740: the Ch10 ADR card spills out of the sticky panel, and 13 step text blocks are taller than the 296–326px strip below the sticky diagram. Touch targets: `.btn-sm` is 36px (HUD, replay buttons, experiment buttons), and the Ch5 row toggles are 33×20. Screenshots are in /private/tmp/claude-501/-Users-kimtaewoo-DE-web/87f927fd-5f5a-4ca9-8840-608bdfafed08/scratchpad/mob/ (s390, s360, t390, t360, i390, i360, run390, crop), and the raw measurements are in steps-m390.json and steps-m360.json.",
+   "findings": [
+    {
+     "file": "src/components/fig.tsx",
+     "chapter": "shared",
+     "severity": "high",
+     "problem": "Diagram labels render below 11px across almost every scene. VB='0 0 440 480' is drawn into a 358px box at 390 (scale 0.81) or 328px at 360 (scale 0.75). Txt (default 14) and the many size 11–13 labels end up at 8–10.6px. 360 is worse because the box narrows to 328px.",
+     "evidence": "3397 of 6235 visible diagram <text> elements are under 11px at 390 (54%), and 4381 of 6235 at 360 (70%). Worst non-map labels: prologue-attempt table headers '주문번호' 8.5px@390 / 7.1@360; prologue-problem '3,000원' 8.5/7.5; ch1-attempt 'order_id' 9.7/7.5; ch2-analogy 'OLTP' 8.0/7.0; ch8-medallion '결제완료 → 배송중 → 취소' 8.9/7.5; ch10-tradeoff '짧음' 8.9/7.4; ch9-problem '지표 화면' 8.5/7.1. Measured as computed font-size × getScreenCTM scale (steps-m390.json / steps-m360.json).",
+     "fix": "Set a font-size floor on mobile. Have Txt (fig.tsx) and NodeLabel (diagram.tsx) read useEnv().mobile and enlarge small sizes, e.g. size<13 → size*1.2 so the result is at least about 11.5px at a scale of 0.75. Or crop the empty horizontal margins of VB on mobile (many figures leave 16–24 unused units). Also consider max-md:px-2 instead of px-4 on the sticky panel in StepScene.tsx to gain about 16px of width."
+    },
+    {
+     "file": "src/components/diagram.tsx",
+     "chapter": "shared",
+     "severity": "medium",
+     "problem": "NodeLabel sub-labels (11.5*scale) and status Badge glyphs (fontSize r*1.15) are the smallest repeated text. The status icons that CLAUDE.md requires (✓✕⏸↻ + text) are hard to tell apart at 6–8px.",
+     "evidence": "Node sub-labels such as '사용자 행동' and 'OLTP' render at 9.4px@390 / 8.2px@360 (ch2-problem, ch3-problem, ch6-problem, ch8-problem). Badge glyphs: ch4-attempt ✓ 7.5px, ch7-attempt ✓ 7.5, ch8-medallion ✓ 7.5, ch10-attempt ✕ 7.5, ch5-distributed ✓ 8.0, epilogue-sentence ✓ 6.0@390 / 5.0@360.",
+     "fix": "On mobile, raise NodeLabel sub to about 13*scale and enforce a minimum Badge radius (e.g. r ≥ 9 in viewBox units, so the glyph is at least about 8.5 units × 0.81 ≈ 11px)."
+    },
+    {
+     "file": "src/components/Growth.tsx",
+     "chapter": "shared",
+     "severity": "high",
+     "problem": "The pipeline map in the growth block cannot be read on mobile from Ch5 on. The figure is a fixed h-[72svh] and PipelineMap is drawn with meet, so the tall vertical map is limited by height and only about 110px wide inside the 358px box. The labels shrink as the map grows, and showing the map growing chapter by chapter is a SPEC §10 requirement.",
+     "evidence": "Median map label size at 390: prologue 11px, ch2 7.9, ch5 5.6, ch7 4.2, ch9 3.9, ch10 4.3. At 360: ch5 5.2, ch7 3.9, ch9 3.6. The box is 358×608 at 390 and 328×533 at 360. Screenshots: i390/ch7-growth.png, i390/ch10-growth.png (narrow map with large side gutters and about 120px of empty space under the figcaption).",
+     "fix": "On mobile, scale the map to the box width instead of the height: give the inner div an aspect ratio from the map's viewBox (w-full h-auto) inside a max-h-[72svh] overflow-y-auto frame, and scroll that frame to the new or changed nodes. Or render only the changed region (the nodes tagged 새) zoomed in, and keep the node-count line as text."
+    },
+    {
+     "file": "src/components/Collection.tsx",
+     "chapter": "shared",
+     "severity": "medium",
+     "problem": "Radar axis labels are 6.6px on mobile. Radar's viewBox is '-66 -6 452 280' with label fontSize 12.5, and Growth.tsx caps it at max-w-[15rem] (240px).",
+     "evidence": "All growth blocks at both 390 and 360: radar box 240×149, every label ('SQL·모델링', '파이프라인·자동화'…) 6.6px. Screenshots: i390/prologue-growth.png, i390/ch2-growth.png.",
+     "fix": "In Growth.tsx use w-full max-w-[22rem] on mobile, and in Radar raise the label fontSize to about 18 (or narrow the viewBox margins) so labels render at 11px or more."
+    },
+    {
+     "file": "src/chapters/Ch01/SqlRunner.tsx",
+     "chapter": "ch1",
+     "severity": "medium",
+     "problem": "The SQL runner stage's height is the maximum over all animation phases (buildStage maxY, lines 136–149, used in the viewBox at line 729). When the final result has fewer rows than an intermediate phase, a large blank area stays under it. Confirms the lead's report.",
+     "evidence": "390×844 after the run finished: the default query (JOIN+GROUP BY) gives svg 351px tall (viewBox 356×419) with a 4-row result filling about 130px, so about 220px is blank. The 'GROUP BY' experiment gives 232px tall for 4 rows (about 100px blank). The 'JOIN' and 'SUM' experiments give 351px tall for 4 rows. Screenshots: run390/ch1-0.png, ch1-3.png, ch1-4.png, ch1-5.png (montage crop/run-ch1.png).",
+     "fix": "Track the extent of each phase and tween the viewBox height with the timeline (attr tween is allowed), or set the viewBox height to the final frame's extent once cursor === total."
+    },
+    {
+     "file": "src/chapters/Ch02/CodeRunner.tsx",
+     "chapter": "ch2",
+     "severity": "medium",
+     "problem": "The mobile pipeline figure always places the 분석용 DB store at viewBox y=404 (geo(), mobile branch, `const S = 404`). This reserves a work band for the ETL in-flight table. In ELT mode nothing ever enters that band, and after any run it is empty. Confirms the lead's report.",
+     "evidence": "At 390 the svg is 316px wide. Belt labels end near y≈150 css and the store starts near y≈355 css, leaving about 200px empty for the entire ELT run (run390/mid-elt-*.png) and after ETL finishes (run390/ch2-0.png, ch2-4.png). The ELT end state is in run390/ch2-2.png and ch2-3.png (svg 316×650). The interaction section grows from 2549px to 3243px.",
+     "fix": "In geo(), when hasStoreChips is set (the ELT shape, where the transform happens inside the store), use S ≈ belt.lineY + 50 (about 210) instead of 404. Optionally also collapse the band for ETL once the trace has finished."
+    },
+    {
+     "file": "src/chapters/Ch01/scenes.tsx",
+     "chapter": "ch1",
+     "severity": "medium",
+     "problem": "SQL code inside the sticky diagram (CODE_CLS line 133: overflow-x-auto whitespace-pre!) is cut at the right edge. The box is inside a role=img sticky figure, so readers get no hint that it scrolls horizontally, and the clipped part is the clause the step is explaining.",
+     "evidence": "390 ch1-attempt step 4: 'SELECT orders.product_id, name, SUM(qty) AS 판매개…' is cut at x=374, and 'JOIN products ON orders.product_id = products.pr…' is cut too. ch1-overload steps 1–3: 'SUM(qty *', 'products.pr', 'customers', '-- 기간' are cut. At 360 more is cut ('product', 'custo'). Screenshots: s390/ch1-attempt-3.png, s390/ch1-overload-0.png, s360/M-04.png.",
+     "fix": "On mobile, wrap instead of scrolling: max-md:whitespace-pre-wrap! with a hanging indent (pl-[2ch] -indent-[2ch]), or supply shorter mobile line breaks for these queries in content (e.g. split SELECT columns onto separate lines)."
+    },
+    {
+     "file": "src/chapters/Ch01/index.tsx",
+     "chapter": "ch1",
+     "severity": "medium",
+     "problem": "At 360×740 the Ch1 attempt and overload diagrams are squeezed vertically by the HTML code block above them, so the SVG part shrinks and its labels become unreadable.",
+     "evidence": "360×740: ch1-overload svg drawn at 328×137 (390: 358×199), with labels 'orders' 6.2px, '✕' 5.5px, '석 리드' about 6px. ch1-attempt svg 328×196 (390: 358×254), with table cells 'order_id' and '2001' at 7.5px. Screenshot: s360/M-04.png.",
+     "fix": "Pass `tall` to the ch1-attempt and ch1-overload StepScenes, or shrink the code block on short viewports (max-md:text-[0.6875rem]! and less padding) so the SVG keeps at least about 200px of height."
+    },
+    {
+     "file": "src/chapters/Ch10/scenes.tsx",
+     "chapter": "ch10",
+     "severity": "medium",
+     "problem": "At 360×740 the ADR card in the decision scene (step 3) is taller than the diagram box. Because it is vertically centred (`absolute inset-0 flex flex-col justify-center`, line 742), it overflows both ends: its top runs under the fixed HUD and its caption spills past the sticky panel's bottom border.",
+     "evidence": "360×740 ch10-decision step 3: card top at about y=42 (HUD spans 12–48), and the caption 'ADR 양식은 팀마다 달라요…' has bottom 451 while the sticky bottom is 444, so the border line runs through the caption. Fine at 390 (card top 118). Screenshot: t360/M-00.png (middle panel).",
+     "fix": "On mobile use justify-start with overflow-hidden, and tighten the rows (max-md:text-sm, smaller row gap), or pass `tall` to the ch10-decision StepScene."
+    },
+    {
+     "file": "src/components/StepScene.tsx",
+     "chapter": "shared",
+     "severity": "medium",
+     "problem": "On short phones the sticky diagram (h-[56svh] / h-[60svh] tall, with pt-[3.75rem]) leaves only 296–326px for step text. Many step blocks (text plus bubbles) are taller than that, so their first lines slide under the diagram before the last lines appear. Meanwhile the SVGs are drawn shorter than their box.",
+     "evidence": "At 360×740, step block height vs. visible strip: epilogue-sentence#1 409>296, ch6-window#4 362>296, ch10-buy#2 353>326, ch3-solution#3 346, ch10-serve#2 334, ch6-window#1 331, ch7-attempt#3 331, ch8-solution#2 322, ch10-attempt#3 / decision#1 / serve#3 318, ch5-distributed#3 307, ch4-solution#1 299. At 390×844: ch6-window#4 362>338 and epilogue-sentence#1 350>338. SVGs at 360 are drawn 298–345px tall inside a box about 372px tall.",
+     "fix": "Add a short-viewport rule, e.g. max-md:[@media(max-height:780px)]:h-[50svh] (tall: 54svh), and reduce the top padding to about 3.25rem (the HUD ends at 48px). Alternatively, trim those step texts or bubbles."
+    },
+    {
+     "file": "src/styles/index.css",
+     "chapter": "shared",
+     "severity": "medium",
+     "problem": "`.btn-sm` has min-height 2.25rem (36px), below the 40px touch-target bar. It is used for the persistent HUD controls and for many in-content buttons.",
+     "evidence": "At 390 and 360: HUD motion toggle 42×36, HUD level button 151×36, every growth '↻ 다시 보기' 97×36 (11 chapters), Ch1 experiment buttons ×6 (e.g. '매출로 바꾸기 (SUM(qty * price))' 225×36), Ch2 experiments ×4 (e.g. '처음 코드로' 90×36), Prologue '처음부터' 74×36 (i390/report.json touch list).",
+     "fix": "Raise .btn-sm to min-height 2.5rem, or to 2.75rem under @media (pointer: coarse)."
+    },
+    {
+     "file": "src/chapters/Ch05/WorkerSlider.tsx",
+     "chapter": "ch5",
+     "severity": "medium",
+     "problem": "The per-row '세부 값 ▾' disclosure buttons in the worker table are tiny tap targets.",
+     "evidence": "7 buttons around line 177: '1대 ▾' etc. at 33×20, and '16대 ▾' etc. at 41×20, at both 390 and 360 (i390/ch5-int0-a.png, bottom table).",
+     "fix": "Give the buttons min-h-10 min-w-10 (with negative margin to keep row height), or make the whole row (or the worker-count cell) the button."
+    },
+    {
+     "file": "src/chapters/Ch02/CodeRunner.tsx",
+     "chapter": "ch2",
+     "severity": "low",
+     "problem": "The <summary> disclosure in the CodeRunner and the range inputs are under 40px tall.",
+     "evidence": "Ch2 summary '알아듣는 명령 7가지' 290×30. Ch10 TradeoffScale summary '모든 단계 한눈에 보기' 282×30 (src/chapters/Ch10/TradeoffScale.tsx). Range inputs with h-8 are 32px: Ch5 '워커 수' 316×32 and Ch10 '지연시간 단계' 280×32 (WorkerSlider.tsx, TradeoffScale.tsx).",
+     "fix": "Add py-2.5 / min-h-11 to the summaries and change the range inputs from h-8 to h-11."
+    },
+    {
+     "file": "src/chapters/Ch09/solution.tsx",
+     "chapter": "ch9",
+     "severity": "medium",
+     "problem": "On mobile, the scene-level pipeline-map overviews are drawn too small to read. Ch9 places the map in the left ~45% beside an HTML panel (PANEL w-[55%], line 113). The Ch8, Ch10 and Prologue overview steps shrink the whole map into the box or into a thumbnail.",
+     "evidence": "At 390 / 360, minimum label size: ch9-solution steps 1 and 3 5.0 / 4.3px; ch8-solution step 3 5.1 / 4.4px (src/chapters/Ch08/scenes.tsx); ch10-decision step 2 3.4 / 3.1px and ch10-problem step 3 3.1 / 2.6px (src/chapters/Ch10/scenes.tsx); prologue-solution step 4 map thumbnail 3.5 / 3.1px, the first time the 파이프라인 맵 appears (src/chapters/Prologue/scenes.tsx); ch6-solution steps 1–2 6.1–7.6 / 5.1px (src/chapters/Ch06/solution.tsx). Screenshots: s390/M-30.png, M-33.png, M-03.png.",
+     "fix": "On mobile, move the camera (the existing vbTo pattern) to the changed nodes instead of showing the whole map, and keep the '맵 노드 수 N → M' readout as the overview. For Ch9, stack the governance or cost panel below the map (or hide the map) instead of placing them side by side."
+    },
+    {
+     "file": "src/chapters/Ch09/solution.tsx",
+     "chapter": "ch9",
+     "severity": "low",
+     "problem": "At 360 the governance HTML panel (PANEL) runs slightly past the sticky panel's bottom.",
+     "evidence": "360×740 ch9-solution step 3: panel bottom 449 > sticky bottom 444 (the last line '열람: 역할별' is at 425–440).",
+     "fix": "Tighten the panel on mobile (space-y-1.5, or top-[3.75rem]), or pass `tall` to this StepScene."
+    },
+    {
+     "file": "src/chapters/Ch04/scenes.tsx",
+     "chapter": "ch4",
+     "severity": "low",
+     "problem": "In the star-schema step 4 transition, the sp2 accent particles travel in a straight line from the fact table to the RES2 result box. On the way they pass over the '주문 항목 팩트' title and the RES2 caption '1~3일치만 담은 예시'. Confirms the lead's report; it is momentary, and the end state is clean.",
+     "evidence": "390×844, step 4 (index 3): at f=0.75 a dot at (287,216) w7 overlaps '주문 항목 팩트'; at f=0.80–0.85 a dot at (290,174) overlaps '1~3일치만 담은 예시'. Particles are defined around lines 1520–1530 (data-dx=RES2.x+20-(FT.x+FT_W-30), data-dy=RES2.y+RES2.h-FT.y) and tweened at line 1644. Screenshots: t390/ch4-star-3-f0.7.png.",
+     "fix": "End the sp2 path at RES2's left side (dx to RES2.x-4, dy to RES2.y+RES2.h/2), so it never reaches the caption under the box, and start it from the right of the 측정값 header instead of from under the title. Or fade factTitle and the RES2 caption to 0.3 during s4+0.62…0.72."
+    },
+    {
+     "file": "src/chapters/Epilogue/scenes.tsx",
+     "chapter": "epilogue",
+     "severity": "low",
+     "problem": "In the zoom scene's step 4, the chapter tags sit on node outlines and the right column is slightly clipped at 390. Partly confirms the lead's report: no tag covers a label's text, but the tags cover outlines and highlight rings.",
+     "evidence": "At 390: the Ch8 tag covers the 레이크하우스 cylinder rim and the orange highlight ring; the Prologue tag sits on the BI 대시보드 top edge; the Ch7 tag sits on the 데이터 계약 top-right corner. Text-to-text overlap measured 0. The 분산 처리, 오케스트레이터 and 모니터링·알림 boxes and their Ch5/Ch3 tags extend to x=377 while the svg's right edge is 374, so their right borders are cut. At 360 nothing is clipped, but '데이터 계약' and '오케스트레이터' touch their box edges. Screenshots: crop/ez3.png, crop/ez3-360.png.",
+     "fix": "Hang the ctag above the node (y0 − tagH − 2) instead of on its corner, or give the tags a bg-colored stroke. Shrink the blueprint's horizontal extent by about 8 units (or pad the viewBox) so the right column fits."
+    },
+    {
+     "file": "src/chapters/Epilogue/scenes.tsx",
+     "chapter": "epilogue",
+     "severity": "low",
+     "problem": "The ZoomFig caption 'cap-4' (F.mapGuide, line 334) says '노드를 눌러 그 챕터로 이동해요', but the nodes in this sticky diagram are not links. Only the later MapNav block is interactive, so tapping the zoom-scene nodes on mobile does nothing.",
+     "evidence": "epilogue-zoom step 4: 0 focusable elements inside the sticky [role=img] (probe2 output 'focus: []'). The same text is MapNav's hint, where the nodes are 155–170×59–65 links.",
+     "fix": "Drop cap-4 from ZoomFig (MapNav already shows mapGuide), or replace it with a pointer such as '아래 목차 맵에서 눌러 이동해요'."
+    },
+    {
+     "file": "src/components/diagram.tsx",
+     "chapter": "shared",
+     "severity": "low",
+     "problem": "Store (cylinder) node labels overlap the rim's lower arc. The label y is y + ry*0.7 (line 108), which puts the label's top above y0+2*ry. Easy to see on mobile in the compact map nodes.",
+     "evidence": "'운영 DB' and '분석용 DB' are crossed by the rim line in ch2-solution step 4, ch3-solution step 1, ch1-solution step 2 and ch3-problem steps at 390 (crop/c2s3.png, crop/c3s0.png, crop/c1s1.png).",
+     "fix": "For kind==='store', place the label below the rim, e.g. y + ry*1.4, or clamp it so the label's top is at least y0 + 2*ry + 2."
+    },
+    {
+     "file": "src/chapters/Ch07/scenes.tsx",
+     "chapter": "ch7",
+     "severity": "low",
+     "problem": "At 360 the panned map in the solution scene draws above the diagram box into the sticky's top padding, where it runs under the fixed HUD.",
+     "evidence": "360×740 ch7-solution step 2: '이벤트 브로커' text top=46 under the HUD (HUD spans 12–48px), and the top node and shield badge are cut (t360/M-00.png, left).",
+     "fix": "Clip the svg to its box on mobile (overflow-hidden on the diagram wrapper), or adjust the mobile vbTo so content starts at least 8 units inside the viewBox."
+    },
+    {
+     "file": "src/chapters/Ch08/scenes.tsx",
+     "chapter": "ch8",
+     "severity": "low",
+     "problem": "Map-camera crops on mobile cut nodes at the edges of the sticky panel.",
+     "evidence": "390: ch8-solution step 1: the '야간 ETL 배치' node is cut at the left edge (x=16), 'BI 대시보드' is off the right edge at x=555–601, and the '오케스트레이터' row is cut at the panel bottom (s390/M-30.png). ch5-solution step 1 (src/chapters/Ch05/scenes.tsx): the '데이터 웨어하우스' box and the 'date=…' label are cut at the panel bottom (s390/M-20.png).",
+     "fix": "Pad the mobile fit() box by about 12 units on each side so partially visible nodes are either fully in frame or fully out."
+    },
+    {
+     "file": "src/chapters/Ch04/scenes.tsx",
+     "chapter": "ch4",
+     "severity": "low",
+     "problem": "The 'before' reference thumbnail in the star-schema step 1 is shrunk below readable size.",
+     "evidence": "ch4-star step 1: the '나누기 전' mini table cells ('주문', '상품번호', '201') render at 4.9px@390 / 4.5px@360 (s390/M-16.png, left). The same applies to the ch9-attempt step 3 lakehouse mini icon labels ('Bronze' 4.9 / 4.3px).",
+     "fix": "On mobile, scale the WIDE thumbnail up (fewer columns, or a larger scale), or replace the cell text with plain bars, since the cells are not meant to be read."
+    }
+   ]
+  },
+  "completion": {
+   "findings": [
+    {
+     "file": "src/lib/gsap.ts",
+     "chapter": "shared",
+     "severity": "high",
+     "problem": "ScrollTrigger positions are never recalculated when content grows after mount. Answering a quiz (Quiz.tsx shows the explanations and result box), a growth section expanding (Growth.tsx) and running an interaction (SqlRunner log) all make the page taller, but only chapter mounts, fonts, the motion toggle, nav and the climax call refreshTriggers(). Every scrub trigger below then fires too early. On ?mount=all, answering each quiz as you reach it means the Ch10 climax never fires: the HUD stays at Lv4 and the Ch10 and Epilogue diagrams stay frozen near t=0.",
+     "evidence": "Fresh localStorage, ?mount=all, playwright scroll in 405px steps, answering every quiz (option 1) when it reaches the viewport. Desktop 1440 log ends 'END HUD: Lv4 시니어 직전 26/26' with localStorage climax:false. Mobile 390 ends 'Lv4 26/26', also climax:false. Measured with ScrollTrigger.getAll(), comparing trigger.start to the real list top minus anchor: after the prologue quiz, all 56 lower triggers are off by +352px. After the prologue, ch1 and ch2 quizzes they are off by +1150px. Running the Ch1 SQL runner alone adds +101px. After the prologue..ch9 quizzes, #ch10-decision's top moved 206025→210174 (+4149px), more than the scene's own 2804px height, so onStep never runs while idx>=1 and markClimax is never called. With no quizzes answered the climax fires normally (true). The lazy (non mount=all) forward flow reaches Lv5 26/26, because later chapter mounts happen to refresh. Revisiting an earlier quiz after everything is mounted (epilogue dex 'missing card' link, then answer) still leaves all 56 triggers below stale by 352px.",
+     "fix": "Fix it once, where ScrollTrigger is registered: add `new ResizeObserver(debounce(() => ScrollTrigger.refresh(), 150)).observe(document.body)` (or observe #root), firing only when the height actually changes, next to setScrollTrigger in src/lib/gsap.ts. That covers the quiz, growth, runners and LevelDesk without per-component calls. If a narrower fix is preferred, call requestAnimationFrame(refreshTriggers) in Quiz.tsx when `done` flips, in Growth.tsx when `done`/`promoted` change, and after SqlRunner/CodeRunner log updates."
+    },
+    {
+     "file": "src/chapters/Ch02/CodeRunner.tsx",
+     "chapter": "ch2",
+     "severity": "medium",
+     "problem": "On mobile, the narrow layout in geo() always places the 분석용 DB store at y=404, which leaves room for the middle 'work' zone. In ELT the transforms run inside the store, so that zone stays empty for the whole run and leaves a large blank band between the belt (수거/배송) and the store drum.",
+     "evidence": "390x844 mobile, ?mount=all, Ch2 '파이프라인 코드 실행기'. Measured the largest vertical gap with nothing drawn inside the stage svg (650px tall, viewBox 0 0 360 740) for each '한 줄씩' press. ETL: 11,30,30,30,30,185,185px. ELT ('load를 위로 올리기'): 11,185,185,185,185,185,185px, with the gap spanning svg y 156→341 px. Screenshot: shots/audit10/code-elt-p1.png.",
+     "fix": "In geo(), pass a flag for whether any step uses the belt work zone (false for the ELT trace). When it is false, start the store right under the belt (e.g. `const S = hasWork ? 404 : g.belt.lineY + 44`) so the svg height shrinks by about 200 viewBox units. Leave the ETL layout as it is."
+    },
+    {
+     "file": "src/chapters/Ch01/SqlRunner.tsx",
+     "chapter": "ch1",
+     "severity": "medium",
+     "problem": "The SQL runner stage svg uses one viewBox height for the whole run: layout returns `h: Math.ceil(maxY + 8)`, with maxY taken over every step (~line 431). At 390px the panel therefore keeps the height of the tallest step (the JOIN table) for every step. The final GROUP BY/SELECT result, a small 4-row table, sits at the top and about two-thirds of the panel is empty.",
+     "evidence": "390x844 mobile, ?mount=all, pressing '한 줄씩' 5 times. The svg stays 351px tall at every step. Bottom of visible content per step: 223, 344, 223, 113, 118px, so the empty space below is 127, 7, 127, 238, 233px. Screenshot: shots/audit10/sql-m-step5-s.png (status '✓ 실행 끝 · 5단계를 모두 처리했어요', result table in the top ~110px of a 351px box).",
+     "fix": "Track maxY per step (steps[i].h) and set or tween the svg viewBox height to the current step's height. An attr tween of viewBox is allowed by CHAPTER_GUIDE. Alternatively, on mobile only, let the svg use the per-step height and keep the max only for desktop."
+    },
+    {
+     "file": "src/chapters/Ch04/scenes.tsx",
+     "chapter": "ch4",
+     "severity": "low",
+     "problem": "Ch4 star schema, step 4: the four 'sp2' accent particles fly straight up from (FT.x+FT_W-30, FT.y) = (334,210) to (342,104). On the way they pass over the '측정값' pill and the '주문 항목 팩트' title (y=172, anchor end at x=364). They land on the bottom edge of the result box, exactly where the caption '1~3일치만 담은 예시' sits (y=RES2.y+RES2.h+17=121), covering the '3'.",
+     "evidence": "Desktop 1440, '#ch4-star [data-step]:nth-child(4)' at 0.66 / 0.74 / 0.80 of step height (timeline ≈3.70–3.875). The particle covers the 측정값 pill, then the '팩' of 주문 항목 팩트, then the '3' of the caption. Screenshots: shots/audit10/star4-mont-s.png and shots/audit10/star-01-crop.png. Gone by 0.99, so the problem is only mid-transition.",
+     "fix": "In StarFig, route sp2 so it misses the labels and ends inside the result box. For example, start it at x = FT.x + FT_W + 10 (right of the title and pill) and set data-dy to `RES2.y + RES2.h/2 - FT.y` with data-dx to `RES2.x + 20 - startX`. Or fade it out (opacity 0) before y < RES2.y + RES2.h + 22. Moving monthNote below the particle's landing point also works."
+    },
+    {
+     "file": "src/chapters/Epilogue/scenes.tsx",
+     "chapter": "epilogue",
+     "severity": "low",
+     "problem": "Epilogue zoom, step 4: the chapter tags crowd the nodes. ChapterTag puts each tag at y = n.y - n.h/2 - 12 with height 16, so every tag straddles its node's top border by 4 units. The Ch8 tag sits on the accent ring of 레이크하우스, and the Prologue tag (BI 대시보드) runs into the Reverse ETL box. Three tags also overflow the 440-wide viewBox and lose their right border. No tag overlaps actual label text.",
+     "evidence": "Desktop 1440 and mobile 390 at '#epilogue-zoom [data-step]:nth-child(4)@0.85': intersection of 16 visible ctag boxes with 28 visible texts is 0 on both. 'Prologue tag covers node reverse 3x12px'. getBBox shows the Ch3 tags (오케스트레이터, 모니터링·알림) at x 412–444 and the Ch5 tag (분산 처리) at x 410–442, past the viewBox width of 440. Screenshots: shots/audit10/star-02-crop.png, shots/audit10/zoomm-s.png.",
+     "fix": "In ChapterTag (~line 128), place the tag fully above the node (y = n.y - n.h/2 - 18) and clamp x so it stays inside the frame: `x = Math.min(n.x + n.w/2 - w + 6, W - w - 2)`. This removes the border overlap, the Reverse ETL contact and the right-edge clipping."
+    },
+    {
+     "file": "src/components/StepScene.tsx",
+     "chapter": "ch10",
+     "severity": "low",
+     "problem": "Jumping past Ch10 grants the Lv5 climax. ScrubScene's onRefresh/onLeave call update(), which sets idx to the last step and calls onStep, so Ch10's `onStep={(i) => i >= 1 && markClimax()}` fires when the reader only jumps past #ch10-decision (rail 'E', #epilogue deep link, HUD TOC). Because levelOf adds +1 for climax regardless of other milestones, a reader who has done nothing sees 'Lv2 주니어 0/26'. In reduced mode the same jump leaves Lv1 (StaticScene's IO only fires for steps crossing the center band), so the two modes disagree.",
+     "evidence": "Fresh localStorage, desktop: clicking rail 'E' from the top leaves the HUD at 'Lv2 주니어 0/26'. A single scrollTo to the epilogue gives the same. Reduced mode, same jump: 'Lv1 신입 0/26'.",
+     "fix": "Only fire onStep from real traversal. In ScrubScene's update, skip the onStep call when the anchor line is past the last item's bottom on refresh/leave, e.g. call onStep only if `y < items[items.length-1].getBoundingClientRect().bottom`. Or pass a flag from onUpdate and ignore the onRefresh/onLeave calls for onStep. Keep the existing comment's intent: a fast scroll that lands on step 3 still promotes."
+    },
+    {
+     "file": "src/content/map.ts",
+     "chapter": "ch8",
+     "severity": "low",
+     "problem": "SPEC 10 says the map grows every chapter and gets simpler at Ch10. Ch8 shrinks the map (16→15 nodes, 18→17 edges; growth text '처음으로 맵이 줄었어요'). Ch10's final simplification versus Ch9 (17→16 nodes, 19→16 edges) is the same −1 node, so the 'simpler at Ch10' contrast rests on the 21-node proposal peak, not on the final map.",
+     "evidence": "mapStateAt node/edge counts: prologue 3/2, ch1 4/4, ch2 5/4, ch3 7/6, ch4 8/7, ch5 11/12, ch6 15/17, ch7 16/18, ch8 15/17, ch9 17/19, ch10Proposal 21/23, ch10Buy 14/14, ch10Final 16/16, epilogue 16/16. The growth-section DOM matches (ch8: nodes=15 exit=2 enter=1; ch10: nodes=16 exit=3 enter=2).",
+     "fix": "Treat this as deliberate (the lakehouse merge) and list it under 가정 in docs/HANDOFF.md and the final report, so the spec deviation is explicit. A code change is optional: if a visibly simpler Ch10 end state is wanted, make ch10Final smaller than ch8, e.g. show reverse/ml as labeled edges instead of nodes."
+    }
+   ],
+   "summary": "I checked SPEC 10 end to end with playwright on ?mount=all, starting from empty localStorage: desktop 1440, mobile 390 and 375, and reduced motion. Two things fail, both from one shared bug.\n\n**What fails**\n1. **Lv5 is never reached on ?mount=all (high).** Answering a quiz, a growth section expanding and running the SQL runner all make the page taller, but nothing recalculates the ScrollTrigger positions. Every scroll trigger below then fires too early: by +352px after the prologue quiz and +1150px after three quizzes. By Ch10, #ch10-decision has moved +4149px, more than its own 2804px height, so the climax step never registers. The HUD ends at 'Lv4 시니어 직전 26/26' with climax:false on desktop and mobile. The normal lazy-loading flow does reach Lv5 26/26, because later chapter mounts happen to refresh. Going back to answer an earlier quiz after everything is mounted still leaves 56 triggers stale by 352px. The fix belongs in one place: a ResizeObserver next to the ScrollTrigger setup in src/lib/gsap.ts.\n2. **Ch10 climax can be earned by skipping (low).** Jumping past Ch10 via the rail or a link grants it, so a reader with nothing done sees 'Lv2 주니어 0/26'. In reduced motion the same jump stays at Lv1.\n\n**The four issues the lead spotted** are all real and measured:\n- **Ch2 code runner, mobile:** a 185px empty band in ELT steps 2–7.\n- **Ch1 SQL runner, mobile:** the panel stays 351px tall, leaving 233–238px empty at steps 4–5.\n- **Ch4 star schema, step 4:** the accent dots fly over '측정값' and '주문 항목 팩트' and land on '1~3일치만 담은 예시'. This only shows mid-step.\n- **Epilogue zoom, step 4:** no tag covers label text (measured 0 intersections). But the tags sit on the node borders, the Prologue tag runs into the Reverse ETL box, and three tags are cut off at the right edge.\n\n**Spec point to decide:** the map shrinks at Ch8 (16→15 nodes, the lakehouse merge), and Ch10's final map is only one node smaller than Ch9's. Ch10 only looks \"simpler\" against its 21-node proposal. This looks deliberate; I suggest listing it as an assumption.\n\n**What passes**\n- **Build:** tsc, vite build and prerender all succeed (exit 0). I built into my scratch folder rather than the shared dist/.\n- **No placeholders:** none in src or in the rendered text and labels.\n- **Real content:** all 12 sections have real text (5.4k–11.8k characters each), with no placeholder sections left.\n- **Rhythm:** Prologue–Ch10 run problem → attempt → concept → (interaction) → solution → summary → quiz → growth, in that order on the page.\n- **Levels and cards:** in the lazy flow and in reduced mode, Lv1→Lv2 (ch2)→Lv3 (ch4)→Lv4 (ch7)→Lv5 at Ch10, ending at 26/26 cards.\n- **Dex:** the epilogue shows '도감 완성 · 26 / 26' with all 26 cells owned.\n- **Map:** grows 3→4→5→7→8→11→15→16→15→17, then 21 (proposal) → 14 → 16 at Ch10. The epilogue zooms from the first paper sketch out to the full 16-node blueprint.\n- **Reduced motion:** all 209 steps render as still pictures, all 7 interactions respond, and the in-page toggle works and persists after reload.\n- **Mobile:** no horizontal overflow at 375 or 390.\n- **Console:** 0 errors and 0 warnings across every full-scroll run.\n\nScreenshots are in /Users/kimtaewoo/DE_web/shots/audit10/. The test scripts are in /private/tmp/claude-501/-Users-kimtaewoo-DE-web/87f927fd-5f5a-4ca9-8840-608bdfafed08/scratchpad/audit10/ (run.cjs for the full-scroll audit, stale2.cjs for the trigger offsets)."
+  },
+  "perf": {
+   "summary": "I measured performance on a fresh build in my scratch dir (/private/tmp/claude-501/-Users-kimtaewoo-DE-web/87f927fd-5f5a-4ca9-8840-608bdfafed08/scratchpad/perf/dist), served on :5301. The build passed. I did not use :5299: another agent's `vite preview` there (pid 81147, started 09:06) serves the stale /tmp/claude-501/de-dist build (index-C_zzfSQm.js, not the current index-BO26gK0C.js), so audits run against :5299 are measuring old code.\n\nLIGHTHOUSE 12.8.2, using Playwright's Chromium:\n- Mobile: Perf 78 (two re-runs gave 82 and 77), A11y 100, Best Practices 100, SEO 100. FCP 3.6s, LCP 4.2s, Speed Index 3.6s, TBT 0, CLS 0. These are simulated; the observed values were FCP 49ms and LCP 85ms.\n- Desktop: Perf 99, A11y 100, BP 100, SEO 100. FCP and LCP 0.7s, TBT 0, CLS 0.\n- Initial DOM is 413 elements and transfer is 524 KiB.\n- Fix for mobile: load the @font-face CSS after first paint. In a patched copy of dist this raised mobile to 99 twice (FCP/LCP 1.7s, CLS 0).\n\nSCROLL TEST: steady 1500 px/s, frame gaps from requestAnimationFrame, long tasks from PerformanceObserver plus long-animation-frame attribution, all with ?mount=all.\n- Dev server, 1x CPU: 25 frames over 50ms, one at every chapter boundary (67-113ms, from the ChapterShell IntersectionObserver re-render in dev React), plus prologue-attempt 267ms and epilogue-zoom 233ms.\n- Production build, 1x CPU: only 6 frames over 50ms (ch3-solution 50, ch6-solution 67, epilogue-dex 83 and 100).\n- Production, 4x CPU throttle, desktop: 39 frames over 50ms and 40 long tasks totalling 4.6s. Worst: epilogue-dex 450, ch6-solution 300, ch3-solution 217, ch8-problem 200, ch4-solution 167, ch5-attempt 167, ch1-solution 133, epilogue-zoom up to 100 (5 frames), epilogue-cycle up to 100 (4 frames).\n- Production, 4x CPU, mobile 390px: 67 frames over 50ms and 72 long tasks totalling 7.1s.\n\nRoot cause of the scroll jank: SVG text is re-laid out at every new scale. Whenever a viewBox camera tween, mapTransition or scale tween changes an SVG's scale, Chromium re-shapes every `<text>` at the new pixel size, costing about 2-3ms per text and 50-60ms per frame for the ch3/ch4/ch6/ch8 diagrams. Containment does not help (tested). Adding `text-rendering: geometricPrecision` to SVG text drops it to 0.1-0.2ms. With that one CSS rule:\n- 4x desktop: 3 frames over 50ms, 2 long tasks totalling 118ms.\n- 4x mobile: 5 frames over 50ms, 2 long tasks totalling 215ms.\n- A 1x-DPR screenshot of the ch6 diagram text looks identical with and without it.\n\nREAL-USER LAZY MOUNT: with the text fix, the remaining jank is chapter mounting. At 1x, 15 long tasks totalled 1.3s. Each chapter costs a React Suspense commit of 48-159ms (mostly forced layout inside the useGSAP builds) plus a 55-76ms ScrollTrigger onscroll layout. The first user scroll stalls 169ms (564ms at 4x) while the Prologue mounts.\n\nTWEEN GREP: 1,684 tl/gsap calls checked. No tweens of width/height/left/top/filter/boxShadow on HTML elements. There are only SVG `attr` tweens (allowed), Ch08 `fill` tweens (paint-only), and a time-0 `fontSize` set at Ch10/scenes.tsx:799 (harmless). The one CSS layout animation is Ch05 WorkerSlider `transition-[width]`.\n\nPARTICLES: desktop maximum is ch6-broker step 1 at exactly 60 (at the limit). On mobile, ch6-broker has 40, over the limit of 24.\n\nDOM WITH ?mount=all: 32,195 elements, of which 25,913 are inside 329 SVGs. outerHTML is 6.4 MB, of which 1.9 MB is rough.js path data. Max depth is 23. Per chapter: ch10 4,735, ch9 3,299, ch8 2,793, ch7 2,768, epilogue 2,726, ch1 2,682. Without mount=all the first screen has 413 elements.\n\nLEAD'S KNOWN ISSUES:\n- Ch1 SqlRunner mobile empty space: confirmed, about 233px after JOIN.\n- Ch2 CodeRunner mobile ELT gap: confirmed, about 210px.\n- Epilogue zoom step 4 tag crowding: confirmed (Ch7 tag clips '데이터 계약'; Ch8 and Ch1 tags sit on the cylinder lids).\n- Ch4 star step 4 dot overlap: not reproduced at resting positions (desktop 0.2/0.4/0.7, mobile 0.25/0.6/0.95). It may only be a dot in mid-flight.",
+   "findings": [
+    {
+     "file": "src/styles/index.css",
+     "chapter": "shared",
+     "severity": "high",
+     "problem": "Scrubbed camera moves (attr viewBox tweens in Ch03/Ch05/Ch06/Ch07/Ch08 and PipelineMap mapTransition) and scale tweens (Epilogue dex tiles) force Chromium to re-shape every SVG <text> at each new device scale. That costs 50-66ms per frame on an unthrottled M-series machine and 100-450ms per frame at 4x CPU. This is the dominant source of scroll jank.",
+     "evidence": "Changing the scale on the ch6-solution SVG (48 texts) costs 57-61ms per frame, ch4-solution 50-52ms, ch3-solution 50-52ms, ch8-problem 50ms. Hiding all text makes it 0ms. Per text it is about 1.7-3.3ms; Badge glyph texts (⏸ 10.35px/700, ✕ 9.2px/700) cost about 16ms each. With `text-rendering: geometricPrecision` the cost is 0.1-0.2ms. `contain:strict` on the diagram box did not help (4x run still had 47 frames over 50ms). Full scroll at 4x desktop: 39 frames over 50ms and 40 long tasks (4.58s) become 3 frames and 2 long tasks (118ms). At 4x mobile: 67 frames and 72 long tasks (7.1s) become 5 frames and 2 long tasks (215ms). Worst scenes before the fix: epilogue-dex 450ms, ch6-solution 300, ch3-solution 217, ch8-problem 200, ch4-solution 167, ch5-attempt 167, epilogue-zoom/cycle 100. A 1x-DPR screenshot of the ch6 diagram text looks the same before and after (scratchpad/perf/vis-ch6-*.png).",
+     "fix": "Add one global rule to index.css: `svg text { text-rendering: geometricPrecision; }`. This lays SVG text out once and scales it geometrically, so viewBox/scale tweens stop re-shaping text. No change to build functions is needed. Re-check small labels on a 1x monitor."
+    },
+    {
+     "file": "src/styles/index.css",
+     "chapter": "shared",
+     "severity": "high",
+     "problem": "Lighthouse mobile Performance is 78 (77-82 across runs), below the SPEC 90 target. The 99 @font-face rules (52 KB of the 99.7 KB render-blocking CSS) make Chromium request 11 Pretendard subsets plus JetBrains Mono (about 360 KB) at VeryHigh priority before first paint. Lantern then counts them on the FCP/LCP critical path.",
+     "evidence": "Mobile: FCP 3.6s, LCP 4.2s, SI 3.6s; LCP element is the hero `p.mt-6` with 89% render delay. Observed FCP is 49ms. network-requests shows 12 VeryHigh woff2 files requested at 38ms. Experiment in scratchpad/perf/dist-exp: I moved the @font-face blocks into assets/fonts.css and injected that link on `load`+rAF. Mobile Perf went to 99 and 99 (FCP/LCP 1.7s, CLS 0) versus 82 and 77 for the baseline on the same machine.",
+     "fix": "Move `@import 'pretendard/.../pretendardvariable-dynamic-subset.css'`, `@import '@fontsource-variable/jetbrains-mono'` and the 'Mono Space KR' @font-face from index.css into a new src/styles/fonts.css. In main.tsx: `addEventListener('load', () => import('./styles/fonts.css').then(() => document.fonts.ready).then(refreshTriggers), { once: true })`. Keep the existing fallback stacks so text renders immediately. Re-running refreshTriggers after the swap matters because the current `document.fonts.ready` call in main.tsx will resolve before these fonts are requested."
+    },
+    {
+     "file": "src/state/mount.ts",
+     "chapter": "shared",
+     "severity": "medium",
+     "problem": "In real (lazy-mount) browsing every chapter mount happens during a scroll gesture. It produces a synchronous React Suspense commit, during which the useGSAP builds force style and layout of the whole new chapter, followed by a forced layout in a ScrollTrigger scroll handler. The very first scroll stalls while the Prologue mounts.",
+     "evidence": "Production lazy run at 1x (with the text fix): 13 frames over 50ms, 15 long tasks (1.29s), all at chapter entry. Each mount is a `TimerHandler:setTimeout` task in index.js (React reveal) of 48-159ms, with 41-137ms of forced layout, plus `#document.onscroll` gsap tasks of 55-76ms forced. Examples: first scroll 'top' 169ms, prologue 123, ch2 136, ch9 167. At 4x: 25 long tasks (4.7s) of 165-564ms each.",
+     "fix": "Mount ahead of need during idle time instead of on the scroll that reaches the 150% rootMargin. When chapter k becomes active (setActive in Chapter.tsx), call `requestIdleCallback(() => startTransition(() => ensureMounted(k + 1)), { timeout: 3000 })` (fall back to setTimeout). Do the same after `load` for index 0 instead of waiting for the first scroll. Keep the IntersectionObserver as a fallback. If that is not enough, defer each StepScene's useGSAP build until its section is within about one viewport (an IntersectionObserver in ScrubScene), which spreads the forced layout across scenes."
+    },
+    {
+     "file": "src/state/progress.tsx",
+     "chapter": "ch10",
+     "severity": "low",
+     "problem": "Any progress change (reach() on each newly reached chapter, markClimax() at ch10-decision) re-renders every useProgress consumer. That includes whole-chapter roots: Ch10() uses useProgress only for markClimax, and Ch07/Epilogue blocks also subscribe. The result is a long task at chapter boundaries and at the climax.",
+     "evidence": "Dev server 1x: an IntersectionObserver callback in Chapter.tsx takes 83-113ms at every chapter start (ch1@0.00, ch2@0.00 ... epilogue@0.00). Production 4x: IO callbacks 36-51ms. ch10-decision 'MessagePort.onmessage' React task 69-96ms at 4x (54ms in the lazy 1x run).",
+     "fix": "Split the context: export `useProgressActions()` from a second context that holds only the stable callbacks {answer, markClimax, reach, reset}. Use it in Ch10() (src/chapters/Ch10/index.tsx:121) and ChapterShell (src/components/Chapter.tsx), so they no longer re-render when the state changes. Components that read state (Hud, Quiz, Growth, LevelDesk) keep useProgress()."
+    },
+    {
+     "file": "src/components/StepScene.tsx",
+     "chapter": "shared",
+     "severity": "medium",
+     "problem": "DOM size with every chapter mounted, which users reach by the epilogue because mounting is cumulative, is very large. It makes every whole-document style recalc, ScrollTrigger.refresh and forced layout expensive.",
+     "evidence": "?mount=all: 32,195 elements, 25,913 of them inside 329 SVGs; outerHTML 6.4 MB; 1.94 MB of path `d` strings; max depth 23. Chapters: ch10 4,735, ch9 3,299, ch8 2,793, ch7 2,768, epilogue 2,726. Largest scenes: ch10-decision 1,034 (78 KB path data), ch10-serve 967, epilogue-cycle 895 (170 KB path data), ch8-solution 834, ch5-distributed 702. A custom-property write on <body> costs a 60-103ms style recalc. Lighthouse counts 400 because chapters are lazy.",
+     "fix": "With the text fix, per-frame jank no longer scales with DOM size, so this is mainly a refresh and one-off cost. Cheapest wins: (1) use `fillStyle: 'solid'` or lower hachure density for large fills, since epilogue-cycle has 170 KB of path data; (2) never set CSS variables on html/body at runtime; (3) optionally put `content-visibility: auto; contain-intrinsic-size: auto 900px` on Summary/Quiz/ChapterGrowth blocks only, not on StepScenes, whose sizes ScrollTrigger needs."
+    },
+    {
+     "file": "src/state/env.tsx",
+     "chapter": "shared",
+     "severity": "low",
+     "problem": "GSAP (138 KB raw, 55 KB gzip) is loaded right after first render only to watch two media queries with gsap.matchMedia. Lighthouse reports 40 KB of it as unused JS on the first screen, and it competes with first paint on slow networks.",
+     "evidence": "Lighthouse network: gsap-CmiRGPl7.js requested at 70ms on the hero, with no chapter chunk loaded. unused-javascript: gsap 39,985 B, index 51,513 B (FCP -150ms, LCP -600ms estimated).",
+     "fix": "Replace the `import('../lib/gsap').then(... gsap.matchMedia ...)` effect with native `matchMedia(q).addEventListener('change', ...)` for the two queries. GSAP will then load with the first chapter chunk."
+    },
+    {
+     "file": "src/chapters/Ch06/scenes.tsx",
+     "chapter": "ch6",
+     "severity": "low",
+     "problem": "The ch6-broker step 1 particle count exceeds the guide's mobile limit (≤ 24) and is exactly at the desktop limit (60).",
+     "evidence": "At mobile, BrokerFig has n=8 (lines 602 and 784): drop 8 + train 16 (n*2) + arr-b 8 + arr-s 8 = 40 accent circles visible in step 1. Desktop: 12+24+12+12 = 60.",
+     "fix": "Use `const n = mobile ? 4 : 12` in both BrokerFig (line 602) and buildBroker (line 784), giving 4+8+4+4 = 20 on mobile. Alternatively drop the train to `n` instead of `n * 2` on mobile."
+    },
+    {
+     "file": "src/chapters/Ch05/WorkerSlider.tsx",
+     "chapter": "ch5",
+     "severity": "low",
+     "problem": "The interaction animates a layout property: stacked bar segments use `transition-[width] duration-300` with an inline `width:%`. Every slider change relayouts during the 300ms transition.",
+     "evidence": "line 122: `className=\"h-full shrink-0 transition-[width] duration-300 ease-out\" style={{ width: `${(r[k] / FULL) * 100}%` }}`",
+     "fix": "Lay the segments out with absolute `left` and fixed widths and animate `transform: scaleX()` with transform-origin left. Or, at minimum, add `contain: layout paint` to the bar container so the relayout stays local."
+    },
+    {
+     "file": "src/chapters/Ch01/SqlRunner.tsx",
+     "chapter": "ch1",
+     "severity": "medium",
+     "problem": "(Lead's known issue, confirmed.) On mobile the SQL runner diagram keeps the height of the tallest phase of the whole run, leaving a large empty area inside the frame once the result table is smaller.",
+     "evidence": "390px viewport, after the JOIN query: the svg is 351px tall (viewBox h 419) but visible content ends at y=141, so about 233px is empty. WHERE leaves 96px empty, GROUP BY 114px. Screenshot: scratchpad/perf/s-runner-ch1-join-m.png. Cause: buildStage tracks `maxY` across every phase (line 149) and returns `h: Math.ceil(maxY + 8)` (line 431).",
+     "fix": "Record a per-phase bottom (max of p.y+h for that frame) and tween the svg viewBox height per phase (`tl.to(svg, { attr: { viewBox: `0 0 ${w} ${h_i}` } })`; cheap once the geometricPrecision fix is in). Or, at minimum, set the final viewBox to the last phase's bottom + 8 when the run finishes."
+    },
+    {
+     "file": "src/chapters/Ch02/CodeRunner.tsx",
+     "chapter": "ch2",
+     "severity": "medium",
+     "problem": "(Lead's known issue, confirmed.) In the mobile ELT layout the transform stations move inside the analytics DB, but the DB block still starts at the fixed y used for ETL. This leaves an empty band between the Extract/Load row and the DB.",
+     "evidence": "390px viewport, ELT mode, after running: about 200px of empty space between the 수거/배송 row and the 분석용 DB cylinder (scratchpad/perf/s-runner-ch2-elt-m.png). geo() mobile branch: `const S = 404` regardless of `hasStoreChips`; the belt ends at lineY 160.",
+     "fix": "In geo(): `const S = hasStoreChips ? 200 : 404` (the belt line is at 160; leave about 40 units for the arrow). Everything below (storeChips, origY, table, h) is already derived from S."
+    },
+    {
+     "file": "src/chapters/Epilogue/scenes.tsx",
+     "chapter": "epilogue",
+     "severity": "low",
+     "problem": "(Lead's known issue, confirmed.) In epilogue-zoom step 4 the chapter tags overlap node content: the Ch7 tag clips the last glyph of '데이터 계약', and the Ch8 and Ch1 tags sit on the lids of the 레이크하우스 and 운영 DB cylinders.",
+     "evidence": "Desktop 1440, #epilogue-zoom step 4 @0.7 (scratchpad/perf/shots/zoom-epi.png). ChapterTag (line 128) places the 16px tab at `y = n.y - n.h/2 - 12`, which overlaps 4px into the node and more into store lids (ry up to 9), right-aligned at `n.x + n.w/2 - w + 6`.",
+     "fix": "Put the tab fully above the outline: `y = n.y - n.h/2 - 18 - (n.kind === 'store' ? 9 : 0)`. For narrow boxes where the tab is wider than about 40% of the node, right-align it to the box edge (`x = n.x + n.w/2 - w`) so it does not cover the label's last glyph."
+    },
+    {
+     "file": "src/components/Hud.tsx",
+     "chapter": "shared",
+     "severity": "low",
+     "problem": "Lighthouse a11y flags label-content-name-mismatch on the HUD button: its visible text is not contained in its aria-label. The a11y score stays 100 only because this audit is experimental.",
+     "evidence": "Button `aria-label=\"주니의 기록 열기: 도감, 역량, 맵, 목차, 설정. Lv1 신입, 진행 0%, 카드 0/26\"` has visible text 'Lv1 0/26', which does not appear as a contiguous substring.",
+     "fix": "Start the accessible name with the visible text, e.g. `aria-label={`Lv${lv} ${cards}/26 — 주니의 기록 열기: …`}`. Or drop aria-label and add the extra context in an sr-only span inside the button."
+    }
+   ]
+  },
+  "reduced": {
+   "summary": "I audited reduced-motion mode on desktop (1440x900) and mobile (390x844, DPR 2), using Playwright's reducedMotion setting and the HUD toggle. That covered 209 step snapshots, 7 interactions, Growth, idle motion and live switching. Snapshot timelines are sound. For every snapshot I took the paused timeline at i+0.97 and checked every tween: none stopped mid-tween and none started after the snapshot time. Screenshot grids were compared against each step's alt text and the storyboard 화면 notes; screenshots are in scratchpad/rm/{d,m}/ with grids in g/. Nothing auto-animates: a full-page idle scan found no running GSAP tweens, no running CSS or Web Animations, and no requestAnimationFrame loops from app code, on either viewport. All 7 interactions show their final result within 60ms with no follow-up timers (pixel-identical at 60ms and 1.5s on desktop; mobile differences were only the fixed HUD). Ch1 and Ch3 also jump straight to their final state when motion is reduced mid-play. Growth shows cards and the stamp at opacity 1, with no replay button and no active tweens. After switching modes live with the HUD toggle, the 209 snapshots match a page loaded in reduced mode exactly, with no console errors. The main problem with the toggle is that it moves the reader to a different scene. Lead's known issues: (a) Ch4 star step 4 accent dot: not seen in reduced mode (no accent shape touches '주문 항목 팩트' or '1~3일치만 담은 예시' at t=3.97 on desktop or mobile), so it is probably a scroll-animation-only problem; (b) Epilogue zoom step 4: partly confirmed (tags sit on node outlines and the focus ring, but no tag overlaps label text); (c) Ch1 SQL runner mobile: confirmed and worse in reduced mode (197px empty vs 129px); (d) Ch2 code runner mobile ELT: confirmed (~175 CSS px gap).",
+   "findings": [
+    {
+     "file": "src/state/env.tsx",
+     "chapter": "shared",
+     "severity": "high",
+     "problem": "Switching motion modes with the HUD toggle moves the reader to a different scene. StepScene swaps ScrubScene and StaticScene, and their heights differ (desktop page height 234,562 vs 198,650 px). scrollY is not mapped back to the step that was on screen, and browser scroll anchoring cannot help because the whole subtree is replaced. Switching back to full motion does not return to the original scene either.",
+     "evidence": "Playwright toggle test (scratchpad/rm/toggle.cjs, screenshots in rm/t/). Desktop: #ch4-star step 2 (scrollY 93975) -> reduced lands at #ch4-problem step 2 (scrollY 71133) -> full stays at #ch4-problem step 2. #ch8-medallion step 3 -> #ch8-problem step 3. Mobile: #ch4-star step 2 -> #ch4-problem step 3; #ch8-medallion step 3 -> #ch8-attempt step 1; #epilogue-zoom step 4 -> outside every scene. See t/s-d-ch4-star-full.png vs s-d-ch4-star-toR.png.",
+     "fix": "In setPref (env.tsx:56), before changing state, record the scene section (id containing '-') and the li[data-step] index under the viewport centre, plus the fraction through that step. After the new layout commits (a useLayoutEffect on `reduced`), scroll to the same section's same step at the same fraction, then call refreshTriggers(). One shared helper fixes every chapter."
+    },
+    {
+     "file": "src/chapters/Ch02/CodeRunner.tsx",
+     "chapter": "ch2",
+     "severity": "medium",
+     "problem": "If ▶ 실행 is playing in full motion and the reader switches to reduced motion, the runner keeps stepping one line every 750ms (STEP_MS). The button stays '⏸ 멈춤', so the page keeps animating in reduced mode. Ch1 (SqlRunner.tsx:533) and Ch3 jump to the final state in the same situation.",
+     "evidence": "rm/midplay.cjs: Ch2 status after toggling to reduced: '7줄 중 3줄' -> 4 -> 4 -> 5 -> 6 over 3s, button '⏸ 멈춤', motion=reduced. Ch1 went straight to items=12 / '▶ 실행'; Ch3 to the final 4 history rows.",
+     "fix": "In the playing effect (lines 515-523), add `if (reduced) { setCur(last); setPlaying(false); setLive(remaining entries joined); return }` and add `reduced` to its dependencies, matching SqlRunner.tsx:533-539."
+    },
+    {
+     "file": "src/chapters/Prologue/scenes.tsx",
+     "chapter": "prologue",
+     "severity": "medium",
+     "problem": "The prologue-solution step 4 snapshot shows the scroll animation's end state: the hand-drawn paper scaled to 0.42 in the top-right corner, with labels too small to read. The storyboard reduced-motion note asks for the hand-drawn map and the HUD map's 3 nodes (app · csv · bi) side by side, but no HUD map nodes are drawn.",
+     "evidence": "Line 756: tl.to(paper, { scale: 0.42, x: 250, y: -16 }). Rendered label heights inside [data-el=paper] at step 4: desktop 5-7px ('사용자 행동' 5px, 'CSV 파일' 7px); mobile 4-5px. Screenshots rm/d/prologue-solution-4.png and rm/m/prologue-solution-4.png. Storyboard 01-prologue.md:172.",
+     "fix": "Add `reduced` to SceneEnv (have Snapshot pass { mobile, reduced: true }). In buildSolution step 4, when reduced, keep the paper at a readable scale (≥0.7) on one side and show a PipelineMap at T.prologue (3 nodes) beside it instead of the 0.42 shrink."
+    },
+    {
+     "file": "src/chapters/Ch10/scenes.tsx",
+     "chapter": "ch10",
+     "severity": "medium",
+     "problem": "Ch10 decision step 2 in reduced mode (the 21→16 climax): ClimaxLayer draws the 21-node and 16-node maps horizontally, side by side on desktop and stacked on mobile. Node labels shrink to 3-4px, so the reader cannot tell which nodes were removed ('걷어냄' tags included). 'Ch9: 17' is also printed twice (centre and counter row).",
+     "evidence": "ClimaxLayer, lines 679-700 (reduced branch, PipelineMap vertical={false}). 93 visible map labels: median height 4.0px (max 8) on desktop, 3.0px (max 6) on mobile. Screenshot rm/m/ch10-decision-2.png.",
+     "fix": "In the reduced branch, crop both maps to the event-broker area that changes (as decision step 1 does), or use vertical layout on mobile, so node labels are ≥10px. Keep the full 16-node map only as a small secondary view. Drop the duplicate 'Ch9: 17'."
+    },
+    {
+     "file": "src/chapters/Ch01/SqlRunner.tsx",
+     "chapter": "ch1",
+     "severity": "medium",
+     "problem": "Confirmed known issue, worse in reduced mode. The 처리 과정 SVG's viewBox height is the tallest phase of the whole run (stage.h = maxY over every step, line 431). In reduced mode ▶ shows only the final 4-row result, so most of the diagram is empty on mobile.",
+     "evidence": "Mobile reduced after ▶: svg 351px tall (viewBox 0 0 356 419), content ends 197px above its bottom; in full motion the gap is 129px. Screenshot rm/i/m-ch1-run-a.png (crop in rm/crop1.png).",
+     "fix": "Track maxY per step. Use the current cursor's (or, in reduced mode, the final step's) height for the viewBox, tweening the viewBox height in full motion, instead of the global maximum."
+    },
+    {
+     "file": "src/chapters/Ch02/CodeRunner.tsx",
+     "chapter": "ch2",
+     "severity": "low",
+     "problem": "Confirmed known issue (same in both modes). On mobile, the narrow geometry always places the 분석용 DB box at y=404 (geo(), line ~67, S = 404). The belt's work zone (y 188-404) is reserved even when, as in ELT, all transforms run inside the store, leaving a large empty band between the conveyor and the store.",
+     "evidence": "Mobile reduced, after 'load를 위로 올리기 (ELT로 바꾸기)' then ▶: about 200 viewBox units (≈175 CSS px at 650/740 scale) of empty space between the 수거/배송 chips and the 분석용 DB box. Screenshot rm/i/m-ch2-elt-a.png (crop in rm/crop1.png).",
+     "fix": "Make S depend on whether any step runs on the belt outside the store, e.g. `const S = workOutside ? 404 : 220`, then shift storeChips, origY and the table from S."
+    },
+    {
+     "file": "src/chapters/Epilogue/scenes.tsx",
+     "chapter": "epilogue",
+     "severity": "low",
+     "problem": "Epilogue zoom step 4: 16 chapter tags (data-el=ctag) sit on node outlines. 'Ch8' covers the top-right of 레이크하우스's orange focus ring and cylinder rim; 'Prologue' sits on BI 대시보드's top border; 'Ch1' sits on 운영 DB's rim; 'Ch10' and 'Ch3' tags crowd neighbouring boxes. No tag box overlaps any label text, so the issue is crowding, not illegible text.",
+     "evidence": "Measured in reduced mode on desktop and mobile: 16 visible ctag groups, 0 intersections with label text boxes. Visual: rm/d/epilogue-zoom-4.png and zoomed rm/crop1.png (Ch8 tag over the focus ring).",
+     "fix": "Place each tag outside its node box (above-left with a 4px gap), or inside the node's top-left corner, and move the lakehouse tag clear of the .node-focus ring (offset by ring width + 6)."
+    },
+    {
+     "file": "src/chapters/Epilogue/scenes.tsx",
+     "chapter": "epilogue",
+     "severity": "low",
+     "problem": "Epilogue dex step 2: the 'Prologue에서 얻어요' caption on the S and U tiles runs past the dashed tile border.",
+     "evidence": "Caption text right edge vs tile rect right edge: desktop +7px, mobile +4-5px. Visible in rm/m/epilogue-dex-2.png (zoomed in rm/crop1.png, S tile).",
+     "fix": "Shrink the caption font for long chapter labels, or shorten it to 'P에서 얻어요' / '프롤로그', or truncate the text using the tw() width estimate (line 56) against the tile width."
+    },
+    {
+     "file": "src/chapters/Ch06/solution.tsx",
+     "chapter": "ch6",
+     "severity": "low",
+     "problem": "Mobile ch6-solution step 3: camera m3 (line 146) ends just below 이벤트 브로커, so the next row of nodes is sliced at the bottom of the SVG and only about 9 of the 15 nodes are visible. The step alt and storyboard describe all 15 nodes drawn bold; on mobile only kafka, lake, etl and oltp are bold.",
+     "evidence": "Audit CLIP on mobile step 3: '이상 결제 탐지', '스트림 처리', '실시간 재고 화면', '데이터 웨어하우스' are outside the 358x395 SVG box. Partial box tops are visible above '노드 11 → 15' in rm/m/ch6-solution-3.png.",
+     "fix": "End the m3 box on a row boundary (pad past kafka.y1 to the next full row, or stop above it), so no node is cut in half. Also make the mobile alt text match the dimmed-map picture."
+    },
+    {
+     "file": "src/components/diagram.tsx",
+     "chapter": "shared",
+     "severity": "low",
+     "problem": "Node draws two status badges when both `status` and `statuses` are passed: one permanent (no data-el) and one switchable (`${el}:${status}`). When a timeline turns the switchable one off (e.g. ✕ → ✓), the permanent ✕ stays in the DOM under the new badge, hidden only because the new badge's opaque circle covers it.",
+     "evidence": "ch3-attempt step 1/2 snapshot (Ch03/scenes.tsx:281 uses status='fail' with statuses=['fail','ok']): '✕' [aetl] opacity 1, '✕' [aetl:fail] opacity 0, '✓' [aetl:ok] opacity 1, all at the same position (100% overlap). Same duplicate '✕' in ch7-attempt steps 2-3.",
+     "fix": "At diagram.tsx (Node return, `{status && <Badge .../>}`), render the permanent badge only when `statuses` is not given: `{status && !statuses && <Badge .../>}`."
+    }
+   ]
+  }
+ },
+ "sharedFixReport": "All 38 findings were handled: 31 fixed in full, 3 fixed in part, 4 skipped. No chapter folder was touched. `npm run typecheck`, `npm run build` (including prerender) and `node scripts/contrast.mjs` all pass, and there are no console errors.\n\n**Fixed**\n- **CSS layers (`index.css`)**\n  - `:focus-visible` now sits in `@layer base` and `.btn*` in `@layer components`.\n  - I deleted the custom `.sr-only`, because Tailwind v4 already provides it.\n  - Effects: the skip link now shows when focused, the checked motion option is filled dark, and the editor and epilogue map show one focus ring instead of two.\n  - The skip link also needed `focus-visible:px-4 py-2`, because `not-sr-only` resets padding to 0. Its target is now `<main id=\"main\" tabIndex=-1>`.\n- **Small CSS fixes**: `.btn-sm` min-height is now 2.5rem. `::selection` is now ink on bg. `svg text { text-rendering: geometricPrecision }` is added; text looks the same at 1x DPR.\n- **Fonts**: they moved to the new `src/styles/fonts.css`, which `main.tsx` loads after the `load` event and then refreshes triggers. The render-blocking CSS went from 99.7 KB to 47.6 KB. I did not run Lighthouse.\n- **Motion toggle keeps your place**\n  - `env.tsx` remembers which step was in the middle of the screen and scrolls back to the same scene, step and fraction.\n  - The scroll goes through ScrollTrigger's own scroll function (new `scrollToY` in `lib/refresh.ts`). With a plain scroll call, the next refresh put the page back at the wrong spot.\n  - In 8 test cases at desktop and 390px, both directions now return to exactly the same scene and step.\n  - `gsap.matchMedia` is replaced with native `matchMedia`, so GSAP now loads with the first chapter.\n- **Stale triggers**: `lib/gsap.ts` now refreshes ScrollTrigger (debounced 150 ms) whenever the page height changes. After answering a quiz, 0 triggers are out of place.\n- **Mounting ahead**: `mountSoon` in `mount.ts` mounts the prologue when the page is idle after load, and mounts chapter k+1 when chapter k becomes active. I checked this in normal (lazy) browsing.\n- **Quiz**\n  - The label is now an `h3`, with its `-quiz` id kept because the epilogue links to it.\n  - After you submit, focus moves to the result box.\n  - The `Summary` and growth labels are `h3` too.\n- **Landmarks**: scene, quiz, growth and interaction sections no longer have names, so they stop being landmarks. The sticky diagram is `aria-hidden`.\n- **HUD**\n  - The tabs support Home and End, and `aria-controls` is only on the selected tab.\n  - Focus goes back to \"진행도 초기화\" after 초기화 or 취소.\n  - The progress bar is now an outline and fill in the text color (`currentColor`), at or above 3:1 on every stage and on hover.\n  - The button's accessible name starts with the visible text, with the rest in sr-only spans.\n  - The chapter rail has its own background, so it stays readable over the Ch6→Ch7 colour band.\n- **Growth block**\n  - The card row wraps instead of scrolling.\n  - Each replay button's name includes the chapter label.\n  - The radar is up to 24rem wide and its labels went from 12.5 to 16 units, with a new viewBox.\n  - The map spans the full width on desktop.\n  - On mobile, a new `PipelineMap fit` mode fills the width and sets the height from the map's own proportions. The root cause was that `boundsOf` forced a minimum width (`minAspect`), which made the vertical map about 1.8× wider than its nodes. Mobile labels went from about 4px to about 14px.\n- **PipelineMap**\n  - The \"새로\" tag now uses the surface colour with an accent border and ink text, at 13 units.\n  - I removed the `aria-label` on the `data-check` group and deleted the now-unused `UI.map.check`.\n  - Map-link names now start with the node's visible text.\n  - Extra fix: in the vertical layout, the faded removed nodes in the Ch10 growth map were drawn on top of the current nodes. They now get their own slots.\n- **TermCard**: the visible text is read directly; I removed the `aria-label` and `aria-hidden`.\n- **Hero**: I removed the duplicate `aria-label` on the card list.\n- **`diagram.tsx`**\n  - The permanent badge is drawn only when `statuses` doesn't already contain that status, so badges no longer stack.\n  - Store (cylinder) labels are now centred between the rim and the bottom; the rim no longer crosses \"운영 DB\".\n- **Contrast**: fail and ok are now checked at 4.5 on bg and card, plus wait on card. To pass, paper `ok` changed to #19692F and blueprint `fail` to #FFB4AC.\n\n**Partly fixed**\n- **Mobile label sizes** (fig.tsx and diagram.tsx findings): a new `fs()` helper raises sizes below 14 halfway towards 14 on mobile only (`--fs-lift: 7px`). It is used in Txt, NodeLabel, SvgTable, Gauge, the map edge labels and the Badge glyph; the glyph is capped at 1.45 × its radius instead of making the badge circle bigger. The sticky diagram's side padding is now `px-2`.\n  - I compared text overlaps across all 209 still images in reduced-motion mode. A lift of 7.5 (towards 15) added about 25 real overlaps, mostly text running past chips and table cells. A lift of 7 added about 8, and none were visible in screenshots, so I used 7.\n  - Labels drawn with raw `<text>` inside chapter files are not covered.\n- **StepScene on short phones**: I only reduced the top padding from 3.75rem to 3.5rem. The HUD now ends at 52px because of the taller buttons.\n  - I skipped the shorter diagram height for short screens. At 360×740 it would shrink diagrams from 0.72× to 0.66×, undoing the label-size fix.\n  - The step blocks that overflow are a chapter text-length issue.\n- **Lighthouse label mismatches**: I fixed the map links and the HUD button. The dex buttons, DagSimulator and the Ch10 `<dl>` are in chapter folders.\n\n**Skipped**\n- **DOM size**: nothing sets CSS variables on html or body at runtime. Adding `content-visibility` would put ScrollTrigger positions out of place again, and the large rough fills are drawn in chapter files.\n- **A landmark for the HUD controls**: low value.\n- **Two of the suggested contrast rows**:\n  - White on accent: nothing in shared code uses it any more.\n  - Muted text at 0.78 opacity: proposal nodes only appear on stage 10, where it measures 4.57.\n- **The lead's four known issues** (Ch4 star dot, epilogue-zoom tags, Ch1 SQL runner height, Ch2 runner gap): all are in chapter code, so I didn't check them.\n\nScreenshots are in `/Users/kimtaewoo/DE_web/shots/sharedfix-before/` and `/Users/kimtaewoo/DE_web/shots/sharedfix-after/`. The test scripts, overlap data and comparisons are in `/private/tmp/claude-501/-Users-kimtaewoo-DE-web/87f927fd-5f5a-4ca9-8840-608bdfafed08/scratchpad/shared-fix/` (the overlap checker is `ovl.mjs`).",
+ "chapterFixReports": {
+  "ch5": "Fixed all 6 ch5 findings. `npm run typecheck` passes and no shot run logged a console error. I did not run `npm run build`, because other agents are editing at the same time.\n\n**Fixed**\n1. **WorkerSlider tap targets**: the mobile \"세부 값\" buttons now have `-my-1.5 min-h-10 min-w-10`. Measured at 390 and 360 wide, each button is about 40×40 and no two overlap. Each mobile table row grows from about 32px to 41px.\n2. **ch5-storage step 3 dimmed labels**: the `data-el=\"fd\"` group now wraps only the folder icon, so only the 6 skipped icons dim to 0.45. The labels `date=03-08/` … `03-13/` stay at full opacity, like every other label. I checked this in motion and reduced mode. I updated the step's alt text in `ch5.ts` and the motion line in the storyboard to match.\n3. **Bar width animation**: I added `[contain:layout_paint]` to the bar container, the minimum fix the finding offered. I did not move the segments to `scaleX`, because scaling would stretch the stripe and dot patterns.\n4. **Problem step 2**: the new third sentence is in, as given: \"조금씩 나눠 읽으면 당장은 버틸 수 있지만, 데이터는 계속 불어나고 있어요.\"\n5. **Slider notice**: it now says cost is roughly \"워커 수 × 실행 시간\" and that only cost keeps rising once the gains shrink, as given. I switched the string to double quotes so it can hold the inner single quotes.\n6. **Distributed step 4**: added \"(또는 워커마다 먼저 세 둔 중간 합계)\", as given.\n\nThe storyboard `docs/storyboard/06-ch5.md` now has the same text for fixes 4–6. I also updated two of its 정확성 메모 notes (the memory one and the shuffle one) to say the screen now mentions reading in chunks and pre-counted partial totals.\n\nOn phones, the longer step texts still fit below the sticky diagram. Problem step 2 is 271px against 371px of room at 390×844 and 326px at 360×740. Distributed step 4 is 213px against 338px at 390×844, and 244px against 296px at 360×740.\n\n**Skipped**: none.\n\nChanged files:\n- `/Users/kimtaewoo/DE_web/src/chapters/Ch05/WorkerSlider.tsx`\n- `/Users/kimtaewoo/DE_web/src/chapters/Ch05/scenes.tsx`\n- `/Users/kimtaewoo/DE_web/src/content/chapters/ch5.ts`\n- `/Users/kimtaewoo/DE_web/docs/storyboard/06-ch5.md`\n\nScreenshots (desktop, `-m` mobile, `-r` reduced; `s-*` are the downscaled copies) are in `/Users/kimtaewoo/DE_web/shots/ch5fix/`. The check scripts are in `/private/tmp/claude-501/-Users-kimtaewoo-DE-web/87f927fd-5f5a-4ca9-8840-608bdfafed08/scratchpad/ch5fix/`."
+ }
+}

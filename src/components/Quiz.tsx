@@ -1,4 +1,4 @@
-import { useId, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { UI } from '../content/ui'
 import type { ChapterId, Quiz as QuizT } from '../content/types'
 import { Rich } from '../lib/rich'
@@ -14,17 +14,26 @@ export function Quiz({ id, quiz }: { id: ChapterId; quiz: QuizT }) {
   const correctIdx = quiz.options.findIndex((o) => o.correct)
   const correct = quiz.options[correctIdx]
   const chosen = saved ?? pick
+  // 제출하면 버튼이 사라지고 보기가 잠긴다 → 포커스를 결과 상자로 옮겨 제자리를 잃지 않게(처음부터 푼 상태면 옮기지 않음)
+  const result = useRef<HTMLDivElement>(null)
+  const submitted = useRef(false)
+  useEffect(() => {
+    if (done && submitted.current) result.current?.focus()
+  }, [done])
 
   return (
-    <section aria-labelledby={`${id}-quiz`} className="py-[8svh]">
-      <p id={`${id}-quiz`} className="font-mono text-sm text-muted">
+    <section className="py-[8svh]">
+      <h3 id={`${id}-quiz`} className="font-mono text-sm text-muted">
         {UI.quiz.title}
-      </p>
+      </h3>
       <form
         className="mt-3 max-w-[46rem]"
         onSubmit={(e) => {
           e.preventDefault()
-          if (pick && !done) answer(id, pick)
+          if (pick && !done) {
+            submitted.current = true
+            answer(id, pick)
+          }
         }}
       >
         <fieldset disabled={done}>
@@ -78,7 +87,7 @@ export function Quiz({ id, quiz }: { id: ChapterId; quiz: QuizT }) {
       </form>
       <div aria-live="polite" className="max-w-[46rem]">
         {done && (
-          <div className="mt-6 rounded-xl border-[1.5px] border-edge bg-surface p-5">
+          <div ref={result} tabIndex={-1} className="mt-6 rounded-xl border-[1.5px] border-edge bg-surface p-5">
             <p className="font-bold">
               <span aria-hidden="true">{saved === correct.id ? '✓ ' : '✕ '}</span>
               {saved === correct.id ? UI.quiz.correct : UI.quiz.wrong(correctIdx + 1)}

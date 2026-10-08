@@ -243,10 +243,10 @@ export function ProblemFig() {
         ))}
         <g data-el="towel-x">
           <Badge x={stX(3) + 18} y={rowTop(0) + 22} status="fail" r={10} />
-          <Txt x={stX(3) + 34} y={rowTop(0) + 18} size={12.5} weight={750} color="var(--fail)">
+          <Txt x={stX(3) + 34} y={rowTop(0) + 18} size={12.5} weight={750}>
             {F.soldOutAd[0]}
           </Txt>
-          <Txt x={stX(3) + 34} y={rowTop(0) + 34} size={12.5} weight={750} color="var(--fail)">
+          <Txt x={stX(3) + 34} y={rowTop(0) + 34} size={12.5} weight={750}>
             {F.soldOutAd[1]}
           </Txt>
         </g>
@@ -599,7 +599,7 @@ function Marker({ el, cx, tip, label }: { el: string; cx: number; tip: number; l
 
 export function BrokerFig() {
   const { mobile } = useEnv()
-  const n = mobile ? 8 : 12
+  const n = mobile ? 4 : 12 // 입자 수 한도(모바일 ≤ 24): 물방울·기차(2n)·도착 점 2줄 = 5n
   const gap = (P1.x1 - P1.x0) / n
   const ids = Array.from({ length: n }, (_, k) => k)
   return (
@@ -781,7 +781,7 @@ export function BrokerFig() {
 
 export const buildBroker: SceneBuild = (q, tl, { mobile }) => {
   const o = pick(q)
-  const n = mobile ? 8 : 12
+  const n = mobile ? 4 : 12
   const gap = (P1.x1 - P1.x0) / n
 
   // ── step 1: 같은 데이터, 다른 도착 방식 ──
