@@ -10,6 +10,7 @@
 - **2026-10-08 세션(울트라코드, Opus)**: 수정 단계만 도는 워크플로 `wf_1815db3c-e6d` 실행 — 챕터마다 수정 → 독립 검토(콘텐츠 정확성 + UI 회귀, 읽기 전용) → 재수정(최대 2회) → 최종 검증(build·Lighthouse / SPEC 10장·콘솔 / 375·360·모션 줄이기·키보드) → 실패 시 최종 수정·재검증. 커밋은 메인 세션이 함. 스크립트는 세션 폴더 `workflows/scripts/phase3-fix-review-verify-*.js`(세션이 바뀌면 resume 불가 → `git diff`로 반영 상태 확인 후 남은 챕터만 다시). 챕터별 findings 추출 도우미: `node -e` 로 `audits.*.findings`를 `chapter`로 거르면 됨(id = `<audit>#<index>`).
 - **사용자 추가 요청: BGM**(같은 세션) — Web Audio 합성(파일 없음) `src/lib/bgm.ts`(첫 클릭 때 지연 로드), 상태 `src/state/bgm.ts`, HUD `BgmToggle`(기본 꺼짐, aria-pressed, 설정 탭에도), 문구 `UI.bgm`. 스테이지마다 악기 추가(0 패드·1 피아노·3 베이스·5 킥/햇·7 블루프린트·8 멜로디·11 에필로그). 단계별 RMS -28.5→-22.9 dBFS, 피크 ≤ -9.9. 독립 검토 워크플로 `wf_1b9526e6-040`(엔진/UX/음악) 결과 반영 필요. 히어로 제목 800~1000px 단어 끊김도 고침(`md:text-[clamp(3rem,6.2vw,5.25rem)]`).
 - **GitHub**: 공개 저장소 https://github.com/twenter1003/DE_web (origin, 사용자 승인). `main` push → `.github/workflows/pages.yml`이 https://twenter1003.github.io/DE_web/ 에 배포. Phase 3·BGM 커밋 후 다시 push할 것(사용자 승인됨).
+- **2026-10-09 (토큰 부족으로 중단)**: 체크포인트 `9082f25`(BGM·히어로), `fc9be38`(챕터 수정·검토 완료)까지 `main`에 push. 마지막 정리 워크플로 `wf_07eb3914-47f`는 수정 단계 중간에 사용자 요청으로 멈춤 → 그 수정(28개 파일, **검토·검증 전**)은 브랜치 `wip/phase3-finish`에 커밋·push(사이트 배포 안 됨). 다음 세션: ① `git diff main wip/phase3-finish`로 확인 후 가져오기(`git merge wip/phase3-finish`) — 항목 목록은 그 브랜치의 `docs/phase3-todo.json`. ② 남은 일: 공용 항목(map.ts 운영 DB→CSV 연결선, StepScene 태블릿 열, progress 컨텍스트 분리, cards Q, 바이블 ELT·처리 시간) 마무리 → 독립 검토 → 최종 검증(SPEC 10: 키보드로 퀴즈 전부 → 26/26·Lv5, 맵 성장·Ch10 단순화·에필로그 줌아웃, 지연 마운트 전체 스크롤 콘솔 0, 375/360/375×667·모션 줄이기) → `npm run build`·`node scripts/storyboard.mjs` → Lighthouse(모바일·데스크톱) → 커밋·push(승인됨). ③ 보고: 부정확·과단순 문장 목록(`docs/phase3-findings.json` content1~3 + 검토 결과) 고친 것/남긴 것, Lighthouse 점수.
 - 다음 세션에서 할 순서(위 워크플로가 끝나지 않았을 때):
   1. 개발 서버 `npx vite --port 5288 --strictPort` 띄우기(5173은 사용자 다른 앱).
   2. 챕터마다 에이전트 하나씩(병렬, 자기 챕터 파일만): `docs/phase3-findings.json`에서 그 챕터 findings를 읽어 수정 → typecheck·스크린샷(데스크톱/--mobile/--reduced)으로 확인. (`docs/phase3-workflow.js`를 그대로 돌리면 감사부터 다시 돈다 — 세션이 바뀌면 resume 불가. 수정 단계만 돌리는 스크립트로 바꿔 쓸 것.)
@@ -55,4 +56,6 @@
 - Ch10 맵 단순화를 위해 Build vs Buy에서 etl·cdc를 관리형 Zero-ETL 연결선으로 대체.
 - 강조색은 신호 주황(종이 #C24705 / 블루프린트 #FF8A3D).
 - 스토리보드 분량 기준(1,200~1,800자)은 공백 제외로 해석.
+- Ch8에서 맵이 16→15 노드로 줄어드는 건 레이크하우스 통합(호수+창고)으로 의도한 SPEC 10 예외. Ch10 최종 16 노드는 Ch8보다 많아서, Ch10의 '단순해짐'은 제안안 21→16 대비로 보여 준다.
+- BGM은 기본 꺼짐, 켠 상태를 저장하지 않음, 음량 슬라이더 없음(기기 음량으로 조절).
 - Prologue의 세 역할 비유는 해결 장면 앞부분에, Ch1의 시도와 실패는 두 장면(SQL 성공 → 운영 DB 과부하)으로 나뉨(스토리보드 검토자 판단 유지).
