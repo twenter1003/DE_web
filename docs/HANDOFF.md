@@ -7,6 +7,12 @@
 - **다음 = Phase 2**: `docs/phase2-workflow.js`를 Workflow 도구에 `script`로 그대로 넣어 실행(배치 3개: Ch3·4·5 → Ch6·7·8 → Ch9·10·Epilogue, 각 build → review → gate가 빌드·커밋). 실행 전 개발 서버(포트 5288)가 떠 있어야 함.
 - 검토자가 남긴 공유 컴포넌트 과제(Phase 3에서 처리): ① 모바일 세로 맵에서 app과 운영 DB가 나란히 놓여 연결선이 짧음(`PipelineMap` verticalLayout), ② Ch1 `scenes.tsx`의 `primed()` 래퍼는 StepScene 수정으로 이제 불필요(지워도 됨).
 
+## 진행 중(이 세션 후반)
+- Phase 2 워크플로 `wf_cdfbb66e-c7f` 실행 중(`docs/phase2-workflow.js`). 배치마다 gate 에이전트가 빌드·커밋.
+- **사용자 추가 요청(2026-10-08)**: "유저가 코드를 입력·실행하면 그 과정을 모션그래픽으로 보여주기". 결정: 챕터당 인터랙션 1개 규칙을 지키려고 *교체*로 반영 —
+  Ch1 SQL 놀이터 → 편집 가능한 'SQL 실행기'(FROM→JOIN→WHERE→GROUP BY→SELECT 논리 순서로 단계 실행), Ch2 ETL↔ELT 토글 → '파이프라인 코드 실행기'(extract→정제→load를 줄마다 실행, load를 위로 올리면 ELT). 미리 채운 코드 + 한 번 누르는 실험 버튼(비전공자용), 작은 자체 해석기(무거운 SQL 엔진 없음). 워크플로 `wf_c0d6ffbf-47b`. 다른 챕터(예: Ch7 YAML 테스트)로 넓힐지는 사용자 의견 대기.
+- 성능: 챕터 지연 마운트(`src/state/mount.ts`, `Deferred.tsx`, `?mount=all`로 전부), 첫 화면 사전 렌더(`scripts/prerender.mjs`, build에 포함), GSAP 지연 로드. Lighthouse 데스크톱 99/100/100/100, 모바일 성능 ~82(한글 웹폰트 서브셋 ~300KB가 느린 4G 시뮬레이션의 첫 그리기를 좌우).
+
 ## 이전 기록
 - Phase 0: 완료. `docs/SPEC.md`, `CLAUDE.md`, `docs/ARCHITECTURE.md`, `docs/CHAPTER_GUIDE.md`, `docs/storyboard/00-bible.md` + `01~12` 챕터 스토리보드(작성 → 적대적 검토 완료, 일관성 검토는 워크플로 `wf_0a2dde01-551` 마지막 단계). **`docs/STORYBOARD.md`(00-bible + 01~12 이어 붙이기)는 아직 안 만듦.**
 - Phase 1: 기반 + Prologue 완료(커밋 `11f0673`). Ch1·Ch2는 워크플로 `wf_54d91a1f-b2d`(build → review)로 구현 중. 끝나면 직접 스크린샷 검토 후 커밋.
