@@ -35,19 +35,177 @@ const etl = {
   load: ['적재', 'Load'],
 } as const
 
+/** 받침에 따라 '으로'/'로'(한글이 아니면 '(으)로') */
+const ro = (w: string) => {
+  const c = w.charCodeAt(w.length - 1) - 0xac00
+  if (!(c >= 0 && c <= 11171)) return '(으)로'
+  const jong = c % 28
+  return jong === 0 || jong === 8 ? '로' : '으로'
+}
+const won = (n: number) => `${n.toLocaleString('ko-KR')}원`
+const ids = (list: string[]) => list.join('·')
+
+// 인터랙션: 파이프라인 코드 실행기. 아래 명령만 알아듣는 작은 해석기(src/chapters/Ch02/pipeline.ts)가 RAW_ORDERS로 계산한다.
 const interaction = {
-  title: 'ETL ↔ ELT 토글',
-  hint: '버튼을 눌러 순서를 바꿔 보세요. 데이터 블록이 어디에서 반듯해지는지 살펴보세요.',
-  groupLabel: '변환 순서 고르기',
+  title: '파이프라인 코드 실행기',
+  hint: '주니가 짠 야간 배치 코드예요. **▶ 실행**을 누르면 코드가 한 줄씩 돌면서, 주문이 어떻게 꺼내지고 정리돼 실리는지 그림으로 보여 줘요. 코드는 직접 고쳐도 되고, 실험 버튼으로 바꿔도 돼요.',
+  note: (n: number) => `진짜 파이썬이 아니라, 아래 명령 ${n}가지만 알아듣는 연습용 실행기예요. 실제로는 더 복잡해서, 분석용 DB 안에서 하는 변환은 보통 SQL 같은 다른 코드로 따로 써요.`,
+
+  editorLabel: '파이프라인 코드 (고쳐도 돼요)',
+  /** 처음 코드. 줄마다 명령 하나 */
+  code: [
+    'data = extract("운영 DB", "orders", 날짜="어제")',
+    'data = remove_duplicates(data)',
+    'data = fill_missing(data, 배송지="미입력")',
+    'data = to_number(data, "가격")',
+    'data = fix_dates(data)',
+    'load(data, "분석용 DB")',
+    'report()',
+  ],
+
+  experimentsTitle: '실험',
+  experiments: {
+    noDedupe: { label: '중복 제거 줄 지우기', watch: '중복 제거 줄을 지웠어요. ▶ 실행을 누르고 아침 리포트의 주문 수를 보세요.' },
+    elt: { label: 'load를 위로 올리기 (ELT로 바꾸기)', watch: 'load 줄을 extract 바로 아래로 올렸어요. ▶ 실행을 누르고 정리가 어디에서 일어나는지 보세요.' },
+    noNumber: { label: '가격 숫자로 바꾸기 빼기', watch: 'to_number 줄을 지웠어요. ▶ 실행을 누르고 매출 합계를 보세요.' },
+    reset: { label: '처음 코드로', watch: '처음 코드로 돌아왔어요.' },
+  },
+  same: '이미 그렇게 바뀌어 있어요. ▶ 실행을 눌러 보세요.',
+
+  controls: { run: '실행', pause: '멈춤', step: '한 줄씩', reset: '처음부터' },
+  progress: (done: number, all: number) => `${all}줄 중 ${done}줄 실행`,
+
+  helpTitle: (n: number) => `알아듣는 명령 ${n}가지`,
+  helpMore: '맨 앞의 `data =`는 빼도 되고, 따옴표도 빼도 돼요. `#` 뒤는 메모(주석)라서 실행하지 않아요.',
+  /** 명령 이름(코드) → 종류·짧은 이름·예시·설명. 종류가 스테이션 아이콘을 정한다. alias는 실행하지 않고 '혹시 …인가요?' 추천에만 쓴다 */
+  commands: {
+    extract: { kind: 'extract', short: '꺼내기', alias: ['추출', '꺼내기', '수거'], example: 'data = extract("운영 DB", "orders", 날짜="어제")', desc: '운영 DB에서 어제 주문을 복사해 꺼내요.' },
+    remove_duplicates: { kind: 'transform', short: '중복 제거', alias: ['중복 제거', 'drop_duplicates', 'dedupe'], example: 'data = remove_duplicates(data)', desc: '주문번호가 같은 줄은 하나만 남겨요.' },
+    fill_missing: { kind: 'transform', short: '빈칸 채우기', alias: ['빈칸 채우기', '결측치 처리', 'fillna'], example: 'data = fill_missing(data, 배송지="미입력")', desc: '빈칸을 정한 값으로 채워요.' },
+    to_number: { kind: 'transform', short: '숫자로', alias: ['숫자로', '숫자로 바꾸기', 'to_numeric'], example: 'data = to_number(data, "가격")', desc: "'4,000원'처럼 글자로 된 가격을 숫자로 바꿔요." },
+    fix_dates: { kind: 'transform', short: '날짜 통일', alias: ['날짜 통일', '날짜 맞추기', 'to_datetime'], example: 'data = fix_dates(data)', desc: '모양이 제각각인 날짜를 한 가지 모양으로 맞춰요.' },
+    load: { kind: 'load', short: '싣기', alias: ['적재', '싣기', '배송', 'save'], example: 'load(data, "분석용 DB")', desc: '분석용 DB에 표로 실어요.' },
+    report: { kind: 'report', short: '리포트', alias: ['리포트', '보고서', 'print', 'show'], example: 'report()', desc: '분석용 DB에 실린 표로 아침 리포트를 계산해요.' },
+  },
+  /** 해석기가 알아듣는 값(띄어쓰기·대소문자는 무시) */
+  words: {
+    data: 'data',
+    sources: ['운영 DB', 'oltp'],
+    tables: ['orders', '주문'],
+    dateKeys: ['날짜', 'date'],
+    yesterday: ['어제', 'yesterday'],
+    targets: ['분석용 DB', '분석용 저장소', 'warehouse'],
+    /** 칸 이름. 첫 번째가 화면에 쓰는 이름 */
+    cols: { id: ['주문번호', 'id'], date: ['주문일', '날짜', 'date'], product: ['상품', 'product'], price: ['가격', 'price'], addr: ['배송지', '주소', 'addr'] },
+  },
+
+  /** 스테이션 종류(택배 물류센터 비유와 같은 이름) */
+  kinds: { extract: '수거', transform: '분류·포장', load: '배송', report: '리포트' },
+
+  fig: {
+    source: '운영 DB',
+    sourceSub: 'orders',
+    srcCount: (n: number) => `어제 주문 ${n}건`,
+    srcKeep: ['꺼내도', '원본은 그대로'],
+    store: '분석용 DB',
+    belt: 'data',
+    tables: { main: '주문', orig: '주문_원본', clean: '주문_정리본' },
+    count: (n: number) => `${n}건`,
+    clean: '정리됨',
+    dirty: (n: number) => `고칠 곳 ${n}`,
+    heads: { id: '주문번호', date: '주문일', price: '가격', region: '지역' },
+    dup: '중복',
+    blank: '빈칸',
+    stop: '멈춤',
+  },
+  legend: '따옴표 "…" = 글자로 저장된 값 · 점선 = 고칠 곳 · 반듯한 블록 = 정리 끝난 줄',
+
+  now: {
+    idle: '아직 실행 전이에요. ▶ 실행이나 한 줄씩을 누르면, 실행 중인 줄이 이 그림에서 어떻게 움직이는지 보여 줘요.',
+  },
+  logTitle: '실행 기록',
+  logEmpty: '실행하면 줄마다 무슨 일이 있었는지 여기에 쌓여요.',
+  log: {
+    entry: (n: number, name: string, inside: boolean, text: string) => `${n}줄 \`${name}\`${inside ? ' (분석용 DB 안에서)' : ''}: ${text}`,
+    error: (n: number, text: string) => `${n}줄에서 멈췄어요. ${text}`,
+    extract: (n: number, found: string[]) =>
+      `운영 DB에서 어제 주문 ${n}건을 복사해 꺼냈어요. 운영 DB의 주문은 그대로예요. ` + (found.length ? `살펴보니 ${found.join(', ')}이 섞여 있어요.` : '고칠 곳은 없어요.'),
+    found: {
+      dup: (n: number) => `중복 ${n}건`,
+      blank: (n: number) => `빈칸 ${n}곳`,
+      text: (n: number) => `글자로 된 가격 ${n}칸`,
+      date: (n: number) => `모양이 다른 날짜 ${n}칸`,
+    },
+    copyFirst: "원본 표는 그대로 두고, 복사한 '주문_정리본' 표를 정리해요. ",
+    dedupe: (before: number, after: number, dup: string[]) => (after < before ? `${before}건 → ${after}건, ${ids(dup)}번이 두 번 있었어요.` : `중복이 없어요. ${after}건 그대로예요.`),
+    fill: (col: string, value: string, filled: string[]) =>
+      filled.length ? `${col} 빈칸 ${filled.length}곳(${ids(filled)}번)을 '${value}'${ro(value)} 채웠어요.` : `${col}에는 빈칸이 없어요. 그대로예요.`,
+    toNumber: (n: number, from: string, to: string) => (n ? `글자로 된 가격 ${n}칸을 숫자로 바꿨어요. '${from}' → ${to}처럼요. 이제 합계에 들어가요.` : '가격이 이미 모두 숫자예요.'),
+    fixDates: (n: number, kinds: number, to: string) => (n ? `날짜 모양 ${kinds}가지를 ${to} 한 가지 모양으로 맞췄어요. ${n}칸이 바뀌었어요.` : '날짜 모양이 이미 한 가지예요.'),
+    load: (n: number, table: string) => `${n}건을 분석용 DB의 '${table}' 표에 실었어요.`,
+    loadRaw: (n: number, table: string, partial: boolean) =>
+      partial
+        ? `위에서 일부만 정리한 ${n}건을 분석용 DB의 '${table}' 표에 그대로 실었어요. 나머지 정리는 실은 다음 저장소 안에서 해요.`
+        : `정리하기 전 ${n}건을 분석용 DB의 '${table}' 표에 그대로 실었어요. 정리는 실은 다음 저장소 안에서 해요.`,
+    report: (n: number, sum: number) => `분석용 DB에서 아침 리포트를 계산했어요. 주문 ${n}건, 매출 ${won(sum)}.`,
+    reportEmpty: '분석용 DB가 비어 있어서 계산할 게 없어요. load 줄이 먼저 실행돼야 해요.',
+  },
+  err: {
+    nothing: '실행할 줄이 없어요. 처음 코드로 버튼을 눌러 보세요.',
+    unknown: (name: string, near: string | null) => `모르는 명령이에요: ${name}.` + (near ? ` 혹시 ${near}인가요?` : ''),
+    known: (names: string[]) => `알아듣는 명령은 ${names.join(', ')}예요. 편집기 아래 '알아듣는 명령' 목록에 쓰는 법이 있어요.`,
+    unreadable: '이 줄을 읽지 못했어요. 명령은 이름(…) 모양으로 써요.',
+    noParen: (name: string) => `${name} 뒤에 괄호 ( )가 빠졌어요.`,
+    unclosed: '여는 괄호 (와 닫는 괄호 )의 짝이 맞지 않아요.',
+    quote: '따옴표의 짝이 맞지 않아요.',
+    variable: (v: string) => `이 실행기는 data라는 이름 하나만 기억해요. 맨 앞의 '${v} ='를 'data ='로 바꿔 주세요.`,
+    dataArg: (v: string) => `이 실행기는 data라는 이름 하나만 기억해요. 괄호 안의 '${v}'를 'data'로 바꿔 주세요.`,
+    noData: '아직 꺼낸 데이터가 없어요. 이 줄보다 위에 extract 줄이 있어야 해요.',
+    twiceExtract: 'extract는 한 번만 써요. 이미 위에서 꺼내 왔어요.',
+    twiceLoad: 'load는 한 번만 써요. 두 번 실으면 같은 주문이 두 번 들어가요.',
+    source: (v: string) => `'${v}'에서는 꺼낼 수 없어요. 꺼내 올 곳은 '운영 DB'예요.`,
+    table: (v: string) => `'${v}' 표는 없어요. 이 연습의 표는 orders(주문) 하나예요.`,
+    date: (v: string) => `날짜는 '어제'만 돼요. '${v}'의 주문은 이 연습 데이터에 없어요.`,
+    target: (v: string) => `'${v}'에는 실을 수 없어요. 실을 곳은 '분석용 DB'예요.`,
+    column: (v: string, cols: string[]) => `'${v}'라는 칸은 없어요. 칸 이름은 ${cols.join(', ')}예요.`,
+    numberCol: (v: string) => `'${v}' 칸은 숫자로 바꾸지 않아요. 숫자로 바꿀 칸은 '가격'이에요.`,
+    dateCol: (v: string) => `'${v}' 칸은 날짜가 아니에요. 날짜 칸은 '주문일'이에요.`,
+    fillWhat: '어느 칸을 무엇으로 채울지 적어요.',
+    fillEmpty: '채울 값이 비어 있어요.',
+    extra: (v: string) => `'${v}'는 이 명령에 쓰지 않는 값이에요.`,
+    tryThis: (example: string) => `이렇게 써 보세요: \`${example}\``,
+    internal: '이 줄을 실행하다가 예상하지 못한 문제가 생겼어요. 처음 코드로 버튼을 눌러 다시 해 보세요.',
+  },
+
+  report: {
+    title: '아침 리포트',
+    from: (table: string) => `분석용 DB '${table}' 표에서 계산`,
+    empty: '분석용 DB가 아직 비어 있어요. load 줄이 실행되면 여기서 숫자를 계산해요.',
+    labels: { count: '주문 수', revenue: '매출 합계', regions: '지역별 주문', dates: '날짜별 주문' },
+    count: (n: number) => `${n}건`,
+    won,
+    pair: (k: string, n: number) => `${k} ${n}`,
+    datePair: (k: string, n: number) => `${k} ${n}건`,
+    blankRegion: '(빈칸)',
+    right: '실제와 같아요',
+    wrong: (v: string) => `실제는 ${v}`,
+    differs: '실제와 달라요',
+    why: {
+      dup: (dup: string[]) => `${ids(dup)}번 주문이 두 번 세어졌어요.`,
+      dupPrice: (dup: string[]) => `${ids(dup)}번 가격이 두 번 더해졌어요.`,
+      text: (n: number) => `글자로 된 가격 ${n}칸은 숫자가 아니라서 합계에서 빠졌어요.`,
+      blank: (n: number) => `배송지가 빈 주문 ${n}건은 어느 지역인지 몰라 (빈칸)으로 묶였어요.`,
+      filledReal: (v: string) => `빈 배송지를 '${v}'${ro(v)} 채워서, 주소를 모르는 주문이 그 지역 주문으로 세어졌어요.`,
+      dates: (k: number) => `같은 날 주문인데 날짜 모양이 ${k}가지라서 ${k}칸으로 쪼개졌어요.`,
+    },
+  },
+
   modes: { etl: 'ETL', elt: 'ELT' },
-  source: '운영 DB',
-  store: '분석용 저장소',
-  stations: { extract: etl.extract[0], transform: etl.transform[0], load: etl.load[0] },
-  /** 스테이션 순번 표시 */
-  order: ['1', '2', '3'],
-  tables: {
-    raw: { name: '주문_원본', rows: '6행', tag: '정리 전' },
-    clean: { name: '주문_정리본', rows: '5행', sum: '합계 19,000원' },
+  shape: {
+    etl: '지금 코드는 ETL 순서예요. 추출 → 변환 → 적재, 정리를 싣기 전에 해요.',
+    elt: '지금 코드는 ELT 순서예요. 추출 → 적재 → 변환, 정리를 분석용 DB 안에서 해요.',
+    copy: "지금 코드에는 정리하는 줄이 없어요. 주니가 처음 했던 '그대로 복사'와 같아요.",
+    none: '지금 코드에는 load 줄이 없어서, 분석용 DB에 아무것도 싣지 않아요.',
   },
   prosTitle: '좋은 점',
   consTitle: '조심할 점',
@@ -60,11 +218,7 @@ const interaction = {
     cons: "저장소 안에 정리 안 된 원본이 쌓여요. 원본을 바로 세면 '6건' 같은 틀린 숫자가 나올 수 있어요.",
   },
   common: '어느 쪽도 틀리지 않아요. 원본을 다시 쓸 일이 있는지, 저장소가 넉넉한지에 따라 골라요.',
-  live: {
-    etl: 'ETL 선택. 추출, 변환, 적재 순서. 분석용 저장소에 정리본 5행.',
-    elt: 'ELT 선택. 추출, 적재, 변환 순서. 분석용 저장소에 원본 6행과 정리본 5행.',
-  },
-  replay: '다시 흘려보내기',
+  live: { reset: '처음으로 되돌렸어요. 아직 아무 줄도 실행하지 않았어요.' },
 }
 
 const figures = {
@@ -224,7 +378,7 @@ export const ch2: ChapterContent<'problem' | 'attempt' | 'analogy' | 'definition
           alt: '두 줄 비교. 위 ETL: 추출, 변환, 적재 순서이고 저장소엔 주문_정리본만. 아래 ELT: 추출, 적재 다음 저장소 안에서 변환, 저장소엔 주문_원본과 주문_정리본. 아래 줄 저장소 상자가 더 넓어요.',
         },
         {
-          text: 'ETL이 틀린 게 아니에요. 정리한 다음 실을지, 실은 다음 정리할지 순서를 고르는 거예요. 아래에서 직접 바꿔 보세요.',
+          text: 'ETL이 틀린 게 아니에요. 정리한 다음 실을지, 실은 다음 정리할지 순서를 고르는 거예요. 아래 코드에서 줄 순서를 직접 바꿔 보세요.',
           lines: [{ who: 'juni', mood: 'focus', text: '정리하는 곳이 저장소 밖이냐, 안이냐네요.' }],
           alt: '두 줄 가운데 라벨: 정답은 없어요 · 순서의 선택. 위 줄 변환은 저장소 밖, 아래 줄 변환은 저장소 안에 있고 둘 다 점선 원으로 표시돼 있어요.',
         },

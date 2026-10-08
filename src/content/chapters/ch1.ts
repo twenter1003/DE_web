@@ -2,7 +2,7 @@ import type { ChapterContent } from '../types'
 
 // Ch1. "어제 몇 개 팔렸어요?" — SQL과 데이터베이스 — 스토리보드: docs/storyboard/02-ch1.md
 
-// 이 챕터의 공통 데이터(장면 2·3과 SQL 놀이터에서 같은 값을 쓴다). 이야기 속 오늘은 6월 3일, 어제는 6월 2일.
+// 이 챕터의 공통 데이터(장면 2·3과 SQL 실행기에서 같은 값을 쓴다). 이야기 속 오늘은 6월 3일, 어제는 6월 2일.
 export const ORDERS = [
   { order_id: 2001, product_id: 'P1', qty: 2, price: 3000, ordered_at: '6/1 10:02' },
   { order_id: 2002, product_id: 'P2', qty: 1, price: 2000, ordered_at: '6/1 13:15' },
@@ -26,32 +26,205 @@ export const PRODUCTS = [
 /** 이야기 속 어제 */
 export const YESTERDAY = '6/2'
 
+/** 이야기 속 오늘(SQL 실행기의 CURRENT_DATE) */
+export const TODAY = '6/3'
+
+const COLS_TEXT = 'order_id, product_id, qty, price, ordered_at, name'
+
+/** 장면 3 마지막 쿼리. SQL 실행기 편집기에 처음 들어 있는 코드 */
+const FINAL_QUERY = [
+  'SELECT orders.product_id, name, SUM(qty) AS 판매개수',
+  'FROM orders',
+  'JOIN products ON orders.product_id = products.product_id',
+  `WHERE DATE(ordered_at) = CURRENT_DATE - 1  -- 어제(${YESTERDAY})`,
+  'GROUP BY orders.product_id, name;',
+].join('\n')
+
+/** WHERE 조건의 비교 기호를 말로 */
+const OP_WORDS: Record<string, (v: string) => string> = {
+  '=': (v) => `${v}인`,
+  '<>': (v) => `${v} 말고 다른`,
+  '!=': (v) => `${v} 말고 다른`,
+  '>': (v) => `${v}보다 큰`,
+  '>=': (v) => `${v} 이상인`,
+  '<': (v) => `${v}보다 작은`,
+  '<=': (v) => `${v} 이하인`,
+}
+
 const interaction = {
-  title: 'SQL 놀이터',
-  hint: '조각을 골라 쿼리를 완성해 보세요. 진짜 데이터베이스가 아니라 연습용 주문 10건으로 결과를 보여 줘요.',
-  caption: '연습용 주문 10건 · 이야기 속 오늘은 6월 3일',
-  groups: {
-    select: { legend: '보여줄 것 · SELECT', options: { all: '전체 주문', count: '상품별 개수', revenue: '상품별 매출' } },
-    period: { legend: '기간 · WHERE', options: { all: '전체 기간', yesterday: '어제' } },
-    join: { legend: '상품 이름 · JOIN', options: { off: '끔', on: '켬' } },
+  title: 'SQL 실행기',
+  hint: (n: number) =>
+    `쿼리를 고쳐 쓰거나 실험 버튼을 눌러 보고, **▶ 실행**으로 쿼리가 표를 어떻게 바꾸는지 지켜보세요. 진짜 데이터베이스가 아니라 연습용 주문 ${n}건으로 처리해요.`,
+  caption: (n: number, today: string) => {
+    const [m, d] = today.split('/')
+    return `연습용 주문 ${n}건 · 이야기 속 오늘은 ${m}월 ${d}일`
   },
-  codeLabel: '조립된 쿼리',
-  sql: {
-    selectAll: 'SELECT *',
-    selectAllJoin: 'SELECT orders.*, products.name',
-    selectGroup: (agg: string) => `SELECT product_id, ${agg}`,
-    selectGroupJoin: (agg: string) => `SELECT orders.product_id, name, ${agg}`,
-    agg: { count: 'SUM(qty) AS 판매개수', revenue: 'SUM(qty * price) AS 매출' },
+  initial: FINAL_QUERY,
+
+  experimentsLabel: '실험 · 누르면 쿼리가 바뀌어요',
+  experiments: [
+    { id: 'all', label: '전부 보기 (SELECT *)', code: 'SELECT *\nFROM orders;', note: '가장 단순한 쿼리예요. FROM이 꺼낸 주문이 거르지도 묶지도 않은 채 그대로 결과가 돼요.' },
+    {
+      id: 'where',
+      label: '어제만 보기 (WHERE 넣기)',
+      code: `SELECT *\nFROM orders\nWHERE DATE(ordered_at) = CURRENT_DATE - 1;  -- 어제(${YESTERDAY})`,
+      note: 'WHERE 줄을 넣었어요. 실행하면 어제 주문이 아닌 행에 ✕ 제외가 붙어요.',
+    },
+    {
+      id: 'group',
+      label: '상품별로 묶기 (GROUP BY)',
+      code: 'SELECT product_id, SUM(qty) AS 판매개수\nFROM orders\nWHERE DATE(ordered_at) = CURRENT_DATE - 1\nGROUP BY product_id;',
+      note: 'GROUP BY가 같은 product_id끼리 모으고, SUM(qty)이 묶음 안의 qty를 더해 숫자 하나로 합쳐요.',
+    },
+    { id: 'join', label: '상품 이름 붙이기 (JOIN)', code: FINAL_QUERY, note: 'JOIN 줄이 products 표에서 상품 이름을 가져와요. 쓰기는 SELECT가 먼저지만, 처리는 FROM부터예요.' },
+    {
+      id: 'revenue',
+      label: '매출로 바꾸기 (SUM(qty * price))',
+      code: FINAL_QUERY.replace('SUM(qty) AS 판매개수', 'SUM(qty * price) AS 매출'),
+      note: '개수 대신 개수 × 개당 가격을 더해요. 한 줄만 바뀌었는데 결과 열이 달라져요.',
+    },
+    {
+      id: 'broken',
+      label: '일부러 틀려 보기 (GROUP BY 빼기)',
+      code: FINAL_QUERY.split('\n').slice(0, 4).join('\n').replace('CURRENT_DATE - 1  --', 'CURRENT_DATE - 1;  --'),
+      note: 'GROUP BY 줄을 지웠어요. ▶ 실행을 누르면 무엇이 문제인지 알려 줘요.',
+    },
+  ],
+
+  editorLabel: 'SQL 쿼리 · 고쳐 써도 돼요',
+  run: '▶ 실행',
+  pause: '⏸ 멈춤',
+  step: '한 줄씩',
+  reset: '처음부터',
+  controlsLabel: '실행 조절',
+  status: {
+    idle: '⏸ 아직 실행 전이에요',
+    running: (k: number, n: number) => `▶ 실행 중 · ${k}/${n}단계`,
+    paused: (k: number, n: number) => `⏸ 멈춤 · ${k}/${n}단계`,
+    done: (n: number) => `✓ 실행 끝 · ${n}단계를 모두 처리했어요`,
+    error: '✕ 쿼리를 고치면 실행할 수 있어요',
+  },
+  stageLabel: '처리 과정',
+  stageEmpty: '▶ 실행이나 한 줄씩을 누르면, 여기에서 표가 단계마다 바뀌어요.',
+  stageError: '쿼리를 고치면 여기에서 다시 처리 과정을 볼 수 있어요.',
+  logLabel: '실행 기록',
+  logEmpty: '아직 실행한 줄이 없어요.',
+
+  /** 그림 속 표 제목 */
+  titles: {
+    from: (n: number) => `orders · ${n}행`,
+    join: (n: number) => `orders + products의 name · ${n}행`,
+    where: (n: number) => `WHERE 뒤 · ${n}행 남음`,
+    group: (g: number) => `GROUP BY 뒤 · ${g}묶음`,
+    result: (n: number) => `결과 · ${n}행`,
+    products: 'products',
+  },
+  excluded: '✕ 제외',
+  nullValue: 'NULL',
+
+  /** 실행 기록 한 줄 */
+  lineTag: (a: number, b: number) => (a === b ? `${a}줄` : `${a}~${b}줄`),
+  logLine: (tag: string, clause: string, text: string) => `${tag} ${clause}: ${text}`,
+  log: {
+    from: (n: number) => `orders 표에서 주문 ${n}건을 꺼냈어요.`,
+    join: (n: number) => `product_id가 같은 products 행을 찾아 ${n}건 모두에 상품 이름(name)을 붙였어요.`,
+    dayLabel: (n: number) => (n === 0 ? '오늘' : n === 1 ? '어제' : `${n}일 전`),
+    yearsAgo: (y: number) => `${y}년 전 `,
+    condDate: (label: string, md: string) => `주문 날짜가 ${label}(${md})인`,
+    condCmp: (col: string, v: string, op: string) => `${col} 값이 ${(OP_WORDS[op] ?? OP_WORDS['='])(v)}`,
+    where: (cond: string, before: number, after: number, out: string) => `${cond} 주문만 남겨요. ${before}건 → ${after}건${out}`,
+    whereOut: (ids: string) => `, ${ids}번은 제외.`,
+    whereOutMany: (k: number) => `, ${k}건은 제외.`,
+    whereNone: ', 빠진 주문이 없어요.',
+    group: (keys: string, before: number, g: number, detail: string) => `${keys} 값이 같은 주문끼리 묶었어요. ${before}건 → ${g}묶음${detail}.`,
+    groupDetail: (parts: string[]) => ` (${parts.join(', ')})`,
+    groupPart: (key: string, n: number) => `${key} ${n}건`,
+    aggs: (list: string) => ` 묶음마다 ${list} 값을 계산해 한 줄로 합쳤어요.`,
+    selectOne: (k: number, list: string) => `GROUP BY가 없어서 남은 ${k}건을 한 묶음으로 보고 ${list} 값을 계산했어요. `,
+    select: (cols: string, n: number) => `${cols} 열만 남겨 결과 ${n}행을 만들었어요.`,
+    selectStar: (n: number) => `*는 모든 열이라 열을 그대로 두고 결과 ${n}행을 만들었어요.`,
+    preview: (rows: string) => ` 결과: ${rows}`,
+    nullNote: ' 더할 행이 없으면 SUM은 NULL(값 없음)이 돼요.',
+  },
+
+  errorTitle: (line: number | null) => (line ? `✕ ${line}줄에서 멈췄어요` : '✕ 실행하지 못했어요'),
+  tryThis: '이렇게 써 보세요',
+  nearLabel: '비슷한 말',
+  err: {
+    empty: '쿼리가 비어 있어요. 위의 실험 버튼으로 예시 쿼리를 불러와 보세요.',
+    start: 'SQL 쿼리는 SELECT로 시작해요.',
+    unknownWord: (w: string) => `'${w}' — 이 실행기가 모르는 말이에요.`,
+    unsupported: (kw: string) => `이 실행기는 ${kw}까지는 몰라요. 알아듣는 건 SELECT · FROM · JOIN · WHERE · GROUP BY예요.`,
+    andOr: 'WHERE 조건은 하나만 알아들어요. AND나 OR로 조건을 잇는 건 아직 몰라요.',
+    groupBy: 'GROUP과 BY는 붙여서 GROUP BY로 써요.',
+    order: (kw: string, prev: string) => `${kw} 줄은 ${prev} 줄보다 앞에 와야 해요. 쓰는 순서: SELECT → FROM → JOIN → WHERE → GROUP BY`,
+    dup: (kw: string) => `${kw} 줄이 두 번 나왔어요. 한 번만 쓸 수 있어요.`,
+    noFrom: '어느 표에서 꺼낼지 알려 주는 FROM 줄이 없어요.',
+    fromTable: 'FROM 뒤에는 orders 하나만 써요. products는 JOIN 줄로 붙여요.',
+    join: 'JOIN 줄은 이 모양으로만 알아들어요.',
+    semicolon: '세미콜론(;)은 쿼리 맨 끝에 한 번만 써요. 이 실행기는 쿼리 하나만 실행해요.',
+    quote: "작은따옴표(')가 닫히지 않았어요. 값의 앞뒤에 모두 써 주세요.",
+    symbol: (ch: string) => `'${ch}' — 이 실행기가 모르는 기호예요.`,
+    doubleQuote: '큰따옴표(")는 이 실행기가 몰라요. 글자 값은 작은따옴표로 감싸고, 결과 열 이름(AS 뒤)은 따옴표 없이 한 단어로 써요.',
+    paren: '괄호 ( ) 짝이 맞지 않아요. 여는 괄호마다 닫는 괄호가 하나씩 있어야 해요.',
+    selectEmpty: 'SELECT 뒤에 보여 줄 열이 없어요. *나 열 이름을 적어 주세요.',
+    emptyItem: '쉼표(,) 사이나 끝에 빈 자리가 있어요.',
+    missingComma: '열 사이에 쉼표(,)가 빠진 것 같아요. 결과 열 이름을 붙이려면 AS를 써요.',
+    alias: 'AS 뒤에는 결과 열 이름을 한 단어로 적어요.',
+    column: (c: string) => `'${c}' 열은 없어요. 쓸 수 있는 열: ${COLS_TEXT}`,
+    table: (t: string) => `'${t}' 표는 없어요. 쓸 수 있는 표: orders, products`,
+    tableCol: (t: string, c: string, list: string) => `${t} 표에는 '${c}' 열이 없어요. ${t}의 열: ${list}`,
+    needJoin: (c: string) => `${c} 열은 products 표에 있어요. JOIN 줄을 넣어야 쓸 수 있어요.`,
+    ambiguous: 'JOIN을 하면 product_id가 orders와 products 두 표에 모두 있어서 어느 쪽인지 정할 수 없어요. 앞에 표 이름을 붙여 주세요.',
+    func: (f: string) => `'${f}' — 이 실행기는 함수 중에 SUM과 COUNT만 알아들어요.`,
+    sumArg: 'SUM 괄호 안에는 숫자 열 하나(qty, price)나 qty * price만 쓸 수 있어요.',
+    countArg: 'COUNT는 COUNT(*)처럼 써요.',
+    star: 'SELECT *는 묶지 않은 행을 그대로 보여 줄 때만 써요. SUM이나 GROUP BY와 함께라면 묶은 열과 합친 값만 적어 주세요.',
+    groupMissing: (cols: string) =>
+      `SUM·COUNT로 합친 값과 보통 열(${cols})을 함께 SELECT하면, 그 보통 열을 GROUP BY에 적어야 해요. 무엇끼리 묶을지 모르면 한 줄에 어느 행의 값을 쓸지 정할 수 없거든요. 실제 데이터베이스도 대부분 이 쿼리를 오류로 막아요.`,
+    groupForm: 'GROUP BY 뒤에는 묶을 열 이름을 쉼표로 이어 적어요.',
+    whereForm: 'WHERE 조건은 하나만, 이런 모양으로 알아들어요.',
+    dateForm: '날짜 조건은 이 모양으로 써요(1 대신 다른 숫자를 써도 돼요).',
+    dateFar: (max: number) => `며칠 전인지는 ${max} 이하의 숫자로 적어 주세요.`,
+    needQuote: (c: string) => `${c} 값은 글자라서 작은따옴표로 감싸요.`,
+    noQuote: (c: string) => `${c}는 숫자 열이라 따옴표 없이 써요.`,
+    textOp: (c: string) => `${c} 같은 글자 열은 = 나 <> 로 같은지만 비교해요.`,
+    generic: (tok: string) => `'${tok}' 부분을 이해하지 못했어요.`,
+    internal: '이 쿼리는 이해하지 못했어요. 실험 버튼으로 예시 쿼리를 불러와 비교해 보세요.',
+  },
+  /** 오류 안내에 보여 줄 바른 모양(코드) */
+  hints: {
+    start: 'SELECT * FROM orders',
     from: 'FROM orders',
     join: 'JOIN products ON orders.product_id = products.product_id',
-    where: 'WHERE DATE(ordered_at) = CURRENT_DATE - 1',
-    whereComment: '-- 어제(6/2)',
-    groupBy: 'GROUP BY product_id',
-    groupByJoin: 'GROUP BY orders.product_id, name',
+    where: "DATE(ordered_at) = CURRENT_DATE - 1   ·   product_id = 'P1'   ·   qty >= 2",
+    date: 'DATE(ordered_at) = CURRENT_DATE - 1',
+    alias: 'SUM(qty) AS 판매개수',
+    comma: 'product_id, SUM(qty)   ·   SUM(qty) AS 판매개수',
+    quote: "product_id = 'P1'   ·   SUM(qty) AS 판매개수",
+    sum: 'SUM(qty * price)',
+    count: 'COUNT(*)',
+    select: 'SELECT *',
+    groupBy: 'GROUP BY orders.product_id, name',
+    groupByOne: 'GROUP BY product_id',
   },
-  codeNote: '※ 날짜를 쓰는 문법은 데이터베이스마다 조금씩 달라요. 결과는 보기 쉽게 정렬했어요(실제로는 ORDER BY로 순서를 정해요).',
-  changed: '← 바뀐 줄',
-  tableCaption: (n: number) => `쿼리 결과 · ${n}행`,
+
+  help: {
+    title: '이 실행기가 알아듣는 SQL',
+    order: 'SQL은 쓴 순서가 아니라 **FROM → JOIN → WHERE → GROUP BY → SELECT** 순서로 처리돼요(실제 데이터베이스는 더 똑똑하게 순서를 바꾸기도 해요).',
+    items: [
+      '`SELECT *` 또는 `SELECT 열, 열` — 열: `order_id` `product_id` `qty` `price` `ordered_at` `name` (`orders.qty`처럼 표 이름을 붙여도 돼요)',
+      '`SUM(qty)` · `SUM(qty * price)` · `COUNT(*)` — `AS 판매개수`처럼 결과 열 이름을 붙일 수 있어요',
+      '`FROM orders`',
+      '`JOIN products ON orders.product_id = products.product_id` (없어도 돼요)',
+      "`WHERE` 조건 하나 (없어도 돼요): `DATE(ordered_at) = CURRENT_DATE - 1` · `product_id = 'P1'` · `qty >= 2`",
+      '`GROUP BY 열, 열` (없어도 돼요) — SUM·COUNT와 함께 SELECT한 보통 열은 모두 여기에 적어요',
+      '대소문자는 상관없어요. `--` 뒤는 사람이 읽는 메모(주석)라 실행하지 않고, 맨 끝 `;`는 있어도 없어도 돼요.',
+    ],
+  },
+  note: '진짜 SQL 엔진이 아니라 위 목록만 알아듣는 연습용 실행기예요. 날짜를 쓰는 문법은 데이터베이스마다 조금씩 달라요. 결과는 보기 쉽게 정렬했어요(실제로는 ORDER BY로 순서를 정해요).',
+
+  /** 표 머리글(장면 그림도 같이 쓴다) */
   cols: {
     order_id: 'order_id',
     product_id: 'product_id',
@@ -60,23 +233,7 @@ const interaction = {
     ordered_at: 'ordered_at',
     name: 'name',
     count: '판매개수',
-    revenue: '매출',
   },
-  /** 한 줄 해설: `${보여줄 것}-${기간}` */
-  explain: {
-    'all-all': '주문 10건이 모두 보여요. 아직 거르거나 묶지 않았어요.',
-    'all-yesterday': 'WHERE가 6월 2일 주문 5건만 남겼어요.',
-    'count-all': 'GROUP BY가 상품마다 한 줄로 묶었어요. 모두 더하면 15개예요.',
-    'count-yesterday': '어제는 모두 9개가 팔렸어요. 대표님 질문의 답이에요.',
-    'revenue-all': 'SUM(qty * price)는 개수 × 개당 가격을 더해요. 모두 더하면 49,000원이에요.',
-    'revenue-yesterday': '어제 매출은 모두 29,000원이에요. P1이 12,000원으로 가장 많아요.',
-  },
-  /** 해설 뒤에 붙는 문장 */
-  joinNote: {
-    off: 'P1~P4가 무슨 상품인지 궁금하면 JOIN을 켜 보세요.',
-    on: 'name 열은 products 테이블에서 JOIN으로 붙여 온 거예요.',
-  },
-  live: (n: number, text: string) => `결과가 바뀌었어요. ${n}행. ${text}`,
 }
 
 const figures = {

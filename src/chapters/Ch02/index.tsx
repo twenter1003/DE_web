@@ -3,7 +3,7 @@ import { ChapterOpening, ChapterShell, Summary } from '../../components/Chapter'
 import { ChapterGrowth } from '../../components/Growth'
 import { Quiz } from '../../components/Quiz'
 import { StepScene } from '../../components/StepScene'
-import { EtlToggle } from './EtlToggle'
+import { CodeRunner } from './CodeRunner'
 import { AnalogyFig, AttemptFig, buildAnalogy, buildAttempt, buildDefinition, buildProblem, buildSolution, DefinitionFig, ProblemFig, SolutionFig } from './scenes'
 
 export function Ch02() {
@@ -14,7 +14,7 @@ export function Ch02() {
       <StepScene id="ch2-attempt" kind="attempt" scene={c.scenes.attempt} diagram={() => <AttemptFig />} build={buildAttempt} tall />
       <StepScene id="ch2-analogy" kind="concept" scene={c.scenes.analogy} diagram={() => <AnalogyFig />} build={buildAnalogy} tall />
       <StepScene id="ch2-definition" kind="concept" scene={c.scenes.definition} diagram={() => <DefinitionFig />} build={buildDefinition} />
-      <EtlToggle />
+      <CodeRunner />
       <StepScene id="ch2-solution" kind="solution" scene={c.scenes.solution} diagram={() => <SolutionFig />} build={buildSolution} tall />
       <Summary text={c.summary} />
       <Quiz id="ch2" quiz={c.quiz} />

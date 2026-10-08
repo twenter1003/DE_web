@@ -17,7 +17,7 @@ import {
   ProblemFig,
   SolutionFig,
 } from './scenes'
-import { SqlPlayground } from './SqlPlayground'
+import { SqlRunner } from './SqlRunner'
 
 export function Ch01() {
   return (
@@ -25,7 +25,7 @@ export function Ch01() {
       <ChapterOpening id="ch1" opening={c.opening} visitors={0} />
       <StepScene id="ch1-problem" kind="problem" scene={c.scenes.problem} diagram={() => <ProblemFig />} build={buildProblem} />
       <StepScene id="ch1-attempt" kind="attempt" scene={c.scenes.attempt} diagram={() => <AttemptFig />} build={buildAttempt} tall />
-      <SqlPlayground />
+      <SqlRunner />
       <StepScene id="ch1-overload" kind="attempt" scene={c.scenes.overload} diagram={() => <OverloadFig />} build={buildOverload} tall />
       <StepScene id="ch1-analogy" kind="concept" scene={c.scenes.analogy} diagram={() => <AnalogyFig />} build={buildAnalogy} />
       <StepScene id="ch1-oltp" kind="concept" scene={c.scenes.oltp} diagram={() => <OltpFig />} build={buildOltp} />

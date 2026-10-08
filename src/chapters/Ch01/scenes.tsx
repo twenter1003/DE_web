@@ -106,8 +106,8 @@ function Initial({ x, y, r = 20, initial, name, seed }: { x: number; y: number; 
 }
 
 // ── 코드 타이핑 ──
-/** 줄 비교용: 끝의 세미콜론·주석을 뗀다(SQL 놀이터도 같이 쓴다) */
-export const norm = (line: string) => line.replace(/;?(\s+--.*)?$/, '')
+/** 줄 비교용: 끝의 세미콜론·주석을 뗀다 */
+const norm = (line: string) => line.replace(/;?(\s+--.*)?$/, '')
 /** 새 코드의 글자마다: 앞 step 코드에 이미 있던 줄의 글자면 false(바로 보임), 새로 써지는 글자면 true */
 function typedMask(prev: string, cur: string) {
   const old = new Set(prev ? prev.split('\n').map(norm) : [])
