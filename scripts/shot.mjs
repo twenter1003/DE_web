@@ -39,7 +39,10 @@ page.on('pageerror', (e) => errors.push(`[pageerror] ${e.message}`))
 if (opt.progress) {
   await page.addInitScript((p) => localStorage.setItem('de-atoz:progress', p), opt.progress)
 }
-await page.goto(opt.url, { waitUntil: 'networkidle' })
+// 챕터는 평소엔 가까워질 때 마운트된다. 검증용으로는 전부 미리 마운트(?mount=all).
+const target = new URL(opt.url)
+if (!target.searchParams.has('mount')) target.searchParams.set('mount', 'all')
+await page.goto(target.toString(), { waitUntil: 'networkidle' })
 await page.evaluate(() => document.fonts.ready)
 await page.waitForTimeout(400)
 for (const sel of opt.click) {

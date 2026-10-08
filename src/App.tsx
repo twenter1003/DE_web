@@ -1,5 +1,6 @@
 import { UI } from './content/ui'
 import { CHAPTERS } from './chapters/registry'
+import { DeferredChapter } from './components/Deferred'
 import { Hero } from './components/Hero'
 import { ChapterRail, Hud } from './components/Hud'
 import { STAGES, stageVars } from './lib/stages'
@@ -20,8 +21,8 @@ export function App() {
         <ChapterRail />
         <main>
           <Hero />
-          {CHAPTERS.map(({ id, Component }) => (
-            <Component key={id} />
+          {CHAPTERS.map(({ id, steps, Component }, i) => (
+            <DeferredChapter key={id} id={id} index={i} steps={steps} Component={Component} />
           ))}
         </main>
         <footer className="paper-grid text-ink" style={stageVars(STAGES[11]) as React.CSSProperties}>
