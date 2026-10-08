@@ -2,10 +2,16 @@
 
 사용자 요청: Phase 0~3을 **멈추지 말고** 끝까지 완료. 컨텍스트 70% 근처에서 이 문서를 갱신하고 새 세션으로 넘김. 가정·질문은 최종 보고에 모은다.
 
-## 현재 상태 (최신)
-- **Phase 0·1·2 완료**: 12개 장 모두 구현·적대적 검토·커밋(배치 커밋 2b93585, 7864554, 0456b28, 35dd8f6). Ch1·Ch2 인터랙션은 사용자 요청으로 '코드 실행기'로 교체(5b151c4).
-- **Phase 3 진행 중**: `docs/phase3-workflow.js`(워크플로 `wf_15d4b1b3-60b`) — 감사 10개 병렬 → 공유 코드 수정 → 챕터별 수정 병렬 → 최종 검증·커밋. 콘텐츠 정확성 감사 결과(`contentFindings`)는 사용자에게 보고할 목록.
-- 중단되면: `Workflow({ scriptPath: "docs/phase3-workflow.js", resumeFromRunId: "wf_15d4b1b3-60b" })`로 이어서(끝난 에이전트는 캐시).
+## 현재 상태 (최신: 커밋 1fa35dc 이후)
+- **Phase 0·1·2 완료**: 12개 장 모두 구현·검토·커밋. Ch1·Ch2 인터랙션은 사용자 요청으로 '코드 실행기'.
+- **Phase 3 일부 완료**: 감사 9개 끝 → 결과 150건이 `docs/phase3-findings.json`에 저장됨(high 8 / medium 56 / low 86).
+  - 공유 코드 38건 처리(31건 완료, 3건 일부, 4건 건너뜀 — `sharedFixReport` 참고). Ch5 수정 완료(`chapterFixReports.ch5`).
+  - **남은 일 = 챕터별 수정 + 최종 검증**: Prologue, Ch1~4, Ch6~10, Epilogue의 findings(`audits.*.findings`에서 `chapter`가 그 챕터인 것). 일부는 1fa35dc에 이미 반영됐을 수 있으니 고치기 전에 현재 파일 확인.
+- 다음 세션에서 할 순서:
+  1. 개발 서버 `npx vite --port 5288 --strictPort` 띄우기(5173은 사용자 다른 앱).
+  2. 챕터마다 에이전트 하나씩(병렬, 자기 챕터 파일만): `docs/phase3-findings.json`에서 그 챕터 findings를 읽어 수정 → typecheck·스크린샷(데스크톱/--mobile/--reduced)으로 확인. (`docs/phase3-workflow.js`를 그대로 돌리면 감사부터 다시 돈다 — 세션이 바뀌면 resume 불가. 수정 단계만 돌리는 스크립트로 바꿔 쓸 것.)
+  3. 최종 검증: `npm run build`, SPEC 10장 완료 기준(퀴즈 전부 → 26/26, Lv5, 맵 성장·Ch10 단순화·에필로그 줌아웃, 모션 줄이기, 모바일), 전체 스크롤 콘솔 에러 0, Lighthouse(모바일·데스크톱), 커밋.
+  4. 사용자에게 보고: `contentFindings`(content1~3 감사)를 '부정확하거나 지나치게 단순화한 문장' 목록으로 정리해 보고(SPEC Phase 3 요구), 고친 것/남긴 것 표시.
 
 ## 진행 중(이 세션 후반)
 - Phase 2 워크플로 `wf_cdfbb66e-c7f` 실행 중(`docs/phase2-workflow.js`). 배치마다 gate 에이전트가 빌드·커밋.
