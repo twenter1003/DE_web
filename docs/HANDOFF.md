@@ -2,10 +2,10 @@
 
 사용자 요청: Phase 0~3을 **멈추지 말고** 끝까지 완료. 컨텍스트 70% 근처에서 이 문서를 갱신하고 새 세션으로 넘김. 가정·질문은 최종 보고에 모은다.
 
-## 현재 상태 (최신: 커밋 90b5067)
-- **Phase 1 완료**: Prologue·Ch1·Ch2 구현·검토·커밋. `docs/STORYBOARD.md` 합침(`node scripts/storyboard.mjs`). 카드 26장 정의를 스토리보드와 동기화. Ch3~Epilogue는 스텁(`return null`)으로 registry에 등록돼 있음.
-- **다음 = Phase 2**: `docs/phase2-workflow.js`를 Workflow 도구에 `script`로 그대로 넣어 실행(배치 3개: Ch3·4·5 → Ch6·7·8 → Ch9·10·Epilogue, 각 build → review → gate가 빌드·커밋). 실행 전 개발 서버(포트 5288)가 떠 있어야 함.
-- 검토자가 남긴 공유 컴포넌트 과제(Phase 3에서 처리): ① 모바일 세로 맵에서 app과 운영 DB가 나란히 놓여 연결선이 짧음(`PipelineMap` verticalLayout), ② Ch1 `scenes.tsx`의 `primed()` 래퍼는 StepScene 수정으로 이제 불필요(지워도 됨).
+## 현재 상태 (최신)
+- **Phase 0·1·2 완료**: 12개 장 모두 구현·적대적 검토·커밋(배치 커밋 2b93585, 7864554, 0456b28, 35dd8f6). Ch1·Ch2 인터랙션은 사용자 요청으로 '코드 실행기'로 교체(5b151c4).
+- **Phase 3 진행 중**: `docs/phase3-workflow.js`(워크플로 `wf_15d4b1b3-60b`) — 감사 10개 병렬 → 공유 코드 수정 → 챕터별 수정 병렬 → 최종 검증·커밋. 콘텐츠 정확성 감사 결과(`contentFindings`)는 사용자에게 보고할 목록.
+- 중단되면: `Workflow({ scriptPath: "docs/phase3-workflow.js", resumeFromRunId: "wf_15d4b1b3-60b" })`로 이어서(끝난 에이전트는 캐시).
 
 ## 진행 중(이 세션 후반)
 - Phase 2 워크플로 `wf_cdfbb66e-c7f` 실행 중(`docs/phase2-workflow.js`). 배치마다 gate 에이전트가 빌드·커밋.
