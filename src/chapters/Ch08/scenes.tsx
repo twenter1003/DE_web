@@ -100,7 +100,7 @@ const CURSOR = [
   [FILES[0][0] + 6, FILES[0][1] + 26],
   [FILES[1][0] + 6, FILES[1][1] + 26],
   [FILES[2][0] + 6, FILES[2][1] + 26],
-  [222, 252],
+  [212, 246],
 ] as const
 const PM = { x: 404, y: 34, h: 120, lake: 36, wh: 72 }
 
@@ -381,13 +381,15 @@ export const buildAttempt: SceneBuild = (q, tl, { mobile }) => {
   const o = pick(q)
   const arrows = ['a-ctl', 'a-ls', 'a-sw'].map((n) => o(n))
   init(tl, [...o('sync'), ...o('sp'), ...o('eq'), ...o('watch'), ...o('two-one'), ...o('alert'), ...o('timeline')], { opacity: 0 })
-  arrows.forEach((a) => hideArrow(tl, a))
+  // 제어 화살표(점선)는 drawSVG가 점선 무늬를 덮어쓰므로 나타나기만 한다
+  init(tl, arrows[0], { opacity: 0 })
+  arrows.slice(1).forEach((a) => hideArrow(tl, a))
   init(tl, o('sync'), { scale: 0.85, svgOrigin: `${A.sync.x} ${A.sync.y}` })
 
   // step 1: 동기화가 생기고 입자 한 무리가 레이크 → 동기화 → 웨어하우스로 한 번 흐른다
   const s1 = at(0)
   tl.to(o('sync'), { opacity: 1, scale: 1, duration: 0.12 }, s1 + 0.04)
-  drawArrow(tl, arrows[0], s1 + 0.14, 0.1)
+  tl.to(arrows[0], { opacity: 1, duration: 0.1 }, s1 + 0.14)
   drawArrow(tl, arrows[1], s1 + 0.2, 0.06)
   drawArrow(tl, arrows[2], s1 + 0.24, 0.06)
   const n = mobile ? 4 : 6
@@ -436,7 +438,8 @@ export const buildAttempt: SceneBuild = (q, tl, { mobile }) => {
   // step 3: 동기화는 흐려지고, 두 저장소가 가운데로 한 칸씩 다가간다
   const s3 = at(2)
   tl.to([...o('timeline'), ...cards, ...o('eq'), ...o('neq')], { opacity: 0, duration: 0.12 }, s3)
-  tl.to([...o('sync'), ...arrows.flat()], { opacity: 0.3, duration: 0.16 }, s3 + 0.08)
+  tl.to([...o('sync'), ...arrows[0]], { opacity: 0.3, duration: 0.16 }, s3 + 0.08)
+  tl.to([...arrows[1], ...arrows[2]], { opacity: 0, duration: 0.16 }, s3 + 0.08)
   tl.to(o('watch'), { opacity: 1, duration: 0.1 }, s3 + 0.16)
   tl.to(o('alert'), { opacity: 1, duration: 0.12 }, s3 + 0.22)
   tl.to(o('lake'), { x: A.step, duration: 0.2, ease: 'power2.inOut' }, s3 + 0.36)
@@ -472,7 +475,7 @@ const BOTTLES = [316, 354, 392]
 
 // step 2 파일 자리
 const IN_X = [130, 310]
-const OUT_X = [86, 222, 358]
+const OUT_X = [84, 224, 362]
 const IN_Y = 226
 const OUT_Y = 324
 // step 3 좌우 비교
@@ -891,16 +894,16 @@ const BCOLS: MCol[] = [
 ]
 const BL = tableLayout(BT.x, BT.y, BCOLS, 6, BT.headH, BT.rowH)
 const brow = (i: number) => (BL.tops[i] + BL.tops[i + 1]) / 2
-const ST5 = { x: 152, y: 176, headH: 22, rowH: [38, 26, 26] }
+const ST5 = { x: 138, y: 176, headH: 22, rowH: [38, 26, 26] }
 const SCOLS: MCol[] = [
-  { key: 'id', label: F.medCols.id, w: 50 },
-  { key: 'status', label: F.medCols.status, w: 118 },
-  { key: 'amount', label: F.medCols.amount, w: 62, end: true },
+  { key: 'id', label: F.medCols.id, w: 60 },
+  { key: 'status', label: F.medCols.status, w: 130 },
+  { key: 'amount', label: F.medCols.amount, w: 58, end: true },
 ]
 const SL5 = tableLayout(ST5.x, ST5.y, SCOLS, 3, ST5.headH, ST5.rowH)
 const SW = SL5.width
 const scell = (i: number) => SL5.tops[i] + Math.min(SL5.tops[i + 1] - SL5.tops[i], 26) * 0.5
-const CARD5 = { x: 14, w: 132, h: 33, y: (k: number) => 180 + k * 37 }
+const CARD5 = { x: 14, w: 118, h: 33, y: (k: number) => 180 + k * 37 }
 // 위쪽 작은 노드 줄: 앱 → 이벤트 브로커 ← CDC ← 운영 DB
 const SRC = [
   { id: 'app', x: 8, w: 96 },
@@ -968,6 +971,7 @@ export function MedallionFig() {
         <RArrow x1={106} y1={21} x2={128} y2={21} seed="m-s1" rough={0.3} head={7} />
         <RArrow x1={262} y1={21} x2={240} y2={21} seed="m-s2" rough={0.3} head={7} />
         <RArrow x1={352} y1={21} x2={330} y2={21} seed="m-s3" rough={0.3} head={7} />
+        <RArrow x1={KAFKA_OUT[0]} y1={KAFKA_OUT[1] + 2} x2={KAFKA_OUT[0]} y2={LY.bronze.y - 4} seed="m-s-b" rough={0.3} head={7} />
       </g>
 
       {/* 빈 자리(점선) → 채워진 층 */}
@@ -995,8 +999,8 @@ export function MedallionFig() {
       <line data-el="bstrike" x1={BT.x + 4} y1={brow(1)} x2={BT.x + BL.width - 4} y2={brow(1)} style={{ stroke: 'var(--fail)' }} strokeWidth={2.2} />
       <g data-el="bto-s">
         {/* 표 오른쪽 바깥으로 올라가 위 행들의 글자를 가로지르지 않는다. 층 바탕마다 보이는 선 색으로 나눠 그린다 */}
-        <RLine x1={BT.x + BL.width + 6} y1={brow(2) - 2} x2={BT.x + BL.width + 6} y2={LY.bronze.y} seed="m-fmt-b" rough={0.2} strokeWidth={1.4} stroke={LAYER.bronze.text} />
-        <RArrow x1={BT.x + BL.width + 6} y1={LY.bronze.y} x2={BT.x + BL.width + 6} y2={SL5.tops[2] + 4} seed="m-fmt" rough={0.2} strokeWidth={1.4} head={6} stroke={LAYER.silver.text} />
+        <RLine x1={BT.x + BL.width + 9} y1={brow(2) - 2} x2={BT.x + BL.width + 9} y2={LY.bronze.y} seed="m-fmt-b" rough={0.2} strokeWidth={1.4} stroke={LAYER.bronze.text} />
+        <RArrow x1={BT.x + BL.width + 9} y1={LY.bronze.y} x2={BT.x + BL.width + 9} y2={SL5.tops[2] + 4} seed="m-fmt" rough={0.2} strokeWidth={1.4} head={6} stroke={LAYER.silver.text} />
       </g>
 
       {/* Silver: 정제된 표(1001 행은 이력 자리까지 높게) */}
@@ -1006,7 +1010,7 @@ export function MedallionFig() {
           {s}
         </text>
       ))}
-      <Txt x={statusX} y={s0 + 32} size={11.5} muted el="hist">
+      <Txt x={statusX} y={s0 + 32} size={11} muted el="hist">
         {F.history}
       </Txt>
       <Tag x={ST5.x + SW + 5} y={scell(0) + 4.5} text={F.fixed} size={11.5} anchor="start" el="t-fixed" fill="var(--surface)" />
@@ -1087,8 +1091,9 @@ export const buildMedallion: SceneBuild = (q, tl) => {
     init(tl, p, { opacity: 0, x: 0, y: 0 })
     const t = s1 + 0.08 + i * 0.1
     tl.to(p, { opacity: 1, duration: 0.02 }, t)
-    tl.to(p, { x: BT.x + 40 - KAFKA_OUT[0], y: brow(i) - KAFKA_OUT[1], duration: 0.12, ease: 'power1.in' }, t)
-    tl.to(p, { opacity: 0, duration: 0.02 }, t + 0.12)
+    tl.to(p, { y: LY.bronze.y - 6 - KAFKA_OUT[1], duration: 0.08, ease: 'none' }, t)
+    tl.to(p, { x: BT.x + 40 - KAFKA_OUT[0], y: brow(i) - KAFKA_OUT[1], duration: 0.05, ease: 'power1.out' }, t + 0.08)
+    tl.to(p, { opacity: 0, duration: 0.02 }, t + 0.13)
     tl.to(brows[i], { opacity: 1, duration: 0.03 }, t + 0.12)
   })
   const tagAt = (i: number) => s1 + 0.08 + i * 0.1 + 0.14
@@ -1246,7 +1251,8 @@ function SolOverlay({ at: pos }: { at: At }) {
   const [lake, wh, lh, media, spark] = ['lake', 'warehouse', 'lakehouse', 'media', 'spark'].map(pos)
   if (!lake || !wh || !lh || !media || !spark) return null
   // 장면 카메라: step 1 = 저장소 둘레, step 2 진입 = 레이크하우스
-  const r1: Box = { x: lake.x - lake.w / 2 + 26, y: 120, w: wh.x + wh.w / 2 + 10 - (lake.x - lake.w / 2 + 26), h: 580 }
+  // 아래 끝은 오케스트레이터·알림 위쪽에서 끊는다(넓은 화면 비율에서 두 노드 윗변만 걸려 보이지 않게)
+  const r1: Box = { x: lake.x - lake.w / 2 + 26, y: 118, w: wh.x + wh.w / 2 + 10 - (lake.x - lake.w / 2 + 26), h: 568 }
   const rLh: Box = { x: lh.x - lh.w / 2 - 30, y: lh.y - lh.h / 2 - 30, w: lh.w + 60, h: lh.h + 60 }
   const sync = { x: (lake.x + wh.x) / 2, y: (lake.y + wh.y) / 2, w: 120, h: 48 }
   const ry = Math.min(9, lake.h * 0.16)
@@ -1372,7 +1378,7 @@ function CloseUp() {
 
 function NodeCounter() {
   return (
-    <div data-el="counter" className="absolute right-0 top-0 rounded-lg border-[1.5px] border-edge bg-surface px-3 py-2 text-right">
+    <div data-el="counter" className="absolute right-0 top-0 rounded-lg md:top-[9%] border-[1.5px] border-edge bg-surface px-3 py-2 text-right">
       <p className="text-xs font-semibold text-muted">{F.nodeCount}</p>
       <p className="font-mono text-xl font-extrabold leading-tight md:text-2xl">
         {NODES_BEFORE}

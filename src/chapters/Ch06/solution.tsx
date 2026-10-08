@@ -316,15 +316,19 @@ export const buildSolution: SceneBuild = (q, tl, { mobile }) => {
   // 다시 그린 선은 맵의 원래 선을 숨긴다
   init(tl, [...rr].flatMap((id) => q(`[data-edge="${id}"] > *`)), { opacity: 0 })
 
-  // ── 진하게 보일 노드(모바일은 그 step의 노드와 바로 이어진 노드만) ──
+  // ── 진하게 보일 노드 ──
+  // 데스크톱: step 1~2는 Ch5의 노드 11개를 흐리게, 새 노드와 새 연결선만 진하게(스토리보드). step 3은 모두 진하게.
+  // 모바일: 그 step의 노드와 바로 이어진 노드만 진하게(모바일 메모).
   const bold: (Set<string> | null)[] = mobile
     ? [new Set(['app', 'kafka', 'fraud']), new Set(['oltp', 'cdc', 'kafka', 'stock']), new Set(['kafka', 'lake', 'etl', 'oltp'])]
-    : [new Set(['app', 'kafka', 'fraud']), new Set(['app', 'kafka', 'fraud', 'oltp', 'cdc', 'stock']), null]
+    : [new Set(['kafka', 'fraud']), new Set(['kafka', 'fraud', 'cdc', 'stock']), null]
   const isBold = (i: number, id: string) => bold[i] === null || bold[i]!.has(id)
   const opNode = (i: number, id: string) => ((NODE_STEP[id] ?? -1) > i ? 0 : isBold(i, id) ? 1 : DIM)
   const opEdge = (i: number, id: string) => {
     if (id === GONE && i >= 2) return 0
-    if ((EDGE_STEP[id] ?? -1) > i) return 0
+    const s = EDGE_STEP[id] ?? -1
+    if (s > i) return 0
+    if (!mobile && s >= 0) return 1
     const [a, b] = id.split('>')
     return isBold(i, a) && isBold(i, b) ? 1 : DIM
   }

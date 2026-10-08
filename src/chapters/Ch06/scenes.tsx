@@ -519,6 +519,8 @@ const P1 = { cy: 110, x0: 84, x1: 334, sink: 382, axisY: 196, ax0: 140, ax1: 416
 const S1 = { t0: 0.04, span: 0.64, end: 0.8 }
 const axX = (dt: number) => P1.ax0 + (dt / S1.end) * (P1.ax1 - P1.ax0 - 18)
 const dropAt = (k: number): P => [70 + (k % 4) * 15, 144 - Math.floor(k / 4) * 15]
+/** 한꺼번에 옮겨진 물방울이 멈추는 자리(쓰는 곳 바로 앞, 정지 그림에도 남는다) */
+const lumpAt1 = (k: number): P => [286 + (k % 4) * 10, P1.cy - 10 + Math.floor(k / 4) * 10]
 
 const CELL = { w: 28, h: 34, x0: 20 }
 const cellX = (n: number) => CELL.x0 + (n - 1) * CELL.w
@@ -531,7 +533,7 @@ const MK = { fraud: 174, lake: 156 }
 const LANE = { y: (i: number) => 150 + i * 60, x: 18, w: 188, h: 32 }
 const SLOT_X = (s: number) => 162 - s * 42
 const WK = { x: 232, w: 66 }
-const ORD = { x: (k: number) => 303 + k * 44, y: 228, w: 36, h: 22 }
+const ORD = { x: (k: number) => 302 + k * 45, y: 228, w: 36, h: 22 }
 /** 레인에 들어오는 순서: [레인, 자리] */
 const ARRIVE: [number, number][] = [
   [1, 0],
@@ -626,7 +628,7 @@ export function BrokerFig() {
         <Tap y0={PANEL[1]} />
         {ids.map((k) => {
           const [x, y] = dropAt(k)
-          return <circle key={k} data-el="drop" data-dx={P1.sink - 18 + (k % 4) * 9 - x} data-dy={PANEL[0] + P1.cy - 6 + Math.floor(k / 4) * 7 - (PANEL[0] + y)} cx={x} cy={PANEL[0] + y} r={5} style={{ fill: 'var(--accent)' }} />
+          return <circle key={k} data-el="drop" data-dx={lumpAt1(k)[0] - x} data-dy={lumpAt1(k)[1] - y} cx={x} cy={PANEL[0] + y} r={5} style={{ fill: 'var(--accent)' }} />
         })}
         {Array.from({ length: n * 2 }, (_, j) => (
           <circle key={j} data-el="train" cx={P1.x1 - (j + 0.5) * gap} cy={PANEL[1] + P1.cy} r={5} style={{ fill: 'var(--accent)' }} />
@@ -756,14 +758,15 @@ export function BrokerFig() {
         <Txt x={ORD.x(0)} y={ORD.y - 6} size={12} weight={750}>
           {F.received}
         </Txt>
+        {/* 빈 자리: 도착한 칩(폭 38)이 테두리까지 덮도록 안쪽으로 그린다 */}
         {[0, 1, 2].map((k) => (
-          <rect key={k} x={ORD.x(k)} y={ORD.y} width={ORD.w} height={ORD.h} rx={5} style={{ fill: 'none', stroke: 'var(--edge)' }} strokeWidth={1.2} strokeDasharray="3 3" />
+          <rect key={k} x={ORD.x(k) - 0.4} y={ORD.y + 0.6} width={ORD.w + 0.8} height={ORD.h - 1.2} rx={4.4} style={{ fill: 'none', stroke: 'var(--edge)' }} strokeWidth={1.2} strokeDasharray="3 3" />
         ))}
-        {[0, 1].map((k) => (
-          <Txt key={k} x={ORD.x(k) + ORD.w + 5} y={ORD.y + 15} size={11} anchor="middle">
-            →
-          </Txt>
-        ))}
+        {[0, 1].map((k) => {
+          const cx = ORD.x(k) + 40.5
+          const cy = ORD.y + ORD.h / 2
+          return <path key={k} d={`M ${cx - 3} ${cy} L ${cx + 3} ${cy} M ${cx + 0.5} ${cy - 2.5} L ${cx + 3} ${cy} L ${cx + 0.5} ${cy + 2.5}`} style={{ fill: 'none', stroke: 'var(--ink)' }} strokeWidth={1.4} strokeLinecap="round" />
+        })}
       </g>
       <Badge x={426} y={ORD.y - 10} status="ok" r={8} el="order-ok" />
       {ARRIVE.map(([lane, s]) => (
@@ -805,7 +808,6 @@ export const buildBroker: SceneBuild = (q, tl, { mobile }) => {
     tl.to(d, { y: 0, duration: 0.03, ease: 'power1.in' }, t)
     const el = d as SVGElement
     tl.to(d, { x: Number(el.dataset.dx), y: Number(el.dataset.dy), duration: 0.08, ease: 'power2.inOut' }, s1 + 0.7)
-    tl.to(d, { opacity: 0, duration: 0.02 }, s1 + 0.78)
   })
   tl.to(arrB, { opacity: 1, duration: 0.02 }, s1 + 0.79)
 

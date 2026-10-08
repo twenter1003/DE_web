@@ -17,7 +17,7 @@ const F = ch7.figures
 // 맵 노드 라벨은 map.ts에서(Ch6 끝 → Ch7 끝)
 const N6 = Object.fromEntries(mapStateAt(T.ch6).nodes.map((n) => [n.id, n]))
 const N7 = Object.fromEntries(mapStateAt(T.ch7).nodes.map((n) => [n.id, n]))
-const initial = (who: keyof typeof PEOPLE) => PEOPLE[who].name.replace(' 대표', '').slice(0, 1)
+const initial = (who: keyof typeof PEOPLE) => PEOPLE[who].name.slice(0, 1)
 
 /** 이름 첫 글자 동그라미 */
 function Initial({ x, y, r = 16, who, seed }: { x: number; y: number; r?: number; who: keyof typeof PEOPLE; seed: string }) {
@@ -532,7 +532,7 @@ export const buildAttempt: SceneBuild = (q, tl) => {
   const s4 = at(3)
   swapLayer(tl, o('att-a'), o('att-b'), s4)
   const [l1 = [], l2 = []] = codeChars(q, 'fix-code')
-  tl.set(l1, { textDecoration: 'line-through', opacity: 0.55 }, s4 + 0.16)
+  tl.set(l1, { textDecoration: 'line-through', opacity: 0.75 }, s4 + 0.16)
   const typed = typeChars(tl, l2, s4 + 0.2, 0.26)
   countTo(tl, o('clock2')[0], 53, 58, (m) => F.clock(m), s4 + 0.08, 0.5)
   const line = o('fix-line')[0] as SVGPolylineElement | undefined
@@ -701,7 +701,7 @@ export function TestFig() {
 
       {/* step 4: 규칙을 YAML로 */}
       <div data-el="test-b" className="absolute inset-0 flex flex-col justify-center gap-2 md:gap-3" style={{ opacity: 0 }}>
-        <CodeType code={F.yaml} el="yaml" className="max-md:p-3! max-md:text-[0.6875rem]! max-md:leading-[1.05rem]!" />
+        <CodeType code={F.yaml} el="yaml" className="max-md:p-2.5! max-md:text-[0.65rem]! max-md:leading-[1.05rem]!" />
         <svg viewBox="0 0 284 196" className="diagram mx-auto h-auto max-h-[42%] min-h-0 w-full max-w-[24rem]" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
           <SvgTable x={6} y={4} cols={QCOLS.slice(0, 3)} rows={CHECK_ROWS.map((r) => ({ id: r.id, price: r.price, at: r.at }))} el="mt" rowH={25} seed="mt" fontSize={12.5} />
           {MT_X.map((x, k) => (
@@ -772,9 +772,9 @@ export const buildTest: SceneBuild = (q, tl) => {
   tl.to(o('t3-gate-ok'), { opacity: 0, duration: 0.03 }, pEnd)
   tl.to(o('t3-gate-x'), { opacity: 1, duration: 0.03 }, pEnd)
   tl.to(o('t3m:wait', 't3-paused'), { opacity: 1, duration: 0.04 }, pEnd + 0.08)
-  tl.to(o('t3-metric'), { opacity: 0.6, duration: 0.06 }, pEnd + 0.08)
+  tl.to(o('t3-metric'), { opacity: 0.78, duration: 0.06 }, pEnd + 0.08)
   tl.to(o('t3b:wait'), { opacity: 1, duration: 0.04 }, pEnd + 0.18)
-  tl.to(o('t3-bi'), { opacity: 0.6, duration: 0.06 }, pEnd + 0.18)
+  tl.to(o('t3-bi'), { opacity: 0.78, duration: 0.06 }, pEnd + 0.18)
   tl.to(o('t3-hold'), { opacity: 1, duration: 0.06 }, pEnd + 0.24)
   drawArrows(tl, o('t3-al'), pEnd + 0.1, 0.1)
   drawArrows(tl, o('t3-ap'), pEnd + 0.22, 0.08)
@@ -810,6 +810,8 @@ export const buildTest: SceneBuild = (q, tl) => {
       tl.to(hl(lit), { opacity: 0, duration: 0.03 }, t + 0.03)
     }
   }
+  // 끝 그림(정지 모드 포함): 완성된 코드 + 검사가 걸린 세 열이 함께 하이라이트
+  tl.to(MT_KEYS.flatMap(hl), { opacity: 0.24, duration: 0.04 }, t + 0.08)
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -1445,7 +1447,7 @@ export const buildSolution: SceneBuild = (q, tl, { mobile }) => {
   tl.to(o('s3-viol'), { opacity: 1, duration: 0.04 }, e1 + 0.03)
   tl.to(o('s3-down1'), { opacity: 0.3, duration: 0.04 }, e1 + 0.07)
   tl.to(o('s3-cut', 's3d1:wait', 's3-stop'), { opacity: 1, duration: 0.04 }, e1 + 0.08)
-  tl.to(o('s3-dep1'), { opacity: 0.6, duration: 0.04 }, e1 + 0.08)
+  tl.to(o('s3-dep1'), { opacity: 0.78, duration: 0.04 }, e1 + 0.08)
   tl.to(o('s3-card2', 's3-row2', 's3-v1'), { opacity: 1, duration: 0.06 }, e1 + 0.14)
   tl.to(o('s3-v1'), { opacity: 0, duration: 0.03 }, e1 + 0.22)
   tl.to(o('s3-v2'), { opacity: 1, duration: 0.03 }, e1 + 0.22)
