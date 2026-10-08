@@ -8,6 +8,7 @@ import type { ChapterId } from '../content/types'
 import { goTo } from '../lib/nav'
 import { STAGES, stageVars } from '../lib/stages'
 import { useActive } from '../state/active'
+import { setBgmStage, toggleBgm, useBgm } from '../state/bgm'
 import { useEnv, type MotionPref } from '../state/env'
 import { useProgress } from '../state/progress'
 import { Radar, TermCard } from './Collection'
@@ -62,11 +63,28 @@ export function MotionToggle({ compact }: { compact?: boolean }) {
   )
 }
 
+export function BgmToggle({ labelled }: { labelled?: boolean }) {
+  const on = useBgm()
+  return (
+    <button type="button" className="btn btn-sm" aria-pressed={on} onClick={toggleBgm} title={on ? UI.bgm.toggleOn : UI.bgm.toggleOff}>
+      <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true">
+        <path d="M8 15V4l9-2v11" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+        <circle cx="5.5" cy="15" r="2.5" fill="currentColor" />
+        <circle cx="14.5" cy="13" r="2.5" fill="currentColor" />
+        {!on && <line x1="3" y1="17" x2="17" y2="3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />}
+      </svg>
+      <span className={labelled ? undefined : 'hidden sm:inline'}>{UI.bgm.label}</span>
+      {!labelled && <span className="sr-only sm:hidden">{UI.bgm.label}</span>}
+    </button>
+  )
+}
+
 type Tab = keyof typeof UI.panel.tabs
 
 function Panel({ close }: { close: () => void }) {
   const p = useProgress()
   const active = useActive()
+  const bgmOn = useBgm()
   const [tab, setTab] = useState<Tab>('cards')
   const [confirm, setConfirm] = useState(false)
   const [resetDone, setResetDone] = useState(false)
@@ -175,6 +193,17 @@ function Panel({ close }: { close: () => void }) {
           <div className="space-y-8">
             <MotionToggle />
             <div>
+              <p className="font-bold">{UI.bgm.label}</p>
+              <p className="mt-1 text-sm text-muted">{UI.bgm.desc}</p>
+              <div className="mt-3">
+                <BgmToggle labelled />
+              </div>
+              {/* 상태는 aria-pressed가 읽어 준다. 터치 화면에서도 글자로 보이게 한 줄 더 */}
+              <p className="mt-2 text-sm text-muted" aria-hidden="true">
+                {bgmOn ? UI.bgm.toggleOn : UI.bgm.toggleOff}
+              </p>
+            </div>
+            <div>
               {!confirm ? (
                 <button ref={resetBtn} type="button" className="btn" onClick={() => (setConfirm(true), setResetDone(false))}>
                   {UI.panel.reset}
@@ -212,14 +241,17 @@ function Panel({ close }: { close: () => void }) {
 }
 
 export function Hud() {
-  const stage = STAGES[useActiveStage()]
+  const stageIdx = useActiveStage()
+  const stage = STAGES[stageIdx]
   const p = useProgress()
   const dialog = useRef<HTMLDialogElement>(null)
   const [open, setOpen] = useState(false)
   const close = () => dialog.current?.close()
+  useEffect(() => setBgmStage(stageIdx), [stageIdx])
   return (
     <StageCtx.Provider value={stage}>
       <div className="fixed right-3 top-3 z-40 flex items-center gap-2 text-ink md:right-5 md:top-4" style={stageVars(stage) as React.CSSProperties}>
+        <BgmToggle />
         <MotionToggle compact />
         {/* 이름은 보이는 글자(Lv·카드 수)로 시작하고, 나머지 안내는 화면 밖 글자로 덧붙인다 */}
         <button

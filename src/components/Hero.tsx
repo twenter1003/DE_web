@@ -29,7 +29,7 @@ export function Hero() {
         <div className="mx-auto flex min-h-svh max-w-[80rem] flex-col justify-center px-4 pb-10 pt-24 md:px-8 lg:pl-[calc(var(--rail-w)+2rem)]">
           <div className="grid items-center gap-10 md:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] md:gap-14">
             <div>
-              <h1 className="text-[3rem] font-extrabold leading-[1.02] tracking-[-0.03em] md:text-[5.25rem]">
+              <h1 className="text-[3rem] font-extrabold leading-[1.02] tracking-[-0.03em] md:text-[clamp(3rem,6.2vw,5.25rem)]">
                 Data Engineering
                 <br />
                 A to Z

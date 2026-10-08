@@ -97,6 +97,13 @@ export const UI = {
     toggleOff: '모션 줄이기 꺼짐',
   },
 
+  bgm: {
+    label: '배경음악',
+    desc: '브라우저가 그 자리에서 만들어 내는 음악이에요. 이야기가 진행될수록 악기가 하나씩 늘어나요.',
+    toggleOn: '배경음악 켜짐',
+    toggleOff: '배경음악 꺼짐',
+  },
+
   rail: { label: '챕터 목록', done: '완료' },
 
   interaction: { label: '직접 해보기' },
