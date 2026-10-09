@@ -3,7 +3,7 @@ import { chromium } from 'playwright'
 import { readFileSync } from 'node:fs'
 const [out, ...files] = process.argv.slice(2)
 const imgs = files.map((f) => `data:image/png;base64,${readFileSync(f).toString('base64')}`)
-const b = await chromium.launch()
+const b = await chromium.launch({ executablePath: process.env.PW_CHROMIUM || undefined })
 const p = await b.newPage({ viewport: { width: 400 * imgs.length, height: 900 } })
 await p.setContent(`<body style="margin:0;display:flex;gap:6px;background:#888">${imgs.map((s) => `<img src="${s}" style="width:394px;height:auto">`).join('')}</body>`)
 await p.waitForTimeout(200)

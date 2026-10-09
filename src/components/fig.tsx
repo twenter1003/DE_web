@@ -34,16 +34,20 @@ interface TxtProps {
   el?: string
   color?: string
   style?: CSSProperties
+  /** 이 폭(사용자 단위)에 맞춰 그린다. 글자 수로 폭을 계산한 칩 안의 글자용: 작은 화면에서 글자를 키워도(--fs-lift) 칩을 넘지 않는다 */
+  fit?: number
 }
 
 /** SVG 글자. 기본은 본문 글꼴 */
-export function Txt({ x, y, children, size = 14, weight = 500, anchor = 'start', muted, mono, el, color, style }: TxtProps) {
+export function Txt({ x, y, children, size = 14, weight = 500, anchor = 'start', muted, mono, el, color, style, fit }: TxtProps) {
   return (
     <text
       x={x}
       y={y}
       data-el={el}
       textAnchor={anchor}
+      textLength={fit}
+      lengthAdjust={fit ? 'spacingAndGlyphs' : undefined}
       className={`${mono ? '' : 't-sans'} ${muted ? 't-muted' : ''}`}
       style={{ fontSize: fs(size), fontWeight: weight, ...(color ? { fill: color } : null), ...style }}
     >

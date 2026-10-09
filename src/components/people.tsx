@@ -55,15 +55,15 @@ export function JuniFace({ mood = 'focus', seed = 'juni' }: { mood?: Mood; seed?
 }
 
 /** 인물 아바타. 주니는 표정이 있는 얼굴, 다른 인물은 이름 첫 글자 */
-export function Avatar({ who, mood, size = 44 }: { who: Who; mood?: Mood; size?: number }) {
+export function Avatar({ who, mood, size = 44, className = '' }: { who: Who; mood?: Mood; size?: number; className?: string }) {
   if (who === 'juni')
     return (
-      <svg viewBox="8 8 84 84" width={size} height={size} className="diagram shrink-0" aria-hidden="true">
+      <svg viewBox="8 8 84 84" width={size} height={size} className={`diagram shrink-0 ${className}`} aria-hidden="true">
         <JuniFace mood={mood} seed="avatar" />
       </svg>
     )
   return (
-    <svg viewBox="0 0 44 44" width={size} height={size} className="diagram shrink-0" aria-hidden="true">
+    <svg viewBox="0 0 44 44" width={size} height={size} className={`diagram shrink-0 ${className}`} aria-hidden="true">
       <REllipse cx={22} cy={22} w={38} h={38} rough={0.4} seed={`av-${who}`} fill="var(--surface)" />
       <text x={22} y={27.5} textAnchor="middle" className="t-sans" style={{ fontSize: 15, fontWeight: 700 }}>
         {PEOPLE[who].name.replace(' 대표', '').replace(' 리드', '').slice(0, 1)}
@@ -77,12 +77,13 @@ export function Bubble({ line, compact }: { line: Line; compact?: boolean }) {
   const p = PEOPLE[line.who]
   const isJuni = line.who === 'juni'
   return (
-    <div className="flex items-start gap-3">
-      <Avatar who={line.who} mood={line.mood} size={compact ? 36 : 44} />
+    // 모바일에서는 조금 촘촘하게: 위쪽 그림 칸 아래 남는 띠(작은 폰은 300px 안팎)에 글과 말풍선이 함께 들어가야 한다
+    <div className="flex items-start gap-2 md:gap-3">
+      <Avatar who={line.who} mood={line.mood} size={compact ? 36 : 44} className="max-md:size-9" />
       <div
-        className={`min-w-0 rounded-2xl border-[1.5px] border-edge bg-surface px-4 py-2.5 ${isJuni ? 'rounded-tl-sm' : 'rounded-tl-sm'}`}
+        className={`min-w-0 rounded-2xl border-[1.5px] border-edge bg-surface px-3 py-2 md:px-4 md:py-2.5 ${isJuni ? 'rounded-tl-sm' : 'rounded-tl-sm'}`}
       >
-        <p className="font-mono text-[0.75rem] leading-5 text-muted">
+        <p className="font-mono text-[0.75rem] leading-4 text-muted md:leading-5">
           {p.name}
           {line.mood && isJuni ? <span className="sr-only"> ({UI.moods[line.mood]})</span> : null}
         </p>

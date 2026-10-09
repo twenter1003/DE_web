@@ -71,6 +71,7 @@ scripts/          contrast.mjs(팔레트 대비 검증), shot.mjs(스크린샷),
 - `npm run typecheck` — 타입 검사
 - `node scripts/contrast.mjs` — 12개 스테이지 팔레트의 WCAG 대비 검증(본문 4.5:1, 그래픽 3:1)
 - `node scripts/shot.mjs --at "#ch3@0" --mobile --reduced` — 개발 서버를 띄운 상태에서 주요 지점 스크린샷(`shots/`)과 콘솔 에러 확인. 옵션은 파일 맨 위 주석에 있어요.
+- `node scripts/scrollcheck.mjs [--mobile] [--reduced]` — 개발 서버에서 페이지 전체를 끝까지 스크롤하며 콘솔 에러와 '보이는데 비어 있는 장면 그림'을 확인(문제가 있으면 종료 코드 1)
 - 개발 서버에서만: `?debug=map`(맵의 모든 시점), `?debug=scene`(장면 엔진 점검)
 
 ## 사용한 것

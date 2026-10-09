@@ -514,7 +514,7 @@ export function ShapesFig() {
                     ) : (
                       <rect x={fx - 1} y={y + 16} width={w + 2} height={28} rx={4} style={{ fill: 'none', stroke: 'var(--muted)' }} strokeDasharray="4 3" />
                     )}
-                    <Txt x={fx + 4} y={y + 35} size={12} mono>
+                    <Txt x={fx + 4} y={y + 35} size={12} mono fit={w - 8}>
                       {f}
                     </Txt>
                   </g>

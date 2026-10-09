@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useMemo, useReducer, useRef, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useLayoutEffect, useMemo, useReducer, useRef, type ReactNode } from 'react'
 import { CHAPTER_IDS, QUIZ_CHAPTERS, type ChapterId } from '../content/types'
 import type { Level, StatKey } from '../content/people'
 import { load, remove, save } from '../lib/storage'
@@ -32,6 +32,7 @@ function sanitize(raw: unknown): Saved {
 }
 
 type Action =
+  | { type: 'load'; saved: Saved }
   | { type: 'answer'; id: ChapterId; option: string }
   | { type: 'climax' }
   | { type: 'reach'; stage: number }
@@ -39,6 +40,8 @@ type Action =
 
 function reducer(s: Saved, a: Action): Saved {
   switch (a.type) {
+    case 'load':
+      return a.saved
     case 'answer':
       if (s.answers[a.id]) return s
       return { ...s, answers: { ...s.answers, [a.id]: a.option }, completed: s.completed.includes(a.id) ? s.completed : [...s.completed, a.id] }
@@ -79,15 +82,20 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(
     (s: Saved, a: Action) => {
       const next = reducer(s, a)
-      if (next !== s) {
+      if (next !== s && a.type !== 'load') {
         if (a.type === 'reset') remove(KEY)
         else save(KEY, next)
       }
       return next
     },
-    undefined,
-    () => sanitize(load<unknown>(KEY, EMPTY)),
+    EMPTY,
   )
+  // 첫 렌더는 저장된 값 없이 그린다: 빌드 때 미리 그린 첫 화면 HTML(진행도 없음)과 같아야 이어받을(hydration) 수 있다.
+  // 저장된 진행도는 그 직후, 화면에 칠하기 전에 불러온다.
+  useLayoutEffect(() => {
+    const raw = load<unknown>(KEY, null)
+    if (raw) dispatch({ type: 'load', saved: sanitize(raw) })
+  }, [])
   const fresh = useRef(new Set<ChapterId>())
 
   const answer = useCallback((id: ChapterId, option: string) => {

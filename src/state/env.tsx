@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useSyncExternalStore, type ReactNode } from 'react'
 import { refreshTriggers, scrollToY } from '../lib/refresh'
 import { load, save } from '../lib/storage'
 
@@ -19,17 +19,43 @@ interface Env {
 const PREF_KEY = 'de-atoz:motion'
 const EnvCtx = createContext<Env | null>(null)
 
+// 첫 화면은 빌드 때 미리 그린 HTML을 이어받는다(main.tsx의 hydrateRoot). 이어받는 첫 렌더는 서버와 같은 값
+// (모션 그대로·데스크톱·'시스템 따름')으로 그리고, 바로 다음 렌더에서 이 기기의 실제 값으로 바꾼다 → 세 값 모두 외부 저장소로 둔다.
+
+const mqls = new Map<string, MediaQueryList>()
+const mql = (q: string) => mqls.get(q) ?? mqls.set(q, window.matchMedia(q)).get(q)!
+
 /** 미디어 쿼리 값을 따라가는 상태 */
 function useMedia(q: string) {
-  const [v, setV] = useState(() => typeof window !== 'undefined' && window.matchMedia(q).matches)
-  useEffect(() => {
-    const m = window.matchMedia(q)
-    const on = () => setV(m.matches)
-    on()
-    m.addEventListener('change', on)
-    return () => m.removeEventListener('change', on)
-  }, [q])
-  return v
+  const subscribe = useCallback(
+    (on: () => void) => {
+      const m = mql(q)
+      m.addEventListener('change', on)
+      return () => m.removeEventListener('change', on)
+    },
+    [q],
+  )
+  return useSyncExternalStore(subscribe, () => mql(q).matches, () => false)
+}
+
+/** 페이지 토글 값(localStorage). 처음 읽을 때 한 번만 저장소에서 가져온다 */
+let prefNow: MotionPref | null = null
+const prefListeners = new Set<() => void>()
+function readPref(): MotionPref {
+  if (prefNow === null) {
+    const p = load<MotionPref>(PREF_KEY, 'system')
+    prefNow = p === 'reduce' || p === 'full' ? p : 'system'
+  }
+  return prefNow
+}
+function writePref(p: MotionPref) {
+  prefNow = p
+  save(PREF_KEY, p)
+  prefListeners.forEach((l) => l())
+}
+function subscribePref(l: () => void) {
+  prefListeners.add(l)
+  return () => void prefListeners.delete(l)
 }
 
 // 모션 모드를 바꾸면 장면이 스크롤 장면 ↔ 정지 그림으로 통째로 바뀌어 높이가 달라진다.
@@ -63,10 +89,7 @@ function restoreAnchor(a: Anchor) {
 export function EnvProvider({ children }: { children: ReactNode }) {
   const systemReduced = useMedia('(prefers-reduced-motion: reduce)')
   const mobile = useMedia('(max-width: 767px)')
-  const [pref, setPrefState] = useState<MotionPref>(() => {
-    const p = load<MotionPref>(PREF_KEY, 'system')
-    return p === 'reduce' || p === 'full' ? p : 'system'
-  })
+  const pref = useSyncExternalStore(subscribePref, readPref, () => 'system' as const)
   const anchor = useRef<Anchor | null>(null)
 
   const reduced = pref === 'reduce' || (pref === 'system' && systemReduced)
@@ -74,8 +97,7 @@ export function EnvProvider({ children }: { children: ReactNode }) {
   const setPref = useCallback(
     (p: MotionPref) => {
       if ((p === 'reduce' || (p === 'system' && systemReduced)) !== reduced) anchor.current = captureAnchor()
-      setPrefState(p)
-      save(PREF_KEY, p)
+      writePref(p)
     },
     [reduced, systemReduced],
   )
