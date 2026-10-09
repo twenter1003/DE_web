@@ -29,8 +29,11 @@ export function Hero() {
         <div className="mx-auto flex min-h-svh max-w-[80rem] flex-col justify-center px-4 pb-10 pt-24 md:px-8 lg:pl-[calc(var(--rail-w)+2rem)]">
           <div className="grid items-center gap-10 md:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] md:gap-14">
             <div>
+              {/* 모바일에서는 줄을 직접 나눈다: 저절로 줄바꿈하게 두면 대체 글꼴과 웹폰트의 글자 폭 차이로
+                  줄 수가 바뀌어(폭 412px 등) 웹폰트가 도착할 때 아래 내용이 한 줄만큼 튄다 */}
               <h1 className="text-[3rem] font-extrabold leading-[1.02] tracking-[-0.03em] md:text-[clamp(3rem,6.2vw,5.25rem)]">
-                Data Engineering
+                Data <br className="md:hidden" />
+                Engineering
                 <br />
                 A to Z
               </h1>

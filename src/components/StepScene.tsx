@@ -1,4 +1,4 @@
-import { useEffect, useRef, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode, type RefObject } from 'react'
 import { gsap, ScrollTrigger, useGSAP } from '../lib/gsap'
 import { Rich } from '../lib/rich'
 import { UI } from '../content/ui'
@@ -82,22 +82,55 @@ const padTo = (tl: gsap.core.Timeline, n: number) => {
   if (tl.duration() < n) tl.set({}, {}, n)
 }
 
+/**
+ * 화면에 가까워졌는가(아래·위로 화면 높이의 1.5배 안). 한 번 가까워지면 계속 true.
+ * 장면 그림(SVG 수백 요소)과 그 타임라인은 이때 만든다: 챕터를 마운트할 때 모든 장면 그림을 한꺼번에 그리고 배치하면
+ * 느린 폰에서 메인 스레드가 1초 가까이 멈춘다. 그림 칸은 높이가 고정이라 늦게 그려도 레이아웃이 밀리지 않는다.
+ */
+function useNear(ref: RefObject<Element | null>) {
+  const [near, setNear] = useState(false)
+  useEffect(() => {
+    const el = ref.current
+    if (!el || near) return
+    const io = new IntersectionObserver(([e]) => e.isIntersecting && setNear(true), { rootMargin: '150% 0px' })
+    io.observe(el)
+    return () => io.disconnect()
+  }, [ref, near])
+  return near
+}
+
+// GSAP은 요소의 transform을 처음 다룰 때 계산된 스타일(transform-origin 등)을 읽는데, SVG 요소에서는 이 읽기가 레이아웃을 강제한다.
+// 첫 렌더에서 tween마다 '읽기 → 쓰기'가 번갈아 일어나면 대상 수만큼 레이아웃을 다시 계산한다(장면 하나에 수십 번, 느린 폰에서 수백 ms).
+// 첫 렌더 전에 transform을 다룰 대상을 한꺼번에 읽어 GSAP 캐시에 넣어 두면 레이아웃은 한 번만 계산된다.
+const TRANSFORM_KEYS = new Set(['x', 'y', 'xPercent', 'yPercent', 'scale', 'scaleX', 'scaleY', 'rotation', 'rotate', 'skewX', 'skewY', 'transformOrigin', 'svgOrigin', 'motionPath'])
+function primeTransforms(tl: gsap.core.Timeline) {
+  const els = new Set<Element>()
+  for (const child of tl.getChildren(true, true, false)) {
+    const { vars } = child as gsap.core.Tween
+    const keys = [...Object.keys(vars), ...Object.keys((vars.startAt as object | undefined) ?? {})]
+    if (keys.some((k) => TRANSFORM_KEYS.has(k))) for (const t of (child as gsap.core.Tween).targets()) if (t instanceof Element) els.add(t)
+  }
+  for (const el of els) gsap.getProperty(el, 'x')
+}
+
 function ScrubScene({ id, kind, scene, diagram, build, onStep, tall }: Props) {
   const root = useRef<HTMLDivElement>(null)
   const diag = useRef<HTMLDivElement>(null)
   const list = useRef<HTMLOListElement>(null)
   const { mobile } = useEnv()
+  const near = useNear(root)
   const n = scene.steps.length
   const onStepRef = useRef(onStep)
   onStepRef.current = onStep
 
   useGSAP(
     (_ctx, contextSafe) => {
-      if (!diag.current || !list.current) return
+      if (!near || !diag.current || !list.current) return
       const q = gsap.utils.selector(diag.current) as Q
       const tl = gsap.timeline({ paused: true })
       build(q, tl, { mobile })
       padTo(tl, n)
+      primeTransforms(tl)
       // 멈춘 타임라인은 시간 0을 그리지 않는다 → 시작 상태(tl.set(...,0))를 즉시 적용
       tl.time(1e-4).time(0)
 
@@ -137,7 +170,7 @@ function ScrubScene({ id, kind, scene, diagram, build, onStep, tall }: Props) {
         onLeaveBack: update,
       })
     },
-    { scope: root, dependencies: [mobile, n], revertOnUpdate: true },
+    { scope: root, dependencies: [mobile, n, near], revertOnUpdate: true },
   )
 
   return (
@@ -151,7 +184,7 @@ function ScrubScene({ id, kind, scene, diagram, build, onStep, tall }: Props) {
         }`}
       >
         <div ref={diag} className="mx-auto h-full w-full max-w-[36rem]">
-          {diagram()}
+          {near && diagram()}
         </div>
       </div>
       <div className="md:col-start-1 md:row-start-1">
@@ -171,19 +204,21 @@ function ScrubScene({ id, kind, scene, diagram, build, onStep, tall }: Props) {
 function Snapshot({ diagram, build, n, i }: { diagram: () => ReactNode; build: SceneBuild; n: number; i: number }) {
   const ref = useRef<HTMLDivElement>(null)
   const { mobile } = useEnv()
+  const near = useNear(ref)
   useGSAP(
     () => {
-      if (!ref.current) return
+      if (!near || !ref.current) return
       const tl = gsap.timeline({ paused: true })
       build(gsap.utils.selector(ref.current) as Q, tl, { mobile })
       padTo(tl, n)
+      primeTransforms(tl)
       tl.time(Math.min(i + 0.97, n))
     },
-    { scope: ref, dependencies: [mobile, n, i], revertOnUpdate: true },
+    { scope: ref, dependencies: [mobile, n, i, near], revertOnUpdate: true },
   )
   return (
     <div ref={ref} className="mx-auto h-full w-full max-w-[36rem]">
-      {diagram()}
+      {near && diagram()}
     </div>
   )
 }

@@ -11,6 +11,11 @@ type Shape =
   | { kind: 'path'; d: string }
   | { kind: 'linear'; points: [number, number][] }
 
+// 경로 좌표는 소수 둘째 자리까지만(화면에서 0.01px 아래 차이). 삼각함수 끝자리가 엔진(빌드 때의 Node·브라우저)마다 달라
+// 그대로 두면 미리 그린 첫 화면과 브라우저가 그린 경로가 어긋나고(hydration 불일치), HTML도 쓸데없이 길어진다.
+const NUM = /-?(?:\d+\.?\d*|\.\d+)(?:e[-+]?\d+)?/gi
+const round = (d: string) => d.replace(NUM, (n) => String(Math.round(Number(n) * 100) / 100))
+
 /** rough.js 경로를 계산하고 캐시한다. 같은 입력·seed면 항상 같은 선(리렌더링 때 떨리지 않음). */
 export function roughPaths(shape: Shape, opts: Options): PathInfo[] {
   const key = JSON.stringify([shape, opts])
@@ -41,7 +46,7 @@ export function roughPaths(shape: Shape, opts: Options): PathInfo[] {
       d = gen.path(shape.d, o)
       break
   }
-  const paths = gen.toPaths(d)
+  const paths = gen.toPaths(d).map((p) => ({ ...p, d: round(p.d) }))
   if (cache.size > 4000) cache.clear()
   cache.set(key, paths)
   return paths
