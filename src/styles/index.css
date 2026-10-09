@@ -109,7 +109,7 @@ svg.diagram {
   color: var(--line);
   overflow: visible;
 }
-/* 모바일: 그림이 0.7~0.85배로 줄어드므로 14보다 작은 라벨을 14 쪽으로 반쯤 키운다(diagram.tsx fs()).
+/* 모바일: 그림이 글 옆 절반 폭으로 줄어드므로 14보다 작은 라벨을 14 쪽으로 반쯤 키운다(diagram.tsx fs()).
    더 키우면 챕터마다 크기를 맞춰 그린 칩·표 칸을 넘친다.
    768px 이상이라도 장면 그림 칸이 설계 크기보다 작으면(태블릿) StepScene이 그림 칸에 같은 값을 준다 */
 @media (max-width: 767px) {
