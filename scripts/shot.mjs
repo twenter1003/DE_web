@@ -4,7 +4,7 @@
 //   node scripts/shot.mjs --mobile --reduced --at "#ch1@0.5"
 //   node scripts/shot.mjs --at "[data-step]:nth-of-type(2)@0.4" (선택자@비율: 요소 높이의 비율 지점을 화면 가운데에)
 // --click "selector" : 스크린샷 전에 클릭(여러 번 가능)
-// 옵션: --out shots  --w 1440 --h 900  --mobile(390x844)  --reduced  --wait 900  --progress '{"v":1,...}'  --full
+// 옵션: --out shots  --w 1440 --h 900  --mobile(기본 390x844)  --reduced  --wait 900  --progress '{"v":1,...}'  --full
 // 환경 변수 PW_CHROMIUM=/경로/chrome : Playwright가 내려받은 브라우저 대신 쓸 실행 파일
 import { chromium } from 'playwright'
 import { mkdirSync } from 'node:fs'
@@ -20,7 +20,8 @@ for (let i = 0; i < argv.length; i++) {
   else if (a === '--click') opt.click.push(argv[++i])
   else if (a.startsWith('--')) opt[a.slice(2)] = argv[++i]
 }
-if (opt.mobile) Object.assign(opt, { w: 390, h: 844 })
+// --mobile의 기본 크기는 390x844. --w/--h를 함께 주면 그 크기(예: 375x667)를 쓴다
+if (opt.mobile) Object.assign(opt, { w: argv.includes('--w') ? opt.w : 390, h: argv.includes('--h') ? opt.h : 844 })
 if (!opt.at.length) opt.at.push('#top@0')
 mkdirSync(opt.out, { recursive: true })
 

@@ -63,7 +63,7 @@ function StepBody({ step, i, n, srAlt = true }: { step: Step; i: number; n: numb
         <Rich text={step.text} />
       </p>
       {step.lines?.length ? (
-        <div className="mt-5 space-y-3">
+        <div className="mt-4 space-y-2 md:mt-5 md:space-y-3">
           {step.lines.map((l, k) => (
             <Bubble key={k} line={l} />
           ))}
