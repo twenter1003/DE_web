@@ -273,8 +273,9 @@ export function live(ctx: AudioContext, stage: number) {
   let on = false
   let timer = 0
   let suspendTimer = 0
-  // 0.12초마다 0.5초 앞까지 예약한다. 탭이 가려지면 컨텍스트를 멈춰 시간도 같이 멈춘다.
-  const tick = () => bgm.scheduleUntil(ctx.currentTime + 0.5)
+  // 0.12초마다 1초 앞까지 예약한다(챕터를 그리느라 메인 스레드가 잠깐 멈춰도 음이 끊기지 않게).
+  // 탭이 가려지면 컨텍스트를 멈춰 시간도 같이 멈춘다.
+  const tick = () => bgm.scheduleUntil(ctx.currentTime + 1)
   // 소리를 끊거나 되살릴 때는 늘 페이드: 파형 중간에서 멈추면 '툭' 소리가 난다
   const fade = (to: number, sec: number) => {
     const g = bgm.master.gain
@@ -298,6 +299,16 @@ export function live(ctx: AudioContext, stage: number) {
     window.clearTimeout(suspendTimer)
     if (document.hidden) fadeOutThen(0.25, () => void ctx.suspend())
     else play(0.8)
+  })
+  // 켜 둔 채 화면이 보이는데 시스템이 소리를 멈췄다면(iOS 전화·Siri, 출력 장치 변경 등) 다시 켠다.
+  // 사용자 동작이 있어야 다시 켜지는 브라우저를 위해 다음 클릭·키 입력 때도 한 번 더 시도한다.
+  const unlock = () => {
+    if (on && !document.hidden && ctx.state !== 'running') void ctx.resume()
+  }
+  ctx.addEventListener('statechange', () => {
+    if (!on || document.hidden || ctx.state === 'running' || ctx.state === 'closed') return
+    void ctx.resume().catch(() => {})
+    for (const ev of ['pointerdown', 'keydown'] as const) addEventListener(ev, unlock, { once: true, capture: true })
   })
   return {
     setStage: (s: number) => bgm.setStage(s),
