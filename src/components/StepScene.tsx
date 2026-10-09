@@ -55,13 +55,14 @@ function SceneHeader({ id, kind, scene, className = '' }: Pick<Props, 'id' | 'ki
 
 function StepBody({ step, i, n, srAlt = true }: { step: Step; i: number; n: number; srAlt?: boolean }) {
   return (
-    <div className="max-w-[34rem]">
+    <div className="min-w-0 max-w-[34rem]">
       <p className="mb-2 font-mono text-xs text-muted" aria-hidden="true">
         {i + 1}/{n}
       </p>
       <p className="text-[1rem] leading-[1.75] md:text-[1.1875rem] md:leading-[1.85]">
         <Rich text={step.text} />
       </p>
+      {/* 모바일은 글 칸이 좁아서 말풍선의 얼굴 그림을 빼고 이름만 보여 준다 */}
       {step.lines?.length ? (
         <div className="mt-4 space-y-2 max-md:[&_svg]:hidden md:mt-5 md:space-y-3">
           {step.lines.map((l, k) => (
@@ -270,7 +271,7 @@ function StaticScene({ id, kind, scene, diagram, build, onStep, tall }: Props) {
             <figure className={`order-2 self-center ${tall ? 'h-[52svh] md:h-[66svh]' : 'h-[42svh] md:h-[56svh]'}`} role="img" aria-label={s.alt}>
               <Snapshot diagram={diagram} build={build} n={n} i={i} />
             </figure>
-            <div className="order-1 self-center">
+            <div className="order-1 min-w-0 self-center">
               <StepBody step={s} i={i} n={n} srAlt={false} />
             </div>
           </li>

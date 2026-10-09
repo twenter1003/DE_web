@@ -45,7 +45,7 @@ src/chapters/<Id>/<Interaction>.tsx (있으면)
   - SVG 회전은 `svgOrigin`(게이지 바늘은 `data-origin` 값 사용).
 - 색: 데이터 = `var(--accent)`, 실패 `var(--fail)` + ✕, 성공 `var(--ok)` + ✓, 대기 `var(--wait)` + ⏸. 상태는 `Badge`/`Node statuses`로 — 색만 바꾸지 않는다.
 - 선은 `Rough*`/`Node`/`RArrow`를 쓴다. 거칠기는 챕터 스테이지가 정한다. 작은 그림은 `rough={0.4}`처럼 낮춘다.
-- 모바일: `useEnv().mobile`이면 세로 배치 좌표로 그린다(다이어그램 영역이 화면 위쪽 50svh).
+- 모바일: `useEnv().mobile`이면 세로 배치 좌표로 그린다(다이어그램 영역은 글 오른쪽, 화면 폭의 약 절반).
 - 맵 변화는 `<PipelineMap t={…} from={…} />` + `mapTransition(q, tl, at(i))`.
 
 ## 인터랙션
