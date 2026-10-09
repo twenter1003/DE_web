@@ -44,7 +44,7 @@
 ## 2. 폴더 구조
 
 ```
-docs/                  SPEC, STORYBOARD, ARCHITECTURE, HANDOFF
+docs/                  ARCHITECTURE, CHAPTER_GUIDE, STORYBOARD, CONTENT_REVIEW
 scripts/               contrast.mjs (대비 검증), shot.mjs (Playwright 스크린샷)
 src/
   main.tsx, App.tsx
