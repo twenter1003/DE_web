@@ -42,9 +42,9 @@ export function StepScene(props: Props) {
   return reduced ? <StaticScene {...props} /> : <ScrubScene {...props} />
 }
 
-function SceneHeader({ id, kind, scene }: Pick<Props, 'id' | 'kind' | 'scene'>) {
+function SceneHeader({ id, kind, scene, className = '' }: Pick<Props, 'id' | 'kind' | 'scene'> & { className?: string }) {
   return (
-    <header className="pb-2 pt-[12svh] md:pt-[18svh]">
+    <header className={`pb-2 pt-[12svh] md:pt-[18svh] ${className}`}>
       <p className="font-mono text-sm text-muted">{UI.sceneKinds[kind]}</p>
       <h3 id={`${id}-title`} className="mt-1 text-[1.375rem] font-bold leading-snug md:text-[1.625rem]">
         {scene.title}
@@ -59,11 +59,11 @@ function StepBody({ step, i, n, srAlt = true }: { step: Step; i: number; n: numb
       <p className="mb-2 font-mono text-xs text-muted" aria-hidden="true">
         {i + 1}/{n}
       </p>
-      <p className="text-[1.0625rem] leading-[1.85] md:text-[1.1875rem]">
+      <p className="text-[1rem] leading-[1.75] md:text-[1.1875rem] md:leading-[1.85]">
         <Rich text={step.text} />
       </p>
       {step.lines?.length ? (
-        <div className="mt-4 space-y-2 md:mt-5 md:space-y-3">
+        <div className="mt-4 space-y-2 max-md:[&_svg]:hidden md:mt-5 md:space-y-3">
           {step.lines.map((l, k) => (
             <Bubble key={k} line={l} />
           ))}
@@ -133,7 +133,7 @@ function primeTransforms(tl: gsap.core.Timeline) {
   for (const el of els) gsap.getProperty(el, 'x')
 }
 
-function ScrubScene({ id, kind, scene, diagram, build, onStep, tall }: Props) {
+function ScrubScene({ id, kind, scene, diagram, build, onStep }: Props) {
   const root = useRef<HTMLDivElement>(null)
   const diag = useRef<HTMLDivElement>(null)
   const list = useRef<HTMLOListElement>(null)
@@ -156,7 +156,7 @@ function ScrubScene({ id, kind, scene, diagram, build, onStep, tall }: Props) {
       tl.time(1e-4).time(0)
 
       const items = Array.from(list.current.querySelectorAll<HTMLElement>('[data-step]'))
-      const anchor = mobile ? 0.74 : 0.5
+      const anchor = 0.5
       let last = -1
       const update = contextSafe!(() => {
         const y = window.innerHeight * anchor
@@ -195,29 +195,22 @@ function ScrubScene({ id, kind, scene, diagram, build, onStep, tall }: Props) {
   )
 
   return (
-    <section ref={root} id={id} className="relative flex flex-col md:grid md:grid-cols-[minmax(0,min(30rem,40%))_minmax(0,1fr)] lg:grid-cols-[minmax(0,min(30rem,45%))_minmax(0,1fr)] md:gap-x-12 lg:gap-x-16">
-      {/* 모바일: 위쪽 띠에 고정(HUD 아래), 옆 여백을 줄여 그림을 조금이라도 크게.
+    <section ref={root} id={id} className="relative grid grid-cols-[minmax(0,11fr)_minmax(0,14fr)] gap-x-3 md:grid-cols-[minmax(0,min(30rem,40%))_minmax(0,1fr)] lg:grid-cols-[minmax(0,min(30rem,45%))_minmax(0,1fr)] md:gap-x-12 lg:gap-x-16">
+      {/* 글은 왼쪽, 그림은 오른쪽 칸에 화면 높이로 고정(휴대폰 세로 화면도 같다). 모바일은 제목이 두 칸을 다 쓰고 그 아래에서 나란히.
           그림 설명은 step마다 화면 밖 글자(StepBody)로 읽히므로 그림 자체는 낭독에서 뺀다 */}
-      <div
-        aria-hidden="true"
-        className={`sticky top-0 z-10 -mx-4 border-b border-edge bg-bg px-2 pb-3 pt-[3.5rem] md:bg-transparent md:col-start-2 md:row-start-1 md:mx-0 md:h-svh md:self-start md:border-0 md:px-0 md:py-[7svh] ${
-          tall ? 'h-[60svh]' : 'h-[56svh]'
-        }`}
-      >
+      <div aria-hidden="true" className="sticky top-0 col-start-2 row-start-2 h-svh self-start pb-[6svh] pt-16 md:row-span-2 md:row-start-1 md:py-[7svh]">
         <div ref={diag} className="mx-auto h-full w-full max-w-[36rem]" style={small ? LIFT : undefined}>
           {near && diagram()}
         </div>
       </div>
-      <div className="md:col-start-1 md:row-start-1">
-        <SceneHeader id={id} kind={kind} scene={scene} />
-        <ol ref={list} className="pb-[44svh] md:pb-[40svh]">
-          {scene.steps.map((s, i) => (
-            <li key={i} data-step className="flex min-h-[78svh] items-start pt-[4svh] md:min-h-[82svh] md:items-center md:pt-0">
-              <StepBody step={s} i={i} n={n} />
-            </li>
-          ))}
-        </ol>
-      </div>
+      <SceneHeader id={id} kind={kind} scene={scene} className="col-span-2 col-start-1 row-start-1 md:col-span-1" />
+      <ol ref={list} className="col-start-1 row-start-2 pb-[40svh]">
+        {scene.steps.map((s, i) => (
+          <li key={i} data-step className="flex min-h-[82svh] items-center">
+            <StepBody step={s} i={i} n={n} />
+          </li>
+        ))}
+      </ol>
     </section>
   )
 }
@@ -272,12 +265,12 @@ function StaticScene({ id, kind, scene, diagram, build, onStep, tall }: Props) {
           <li
             key={i}
             data-step
-            className="grid gap-6 border-t border-edge py-10 first:border-t-0 md:grid-cols-[minmax(0,min(30rem,40%))_minmax(0,1fr)] lg:grid-cols-[minmax(0,min(30rem,45%))_minmax(0,1fr)] md:gap-x-12 md:py-14 lg:gap-x-16"
+            className="grid grid-cols-[minmax(0,11fr)_minmax(0,14fr)] gap-x-3 border-t border-edge py-10 first:border-t-0 md:grid-cols-[minmax(0,min(30rem,40%))_minmax(0,1fr)] lg:grid-cols-[minmax(0,min(30rem,45%))_minmax(0,1fr)] md:gap-x-12 md:py-14 lg:gap-x-16"
           >
-            <figure className={`md:order-2 ${tall ? 'h-[52svh] md:h-[66svh]' : 'h-[42svh] md:h-[56svh]'}`} role="img" aria-label={s.alt}>
+            <figure className={`order-2 self-center ${tall ? 'h-[52svh] md:h-[66svh]' : 'h-[42svh] md:h-[56svh]'}`} role="img" aria-label={s.alt}>
               <Snapshot diagram={diagram} build={build} n={n} i={i} />
             </figure>
-            <div className="self-center md:order-1">
+            <div className="order-1 self-center">
               <StepBody step={s} i={i} n={n} srAlt={false} />
             </div>
           </li>
