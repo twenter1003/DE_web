@@ -95,7 +95,7 @@ SQL 실행기, 파이프라인 코드 실행기, DAG 실패 시뮬레이터, 타
   <img src="docs/readme/mobile-quiz.png" alt="휴대폰 퀴즈 화면. 보기 네 개 중 하나를 고르고 정답 확인을 눌러요" width="30%">
 </p>
 
-- 휴대폰에서는 그림이 화면 위에 고정되고, 글이 그 아래로 지나가요.
+- 화면이 넓으면(태블릿, 가로로 돌린 휴대폰 등) 웹처럼 왼쪽에 글, 오른쪽에 그림이 나란히 나와요. 폭이 좁은 세로 화면에서는 그림이 위에 고정되고 글이 그 아래로 지나가요.
 - **모션 줄이기**(시스템 설정 또는 오른쪽 위 토글)를 켜면 단계마다 정지 그림과 글로 바뀌어요. 배우는 내용은 똑같아요.
 - 키보드만으로 퀴즈·도감·설정을 모두 다룰 수 있고, 그림마다 화면 낭독기용 설명이 있어요.
 - **배경음악**은 브라우저가 그 자리에서 만들어 내는 음악이에요(음원 파일 없음). 기본은 꺼져 있고, 이야기가 진행될수록 악기가 하나씩 늘어나요.
@@ -125,28 +125,10 @@ npm run build
 - **Vercel**: 저장소를 가져오면 Vite 프로젝트로 인식해요. Build Command `npm run build`, Output Directory `dist`.
 - **GitHub Pages**: `main`에 push하면 `.github/workflows/pages.yml`이 빌드해서 배포해요(저장소 Settings → Pages의 Source = GitHub Actions). 지금 배포 주소: https://twenter1003.github.io/DE_web/
 
-## 문구 고치기 (컴포넌트를 건드리지 않고)
-
-모든 텍스트는 `src/content/` 아래에 있어요.
-
-| 고칠 것 | 파일 |
-|---|---|
-| 챕터 본문·대사·그림 속 라벨·퀴즈·성장 대사 | `src/content/chapters/<챕터>.ts` (`prologue`, `ch1` … `ch10`, `epilogue`) |
-| A–Z 카드 정의 | `src/content/cards.ts` |
-| 챕터 제목·주제·회사 규모 | `src/content/toc.ts` |
-| 인물 이름, 레벨 이름, 역량 축과 챕터별 상승치 | `src/content/people.ts` |
-| 파이프라인 맵 노드 라벨, 등장·퇴장 시점 | `src/content/map.ts` |
-| 버튼·HUD·안내 문구 | `src/content/ui.ts` |
-
-챕터 파일의 `scenes.<장면>.steps[]`에서 `text`는 화면 왼쪽 글, `lines`는 말풍선, `alt`는 그 단계 그림의 설명(모션 줄이기·스크린리더용)이에요. `**굵게**`, `` `코드` `` 두 가지 표기만 쓸 수 있어요.
-step 개수를 바꾸면 그 장면의 애니메이션(`src/chapters/<챕터>/scenes.tsx`)도 함께 고쳐야 해요. 문장만 고칠 때는 콘텐츠 파일만 바꾸면 돼요.
-
-장면 기획 원본은 `docs/storyboard/`에 있고, `node scripts/storyboard.mjs`로 `docs/STORYBOARD.md` 한 파일로 합쳐요.
-
 ## 구조
 
 ```
-src/content/      문구(위 표)
+src/content/      모든 문구(본문·대사·퀴즈·카드·버튼)
 src/chapters/     챕터 = 독립 컴포넌트 + 자체 타임라인 (registry.ts 에 순서)
 src/components/   공통 부품: StepScene(모션 문법), PipelineMap, Quiz, ChapterGrowth, Hud, Desk, Rough* …
 src/state/        진행도(localStorage), 모션 줄이기·모바일 감지(gsap.matchMedia), 레벨·역량·맵 파생
@@ -156,14 +138,6 @@ scripts/          contrast.mjs(팔레트 대비 검증), shot.mjs(스크린샷),
 ```
 
 자세한 설계와 규칙은 `docs/ARCHITECTURE.md`와 `docs/CHAPTER_GUIDE.md`에 있어요.
-
-## 점검 도구
-
-- `npm run typecheck` — 타입 검사
-- `node scripts/contrast.mjs` — 12개 스테이지 팔레트의 WCAG 대비 검증(본문 4.5:1, 그래픽 3:1)
-- `node scripts/shot.mjs --at "#ch3@0" --mobile --reduced` — 개발 서버를 띄운 상태에서 주요 지점 스크린샷(`shots/`)과 콘솔 에러 확인. 옵션은 파일 맨 위 주석에 있어요.
-- `node scripts/scrollcheck.mjs [--mobile] [--reduced]` — 개발 서버에서 페이지 전체를 끝까지 스크롤하며 콘솔 에러와 '보이는데 비어 있는 장면 그림'을 확인(문제가 있으면 종료 코드 1)
-- 개발 서버에서만: `?debug=map`(맵의 모든 시점), `?debug=scene`(장면 엔진 점검)
 
 ## 사용한 것
 
