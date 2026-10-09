@@ -107,6 +107,8 @@ type SceneBuild = (q: (sel: string) => Element[], tl: gsap.core.Timeline, env: {
 - step i의 전환은 타임라인 시간 `[i, i+1)` 구간에 넣는다. 타임라인 길이 = step 수.
 - scrub 모드: 스크롤 진행률 → 타임라인 진행률. step 블록이 화면 가운데를 지날 때 해당 전환이 재생된다.
 - 정지 모드: step마다 다이어그램을 하나씩 렌더하고 `tl.progress((i+1)/N)`로 그 step의 최종 상태에 멈춘다.
+- 다이어그램과 타임라인은 장면(정지 모드는 step)이 화면에 가까워질 때(위·아래 1.5화면) 만든다. 그림 칸은 높이가 고정이라 늦게 그려도 레이아웃이 밀리지 않는다. 장면 밖에서 장면 그림 요소를 찾지 않는다.
+- 그림 칸이 설계 크기(440×480)보다 작으면(모바일·태블릿) 작은 라벨을 키운다(`--fs-lift`, `fs()`).
 
 ## 4. 핀 고정 방식
 ScrollTrigger의 `pin` 대신 CSS `position: sticky`로 다이어그램을 고정하고, ScrollTrigger는 scrub(진행률 → 타임라인)만 맡는다.
@@ -126,6 +128,8 @@ ScrollTrigger의 `pin` 대신 CSS `position: sticky`로 다이어그램을 고�
 | ScrollTrigger 수십 개로 인한 끊김 | transform·opacity만 애니메이션, scrub 스무딩 0.5, 입자 수 상한(데스크톱 60 / 모바일 24), rough 경로 메모이즈, blur·filter 애니메이션 금지 |
 | 폰트 로딩 후 레이아웃 변화로 트리거 위치 어긋남 | `document.fonts.ready` 후 `ScrollTrigger.refresh()`, 모션 토글·리사이즈 후에도 refresh |
 | 언마운트 시 트리거 누수·중복 | 모든 타임라인은 `useGSAP`(scope 지정) 안에서 생성 → 자동 revert |
+| 챕터 마운트가 메인 스레드를 오래 막음(느린 폰에서 1초 가까이) | 장면 그림은 가까워질 때 렌더, 첫 렌더 전에 GSAP transform을 한꺼번에 읽어 레이아웃 강제 반복 방지 |
+| 사전 렌더 HTML과 첫 클라이언트 렌더 불일치(hydration) | 첫 렌더는 서버와 같은 값(모션·모바일·토글은 서버 스냅숏, 진행도는 레이아웃 효과에서 로드), rough 좌표 반올림, 개발 서버도 사전 렌더해 콘솔로 확인 |
 | 모바일 주소창 높이 변화 | `svh` 단위, `ScrollTrigger.config({ ignoreMobileResize: true })` |
 | 모바일에서 다이어그램이 작아짐 | sticky 52svh 영역 + 세로 배치 좌표, 라벨 최소 12px |
 | 모션 축소 시 내용 손실 | 정지 모드에서도 모든 step 그림·텍스트 표시, 인터랙션은 결과만 즉시 반영 |
