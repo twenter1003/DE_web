@@ -79,7 +79,8 @@ function geo(wide: boolean, hasStoreChips: boolean, hasOrig: boolean, onBelt: bo
     wide,
     src: { x: 20, y: 8, w: 320, h: 92 },
     stub: (i) => ({ x: 36 + i * 48, y: 58, w: 40, h: 14 }),
-    belt: { x0: 16, x1: 344, chipY: 118, lineY: 160 },
+    // 칩 6개(수거·분류·포장×4·배송)가 들어가도 가장 긴 라벨 '분류·포장'(모바일 11.5)이 칩 테두리에 닿지 않게 벨트를 화면 폭 거의 끝까지(가운데 180 유지)
+    belt: { x0: 4, x1: 356, chipY: 118, lineY: 160 },
     work: { x0: 30, x1: 30, y: 188 },
     store: { x: 10, y: S, w: 340, h: bottom - S },
     storeChips,
@@ -122,6 +123,8 @@ function Chip({ cx, y, slot, step, cur, shown }: { cx: number; y: number; slot: 
   const x0 = cx - w / 2
   const ok = step.ok
   const kind = step.kind
+  // 양옆 4 이상 남을 때만 10, 아니면 9(모바일 칩 6개의 '분류·포장'이 테두리에 닿지 않게)
+  const label = ok && kind ? I.kinds[kind] : I.fig.stop
   return (
     <g style={{ opacity: shown ? 1 : 0, transition: 'opacity 0.3s' }}>
       <rect x={x0} y={y} width={w} height={CHIP_H} rx={4} style={{ fill: 'var(--surface)' }} />
@@ -136,8 +139,8 @@ function Chip({ cx, y, slot, step, cur, shown }: { cx: number; y: number; slot: 
         <Badge x={cx} y={y + 16} status="fail" r={8} />
       )}
       {w >= 40 && (
-        <Txt x={cx} y={y + 36} size={w < 50 ? 9 : 10} weight={650} anchor="middle" color={ok ? undefined : 'var(--fail)'}>
-          {ok && kind ? I.kinds[kind] : I.fig.stop}
+        <Txt x={cx} y={y + 36} size={tw(label, 10) + 8 <= w ? 10 : 9} weight={650} anchor="middle" color={ok ? undefined : 'var(--fail)'}>
+          {label}
         </Txt>
       )}
       {ok && slot >= 46 && step.name in I.commands && (

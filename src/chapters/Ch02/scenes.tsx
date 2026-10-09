@@ -57,7 +57,7 @@ export function ProblemFig() {
         <Node x={85} y={70} w={NW} h={NH} label={n.app.label} sub={n.app.sub} kind="source" seed="p-app" />
         <Node x={355} y={70} w={NW} h={NH} label={n.csv.label} sub={n.csv.sub} kind="doc" seed="p-csv" />
         <Node x={355} y={230} w={NW} h={NH} label={n.bi.label} sub={n.bi.sub} kind="serve" seed="p-bi" />
-        <RArrow x1={152} y1={70} x2={286} y2={70} seed="p-e1" rough={0.5} />
+        <RArrow x1={154} y1={202} x2={288} y2={100} seed="p-e1" rough={0.5} />
         <RArrow x1={355} y1={98} x2={355} y2={202} seed="p-e2" rough={0.5} />
         <RArrow x1={85} y1={98} x2={85} y2={202} seed="p-e3" rough={0.5} />
       </g>
@@ -1021,7 +1021,7 @@ function MapOverlay({ at: pos }: { at: At }) {
     y1: Math.max(bi.y + bi.h / 2, ph.y + ph.h) + 14,
   }
   // 옆으로 비킨 CSV를 잇는 선(노드 테두리 바깥에서 시작·끝)
-  const s1 = { x: app.x + app.w / 2 - 22, y: app.y + app.h / 2 + 5 }
+  const s1 = { x: oltp.x + oltp.w / 2 + 6, y: oltp.y }
   const e1 = { x: aside.x - csv.w / 2 - 6, y: aside.y - csv.h / 2 - 4 }
   const s2 = { x: aside.x - 18, y: aside.y + csv.h / 2 + 5 }
   const e2 = { x: bi.x + bi.w / 2 + 7, y: bi.y - 8 }
@@ -1105,7 +1105,7 @@ export const buildSolution: SceneBuild = (q, tl) => {
   const off = o('csv-off')[0]
   init(tl, o('map-layer'), { opacity: 0 })
   // 원래 CSV 연결선은 bi의 새 자리로 그려지므로 숨기고, 옆으로 비킨 CSV를 덧그린 선으로 잇는다
-  init(tl, [...edge('app>csv'), ...edge('csv>bi'), ...etlN, ...whN, ...newE.flat(), ...o('lbl-new'), ...o('flow-dot'), ...o('phone'), ...o('card'), ...o('to-phone')], { opacity: 0 })
+  init(tl, [...edge('oltp>csv'), ...edge('csv>bi'), ...etlN, ...whN, ...newE.flat(), ...o('lbl-new'), ...o('flow-dot'), ...o('phone'), ...o('card'), ...o('to-phone')], { opacity: 0 })
   if (off) init(tl, node('csv'), { x: num(off, 'dx'), y: num(off, 'dy') })
   init(tl, [...strokes([...etlN, ...whN]), ...shafts(newE.flat())], { drawSVG: '0%' })
   newE.forEach((e) => init(tl, heads(e), { opacity: 0 }))

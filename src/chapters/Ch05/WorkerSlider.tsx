@@ -33,7 +33,7 @@ const PATTERN: Record<'div' | 'coord' | 'serial', CSSProperties> = {
 const KEYS = ['div', 'coord', 'serial'] as const
 
 const SLIDER = [
-  'block h-8 w-full cursor-pointer appearance-none bg-transparent',
+  'block h-11 w-full cursor-pointer appearance-none bg-transparent',
   '[&::-webkit-slider-runnable-track]:h-2 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:bg-[color-mix(in_srgb,var(--ink)_38%,transparent)]',
   '[&::-webkit-slider-thumb]:-mt-2 [&::-webkit-slider-thumb]:size-6 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-ink [&::-webkit-slider-thumb]:shadow-[0_0_0_3px_var(--surface),0_0_0_4.5px_var(--ink)]',
   '[&::-moz-range-track]:h-2 [&::-moz-range-track]:rounded-full [&::-moz-range-track]:bg-[color-mix(in_srgb,var(--ink)_38%,transparent)]',

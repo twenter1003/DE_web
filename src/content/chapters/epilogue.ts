@@ -78,7 +78,7 @@ const interaction = {
   },
   /** 장면 4 뒤의 도감 격자 */
   dex: {
-    hint: '칸을 누르면 아래에 뜻이 나와요. 키보드는 방향키로 칸 사이를 옮겨요.',
+    hint: '칸을 누르면 아래에 그 카드의 뜻이나 얻는 곳이 나와요. 키보드는 방향키로 칸 사이를 옮겨요.',
     missingTitle: '남은 카드',
     cell: (letter: string, term: string, def: string) => `${letter} ${term}: ${def}`,
     cellMissing: (letter: string, label: string) => `${letter}, 아직 못 모음, ${label}에서 얻어요`,

@@ -29,7 +29,7 @@ export const CARDS: Card[] = [
   { letter: 'N', term: 'Normalization', ko: '정규화', def: '같은 정보가 여러 곳에 반복해 적히지 않도록 테이블을 나눠, 중복을 줄이고 한 곳만 고치면 되게 하는 설계 방식', chapter: 'ch4' },
   { letter: 'O', term: 'OLTP vs OLAP', def: '짧은 읽기·쓰기를 빠르게 많이 하는 운영용 처리와 많은 행을 훑어 집계하는 분석용 처리의 구분', chapter: 'ch1' },
   { letter: 'P', term: 'Partitioning', ko: '파티셔닝', def: '날짜 같은 기준으로 데이터를 폴더나 구역별로 나눠 저장해, 쿼리가 필요한 구역만 골라 읽게 하는 저장 방식', chapter: 'ch5' },
-  { letter: 'Q', term: 'Quality', ko: '데이터 품질', def: '데이터가 비거나 겹치지 않고 허용 범위 안에서 제때 도착해, 믿고 쓸 수 있는 정도', chapter: 'ch7' },
+  { letter: 'Q', term: 'Quality', ko: '데이터 품질', def: '데이터가 비거나 겹치지 않고, 허용 범위 안의 맞는 값으로 제때 도착해 믿고 쓸 수 있는 정도', chapter: 'ch7' },
   { letter: 'R', term: 'Reverse ETL', ko: '리버스 ETL', def: '웨어하우스나 레이크하우스에서 만든 결과를 CRM·마케팅 툴 같은 업무 도구로 되돌려 보내는 방식', chapter: 'ch10' },
   { letter: 'S', term: 'Schema', ko: '스키마', def: '데이터에 어떤 항목이 어떤 값의 종류로 들어가는지 미리 정해 둔 데이터의 설계도', chapter: 'prologue' },
   { letter: 'T', term: 'Time travel', ko: '타임 트래블', def: '테이블이 버전마다 남겨 둔 기록으로, 보관 기간 안의 과거 시점 데이터를 그대로 다시 조회하는 기능', chapter: 'ch8' },

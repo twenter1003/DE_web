@@ -127,7 +127,9 @@ export const MAP_NODES: MapNodeDef[] = [
 ]
 
 export const MAP_EDGES: MapEdgeDef[] = [
-  { from: 'app', to: 'csv', kind: 'data', start: 0, until: 2 },
+  { from: 'app', to: 'csv', kind: 'data', start: 0, until: 1 },
+  // Ch1부터: CSV는 운영 DB에서 내보낸 사본
+  { from: 'oltp', to: 'csv', kind: 'data', start: 1, until: 2 },
   { from: 'csv', to: 'bi', kind: 'data', start: 0, until: 2 },
   { from: 'app', to: 'oltp', kind: 'data', start: 1 },
   { from: 'oltp', to: 'bi', kind: 'warn', start: 1, until: 2, label: '직접 쿼리' },

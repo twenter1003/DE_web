@@ -7,7 +7,7 @@ import { Rich } from '../lib/rich'
 import { STAGES, stageVars } from '../lib/stages'
 import { setActive } from '../state/active'
 import { mountSoon } from '../state/mount'
-import { useProgress } from '../state/progress'
+import { useProgressActions } from '../state/progress'
 import { Desk, type Board } from './Desk'
 import { Bubble } from './people'
 import { StageCtx } from './sketch'
@@ -18,7 +18,7 @@ export function ChapterShell({ id, children }: { id: ChapterId; children: ReactN
   const stage = STAGES[toc.stage]
   const prev = toc.stage > 0 ? STAGES[toc.stage - 1] : null
   const ref = useRef<HTMLElement>(null)
-  const { reach } = useProgress()
+  const { reach } = useProgressActions()
 
   useEffect(() => {
     const el = ref.current

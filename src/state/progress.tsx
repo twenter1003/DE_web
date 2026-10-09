@@ -69,7 +69,11 @@ interface ProgressApi {
   reset: () => void
 }
 
+type ProgressActions = Pick<ProgressApi, 'answer' | 'markClimax' | 'reach' | 'reset'>
+
 const Ctx = createContext<ProgressApi | null>(null)
+// 동작만 쓰는 곳(ChapterShell 등)은 진행도가 바뀔 때마다 다시 그려지지 않게 따로 내려준다
+const ActionsCtx = createContext<ProgressActions | null>(null)
 
 export function ProgressProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(
@@ -116,12 +120,24 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
       reset,
     }
   }, [state, isFresh, answer, markClimax, reach, reset])
+  const actions = useMemo<ProgressActions>(() => ({ answer, markClimax, reach, reset }), [answer, markClimax, reach, reset])
 
-  return <Ctx.Provider value={value}>{children}</Ctx.Provider>
+  return (
+    <ActionsCtx.Provider value={actions}>
+      <Ctx.Provider value={value}>{children}</Ctx.Provider>
+    </ActionsCtx.Provider>
+  )
 }
 
 export function useProgress(): ProgressApi {
   const v = useContext(Ctx)
   if (!v) throw new Error('ProgressProvider 밖에서 useProgress 사용')
+  return v
+}
+
+/** 진행도 값 없이 동작만. 진행도가 바뀌어도 다시 그려지지 않는다 */
+export function useProgressActions(): ProgressActions {
+  const v = useContext(ActionsCtx)
+  if (!v) throw new Error('ProgressProvider 밖에서 useProgressActions 사용')
   return v
 }

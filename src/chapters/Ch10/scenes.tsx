@@ -647,11 +647,12 @@ const GONE: [string, 0 | 1, number][] = [
 function ReasonFig({ after }: { after?: boolean }) {
   const [L, R] = RX
   const tagY = (r: number) => RY(r) + 38
+  // after(모션 줄이기, 카운터 줄과 그림 칸을 나눠 씀)는 모니터 받침을 빼고 화면 테두리를 내용 둘레(x 35~422, y 26~406)로 좁혀 글자를 조금이라도 크게
+  const [fx, fy, fw, fh] = after ? [24, 14, 412, 406] : [4, 4, 432, 432]
   return (
-    // after(모션 줄이기, 카운터 줄과 그림 칸을 나눠 씀)는 모니터 받침을 빼고 잘라 글자를 조금이라도 크게
-    <Fig viewBox={after ? '0 0 440 440' : undefined}>
+    <Fig viewBox={after ? '22 12 416 410' : undefined}>
       {/* 회의실 화면 */}
-      <rect x={4} y={4} width={432} height={432} rx={10} style={{ fill: 'var(--bg)', stroke: 'var(--edge)' }} strokeWidth={1.5} />
+      <rect x={fx} y={fy} width={fw} height={fh} rx={10} style={{ fill: 'var(--bg)', stroke: 'var(--edge)' }} strokeWidth={1.5} />
       {!after && <path d="M 202 436 L 196 464 M 238 436 L 244 464 M 176 466 L 264 466" style={{ fill: 'none', stroke: 'var(--edge)' }} strokeWidth={2} strokeLinecap="round" />}
 
       <RArrow x1={L + 76} y1={RY(0)} x2={R - 83} y2={RY(0)} seed="r-kf" rough={0.4} />
@@ -741,7 +742,8 @@ function ClimaxLayer() {
             </span>
           </div>
         </div>
-        <div className="relative w-[38%] max-w-[13rem] shrink-0 rounded-lg border-[1.5px] border-edge bg-bg p-1">
+        {/* 모션 줄이기의 모바일: 책상을 조금 줄여 카운터 줄('21 → 16 Ch9: 17')이 한 줄에 들어가게 → 아래 줄이 낮아져 그림이 커진다 */}
+        <div className={`relative max-w-[13rem] shrink-0 rounded-lg border-[1.5px] border-edge bg-bg p-1 ${reduced ? 'w-[30%] md:w-[38%]' : 'w-[38%]'}`}>
           <div data-el="desk-old">
             <Desk level={4} board="crowded" mood="focus" />
           </div>

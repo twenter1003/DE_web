@@ -1491,9 +1491,9 @@ export const buildSolution: SceneBuild = (q, tl, { mobile }) => {
   const movers = o('mover')
   const rr = o('rr-media')
   init(tl, [...lh, ...edge('media>lakehouse'), ...o('ghost'), ...movers, ...newChecks, ...bands, ...o('close-layer'), ...o('over-layer'), ...o('counter'), ...o('memo'), ...o('cnt-to')], { opacity: 0 })
-  // 모바일 step 1 카메라는 ETL 열과 Kafka 줄을 함께 담느라 그 사이의 CDC가 왼쪽 끝에 반쯤 걸린다.
-  // 글자 조각만 보이지 않게 이 맵(svg)에서는 CDC와 그 연결선을 감춘다(step 2부터는 맵 자체가 사라지고, step 3은 다른 맵 vsvg)
-  if (mobile) init(tl, [...node('cdc'), ...edge('oltp>cdc'), ...edge('cdc>kafka')], { opacity: 0 })
+  // step 1 카메라(데스크톱·모바일 모두)는 저장소 둘레를 담느라 CDC가 왼쪽 끝에 조각으로만 걸린다.
+  // 빈 상자 조각이 보이지 않게 이 맵(svg)에서는 CDC와 그 연결선을 감춘다(step 2부터는 맵 자체가 사라지고, step 3은 다른 맵 vsvg)
+  init(tl, [...node('cdc'), ...edge('oltp>cdc'), ...edge('cdc>kafka')], { opacity: 0 })
   init(tl, vsvg, { attr: { viewBox: camNear } })
   init(tl, lhStrokes, { drawSVG: '0%' })
   init(tl, q('[data-el="sync-x"] path'), { drawSVG: '0%' })

@@ -782,10 +782,11 @@ export const buildSolution: SceneBuild = (q, tl) => {
   // step 4: 이 그림이 앞으로 자랄 맵이 된다
   const still = q('[data-el="still-map"]')
   if (still.length) {
-    // 모션 줄이기: 손그림은 읽히는 크기(0.8배)로 위 가운데, 그 아래 HUD 맵 3노드, 맨 아래 주니·석 리드·메모
+    // 모션 줄이기: 손그림은 폰에서도 하위 라벨이 읽히는 크기(0.9배)로 위쪽 폭 가득, 그 아래 HUD 맵 3노드, 맨 아래 주니·석 리드·메모
     tl.set(still, { opacity: 0 }, 0)
-    tl.to(q('[data-el="paper"]'), { scale: 0.8, x: 42, y: -54, transformOrigin: '0% 0%', duration: 0.3 }, at(3))
-    tl.set(q('[data-el="meet"]'), { x: 12, y: 56 }, at(3))
+    tl.to(q('[data-el="paper"]'), { scale: 0.9, x: 21, y: -54, transformOrigin: '0% 0%', duration: 0.3 }, at(3))
+    tl.set(still, { y: 39 }, at(3))
+    tl.set(q('[data-el="meet"]'), { x: 12, y: 95 }, at(3))
     tl.to([still, q('[data-el="meet"]')], { opacity: 1, duration: 0.15 }, at(3) + 0.3)
     return
   }

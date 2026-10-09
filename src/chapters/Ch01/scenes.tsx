@@ -987,6 +987,8 @@ const DASHES = (() => {
   }
   return out
 })()
+/** 경고 표시 폭: 짧은 '부하 경고', 긴 '직접 쿼리 · 부하 경고' */
+const WARN_W = [120, 196]
 
 export function SolutionFig() {
   return (
@@ -1035,9 +1037,13 @@ export function SolutionFig() {
         <p className="absolute left-0 top-0 font-mono text-xs text-muted md:text-sm">{F.mapCaption}</p>
         <PipelineMap t={1} from={0} className="absolute inset-0" label={F.mapCaption} />
         <svg data-el="warn-layer" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" className="diagram pointer-events-none absolute inset-0 h-full w-full" aria-hidden="true">
+          <g data-el="detour" style={{ fill: 'none', stroke: 'var(--fail)' }} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+            <path strokeDasharray="8 6" />
+            <path />
+          </g>
           <g data-el="warn">
             {[F.loadWarn, F.directLoadWarn].map((t, i) => {
-              const w = i === 0 ? 120 : 196
+              const w = WARN_W[i]
               return (
                 <g key={t} data-el={i === 0 ? 'warn-s' : 'warn-l'}>
                   <rect x={-w / 2} y={-14} width={w} height={28} rx={6} style={{ fill: 'var(--surface)', stroke: 'var(--fail)' }} strokeWidth={1.6} />
@@ -1071,7 +1077,6 @@ export const buildSolution: SceneBuild = (q, tl) => {
   tl.to(q('[data-el="rules"]'), { opacity: 0, duration: 0.12 }, s2)
   tl.to(mapwrap, { opacity: 1, duration: 0.1 }, s2 + 0.04)
   const map = q('[data-el="map"]')[0] as SVGSVGElement | undefined
-  const label = q('[data-edge="oltp>bi"] text')[0]
   const warn = q('[data-el="warn"]')
   const box = (id: string) => {
     const r = q(`[data-node="${id}"] .node-focus`)[0]
@@ -1080,43 +1085,54 @@ export const buildSolution: SceneBuild = (q, tl) => {
   }
   // 맵의 기본 뷰박스는 HUD용 비율이라 세로 배치(모바일)에서 위아래 여백이 크다. 이 장면에서는 노드 4개에 꼭 맞춰 줌한다
   const all = ['app', 'csv', 'bi', 'oltp'].map(box)
+  const [, csv, bi, db] = all
+  // 세로 배치(모바일)에선 노드가 한 줄로 서서 운영 DB ⇢ 노트북 점선이 CSV 노드 뒤로 지나가며 실선과 겹친다.
+  // 그래서 점선을 노드 줄 오른쪽으로 돌려 그리고, 경고 표시를 그 옆에 단다(그만큼 뷰박스를 오른쪽으로 넓힌다)
+  const vertical = db !== null && bi !== null && db.cx === bi.cx
+  const detourX = db ? db.x + db.w + 16 : 0
   if (map && all.every(Boolean)) {
     const b = all as NonNullable<ReturnType<typeof box>>[]
     const x0 = Math.min(...b.map((r) => r.x)) - 24
     const y0 = Math.min(...b.map((r) => r.y)) - 24
-    map.dataset.vbTo = `${x0} ${y0} ${Math.max(...b.map((r) => r.x + r.w)) + 24 - x0} ${Math.max(...b.map((r) => r.y + r.h)) + 24 - y0}`
+    const x1 = vertical ? detourX + 8 + WARN_W[1] + 8 : Math.max(...b.map((r) => r.x + r.w)) + 24
+    map.dataset.vbTo = `${x0} ${y0} ${x1 - x0} ${Math.max(...b.map((r) => r.y + r.h)) + 24 - y0}`
   }
   mapTransition(q, tl, s2 + 0.08, { dur: 0.6 })
-  // 스토리보드 순서: 앱에서 새 실선이 뻗고 → 그 끝에 운영 DB가 그려지고 → 운영 DB ⇢ 노트북 경고 점선
+  // 스토리보드 순서: 앱에서 새 실선이 뻗고 → 그 끝에 운영 DB가 그려지고 → 운영 DB → CSV 실선(CSV의 출처) → 운영 DB ⇢ 노트북 경고 점선
   // (mapTransition은 새 노드·선을 한꺼번에 켠다. 자식 요소의 opacity·drawSVG로 순서만 나눈다)
   const newShaft = q('[data-edge="app>oltp"] [data-el="shaft"] path')
   const newHead = q('[data-edge="app>oltp"] [data-el="head"]')
   const dbOutline = q('[data-node="oltp"] path')
   const dbText = q('[data-node="oltp"] text')
+  const csvShaft = q('[data-edge="oltp>csv"] [data-el="shaft"] path')
+  const csvHead = q('[data-edge="oltp>csv"] [data-el="head"]')
   const warnLine = q('[data-edge="oltp>bi"] > *')
-  tl.set(newShaft, { drawSVG: '0%' }, 0)
-  tl.set([...newHead, ...dbText, ...warnLine], { opacity: 0 }, 0)
+  const detour = q('[data-el="detour"]')
+  tl.set([...newShaft, ...csvShaft], { drawSVG: '0%' }, 0)
+  tl.set([...newHead, ...csvHead, ...dbText, ...warnLine, ...detour], { opacity: 0 }, 0)
   tl.set(dbOutline, { drawSVG: '0%' }, 0)
   tl.to(newShaft, { drawSVG: '100%', duration: 0.14, ease: 'none' }, s2 + 0.4)
   tl.to(newHead, { opacity: 1, duration: 0.03 }, s2 + 0.53)
   tl.to(dbOutline, { drawSVG: '100%', duration: 0.1, ease: 'none' }, s2 + 0.54)
   tl.to(dbText, { opacity: 1, duration: 0.05 }, s2 + 0.6)
-  tl.to(warnLine, { opacity: 1, duration: 0.06 }, s2 + 0.64)
-  const db = box('oltp')
-  const bi = box('bi')
-  if (map && label && db && bi) {
-    // 경고 표시는 점선의 운영 DB 쪽 1/4 지점. 세로 배치(모바일)에서 '직접 쿼리' 라벨이 다른 노드에 가려지면 표시에 함께 적는다
-    const lx = Number(label.getAttribute('x'))
-    const ly = Number(label.getAttribute('y'))
-    const hidden = ['app', 'csv'].some((id) => {
-      const r = box(id)
-      return r !== null && lx > r.x && lx < r.x + r.w && ly > r.y && ly < r.y + r.h
-    })
+  tl.to(csvShaft, { drawSVG: '100%', duration: 0.1, ease: 'none' }, s2 + 0.64)
+  tl.to(csvHead, { opacity: 1, duration: 0.03 }, s2 + 0.73)
+  tl.to(vertical ? detour : warnLine, { opacity: 1, duration: 0.06 }, s2 + 0.78)
+  if (map && csv && db && bi) {
     tl.set(q('[data-el="warn-layer"]'), { attr: { viewBox: map.dataset.vbTo ?? '0 0 100 100' } }, 0)
-    // 긴 표시는 앱 → CSV 화살표를 가리지 않게 점선 오른쪽으로 비켜 둔다
-    tl.set(warn, { x: db.cx + (bi.cx - db.cx) * 0.25 + (hidden ? 30 : 0), y: db.cy + (bi.cy - db.cy) * 0.25, opacity: 0 }, 0)
-    tl.set(q(hidden ? '[data-el="warn-s"]' : '[data-el="warn-l"]'), { opacity: 0 }, 0)
-    tl.to(warn, { opacity: 1, duration: 0.1 }, s2 + 0.7)
+    if (vertical) {
+      const ex = bi.x + bi.w
+      const [line, head] = q('[data-el="detour"] path')
+      tl.set(line, { attr: { d: `M ${db.x + db.w} ${db.cy} H ${detourX} V ${bi.cy} H ${ex}` } }, 0)
+      tl.set(head, { attr: { d: `M ${ex + 8} ${bi.cy - 6} L ${ex} ${bi.cy} L ${ex + 8} ${bi.cy + 6}` } }, 0)
+    }
+    // 가로 배치: 짧은 표시를 점선의 운영 DB 쪽 1/3 지점에(운영 DB → CSV 실선과 '직접 쿼리' 라벨 사이).
+    // 점선 위 그대로면 상자 왼쪽 위 모서리가 운영 DB → CSV 화살표에 걸려서 오른쪽 아래로 조금 비켜 둔다(점선은 여전히 상자를 지난다).
+    // 세로 배치: 맵의 점선과 라벨을 감췄으니 긴 표시('직접 쿼리 · 부하 경고')를 돌아가는 점선 오른쪽, CSV 옆에
+    const pos = vertical ? { x: detourX + 8 + WARN_W[1] / 2, y: csv.cy } : { x: db.cx + (bi.cx - db.cx) * 0.34 + 6, y: db.cy + (bi.cy - db.cy) * 0.34 + 10 }
+    tl.set(warn, { ...pos, opacity: 0 }, 0)
+    tl.set(q(vertical ? '[data-el="warn-s"]' : '[data-el="warn-l"]'), { opacity: 0 }, 0)
+    tl.to(warn, { opacity: 1, duration: 0.1 }, s2 + 0.84)
   }
 
   // step 3: 연필이 운영 DB 옆에 점선 상자를 그리고 '분석용?'을 쓴다

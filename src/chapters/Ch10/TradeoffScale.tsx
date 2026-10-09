@@ -12,7 +12,7 @@ const ROWS = I.rows
 const LAST = ROWS.length - 1
 
 const SLIDER = [
-  'block h-8 w-full cursor-pointer appearance-none bg-transparent',
+  'block h-11 w-full cursor-pointer appearance-none bg-transparent',
   '[&::-webkit-slider-runnable-track]:h-2 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:bg-[color-mix(in_srgb,var(--ink)_38%,transparent)]',
   '[&::-webkit-slider-thumb]:-mt-2 [&::-webkit-slider-thumb]:size-6 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-ink [&::-webkit-slider-thumb]:shadow-[0_0_0_3px_var(--surface),0_0_0_4.5px_var(--ink)]',
   '[&::-moz-range-track]:h-2 [&::-moz-range-track]:rounded-full [&::-moz-range-track]:bg-[color-mix(in_srgb,var(--ink)_38%,transparent)]',
@@ -136,7 +136,8 @@ export function TradeoffScale() {
 
         {/* 모든 단계 한눈에 보기 */}
         <details className="rounded-xl border-[1.5px] border-edge bg-bg p-4">
-          <summary className="cursor-pointer py-2 font-bold">{I.tableTitle}</summary>
+          {/* 바깥 여백까지 덮어 상자 전체가 누르는 곳이 되게 */}
+          <summary className="-m-4 cursor-pointer rounded-xl px-4 py-6 font-bold">{I.tableTitle}</summary>
           <table className="mt-4 hidden w-full border-collapse text-left text-sm md:table">
             <thead>
               <tr className="border-b-[1.5px] border-edge">

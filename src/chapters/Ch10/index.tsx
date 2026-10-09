@@ -12,7 +12,7 @@ import { StepScene } from '../../components/StepScene'
 import { refreshTriggers } from '../../lib/refresh'
 import { STAGES } from '../../lib/stages'
 import { useEnv } from '../../state/env'
-import { useProgress } from '../../state/progress'
+import { useProgress, useProgressActions } from '../../state/progress'
 import {
   AttemptFig,
   BuyFig,
@@ -119,7 +119,7 @@ function LevelDesk() {
 }
 
 export function Ch10() {
-  const { markClimax } = useProgress()
+  const { markClimax } = useProgressActions()
   const { reduced } = useEnv()
   // 클라이맥스: 결정 장면의 step 2(안 만들기로 한 순간)나 step 3이 화면 가운데 선을 지나면 Lv5 승급.
   // 빠르게 스크롤해 step 3에 닿아도, 아래에서 거슬러 올라와도 승급하고, 장면을 통째로 건너뛰면(레일·목차 점프, 새로고침) 승급하지 않는다.
@@ -130,7 +130,7 @@ export function Ch10() {
     steps.forEach((el) => io.observe(el))
     return () => io.disconnect()
   }, [markClimax, reduced])
-  // markClimax는 바뀌지 않는다. 진행도가 바뀔 때마다(챕터 도달·퀴즈) 챕터 전체를 다시 그리지 않게 트리를 고정한다.
+  // 동작만 구독하므로 진행도가 바뀌어도(챕터 도달·퀴즈) 다시 그려지지 않는다. 환경(useEnv)이 바뀔 때도 트리는 고정한다.
   // 진행도를 읽는 부품(LevelDesk·Quiz·ChapterGrowth)은 각자 구독한다
   return useMemo(() => (
     <ChapterShell id="ch10">

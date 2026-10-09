@@ -141,7 +141,7 @@ function ScrubScene({ id, kind, scene, diagram, build, onStep, tall }: Props) {
   )
 
   return (
-    <section ref={root} id={id} className="relative flex flex-col md:grid md:grid-cols-[minmax(0,30rem)_minmax(0,1fr)] md:gap-x-12 lg:gap-x-16">
+    <section ref={root} id={id} className="relative flex flex-col md:grid md:grid-cols-[minmax(0,min(30rem,40%))_minmax(0,1fr)] lg:grid-cols-[minmax(0,min(30rem,45%))_minmax(0,1fr)] md:gap-x-12 lg:gap-x-16">
       {/* 모바일: 위쪽 띠에 고정(HUD 아래), 옆 여백을 줄여 그림을 조금이라도 크게.
           그림 설명은 step마다 화면 밖 글자(StepBody)로 읽히므로 그림 자체는 낭독에서 뺀다 */}
       <div
@@ -215,7 +215,7 @@ function StaticScene({ id, kind, scene, diagram, build, onStep, tall }: Props) {
           <li
             key={i}
             data-step
-            className="grid gap-6 border-t border-edge py-10 first:border-t-0 md:grid-cols-[minmax(0,30rem)_minmax(0,1fr)] md:gap-x-12 md:py-14 lg:gap-x-16"
+            className="grid gap-6 border-t border-edge py-10 first:border-t-0 md:grid-cols-[minmax(0,min(30rem,40%))_minmax(0,1fr)] lg:grid-cols-[minmax(0,min(30rem,45%))_minmax(0,1fr)] md:gap-x-12 md:py-14 lg:gap-x-16"
           >
             <figure className={`md:order-2 ${tall ? 'h-[52svh] md:h-[66svh]' : 'h-[42svh] md:h-[56svh]'}`} role="img" aria-label={s.alt}>
               <Snapshot diagram={diagram} build={build} n={n} i={i} />

@@ -11,6 +11,7 @@ import { Bubble } from '../../components/people'
 import { PipelineMap } from '../../components/PipelineMap'
 import { RArrow, RRect, StageCtx } from '../../components/sketch'
 import { goTo } from '../../lib/nav'
+import { scrollToY } from '../../lib/refresh'
 import { STAGES, stageVars } from '../../lib/stages'
 import { useEnv } from '../../state/env'
 import { useProgress } from '../../state/progress'
@@ -142,7 +143,7 @@ export function DexBoard() {
           <TermCard card={card} owned={owned} variant="row" />
         </ul>
         {!owned && (
-          <a href={`#${card.chapter}-quiz`} onClick={go(card.chapter)} className="mt-2 inline-block font-semibold underline underline-offset-4">
+          <a href={`#${card.chapter}-quiz`} onClick={go(card.chapter)} className="mt-2 inline-flex min-h-[2.75rem] items-center font-semibold underline underline-offset-4">
             {I.dex.go(tocOf(card.chapter).label)}
           </a>
         )}
@@ -190,9 +191,10 @@ function SketchCard() {
   )
 }
 
-/** 첫 화면으로. 진행도를 지운 뒤에는 부드럽게 굴리지 않는다(지나가는 챕터가 다시 '도달'로 기록되지 않게) */
-function toTop(smooth: boolean) {
-  window.scrollTo({ top: 0, behavior: smooth ? 'smooth' : 'auto' })
+/** 첫 화면으로 즉시 이동. 부드럽게 굴리면 선택지가 접히며 줄어든 페이지와 ScrollTrigger refresh가 스크롤을 되돌리고,
+ *  진행도를 지운 뒤라면 지나가는 챕터가 다시 '도달'로 기록된다. ScrollTrigger가 기억하는 위치도 함께 바꾼다 */
+function toTop() {
+  scrollToY(0)
   history.replaceState(null, '', location.pathname + location.search)
   const h = document.querySelector<HTMLElement>('#top h1')
   if (h) {
@@ -203,7 +205,6 @@ function toTop(smooth: boolean) {
 
 export function Restart() {
   const p = useProgress()
-  const { reduced } = useEnv()
   const [open, setOpen] = useState(false)
   const first = useRef<HTMLButtonElement>(null)
   const dlg = useRef<HTMLDialogElement>(null)
@@ -240,7 +241,7 @@ export function Restart() {
               className="btn"
               onClick={() => {
                 setOpen(false)
-                toTop(!reduced)
+                toTop()
               }}
             >
               {R.keep}
@@ -270,7 +271,7 @@ export function Restart() {
               p.reset()
               dlg.current?.close()
               setOpen(false)
-              toTop(false)
+              toTop()
             }}
           >
             {R.yes}
