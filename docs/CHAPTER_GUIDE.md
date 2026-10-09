@@ -1,6 +1,6 @@
 # 챕터 구현 가이드
 
-Prologue·Ch1·Ch2가 기준 구현이다. 새 챕터는 그 구조를 그대로 따른다. 규칙 요약은 `CLAUDE.md`, 장면 내용은 `docs/storyboard/NN-*.md`.
+Prologue·Ch1·Ch2가 기준 구현이다. 새 챕터는 그 구조를 그대로 따른다. 설계 원칙과 모션 규칙은 `docs/ARCHITECTURE.md`, 장면 내용은 `docs/storyboard/NN-*.md`.
 
 ## 파일
 ```
@@ -54,6 +54,6 @@ src/chapters/<Id>/<Interaction>.tsx (있으면)
 - 문구는 콘텐츠 파일에서. 단순화한 모델이면 `UI.simplified` 고지를 보여준다.
 
 ## 확인
-1. `npm run typecheck` (여러 작업자가 동시에 돌려도 안전)
+1. `npm run typecheck` (빌드 없이 타입만 검사)
 2. 개발 서버(포트 5288)에서 `node scripts/shot.mjs --at "#<id>-problem@0.4" …` 데스크톱 / `--mobile` / `--reduced`로 장면마다 스크린샷을 찍어 직접 본다. 콘솔 에러 0.
 3. 텍스트가 스토리보드와 일치하는지, 플레이스홀더가 없는지.

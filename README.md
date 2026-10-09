@@ -151,11 +151,11 @@ src/chapters/     챕터 = 독립 컴포넌트 + 자체 타임라인 (registry.t
 src/components/   공통 부품: StepScene(모션 문법), PipelineMap, Quiz, ChapterGrowth, Hud, Desk, Rough* …
 src/state/        진행도(localStorage), 모션 줄이기·모바일 감지(gsap.matchMedia), 레벨·역량·맵 파생
 src/lib/          스테이지 팔레트·선 정밀도, gsap 등록, rough.js 래퍼
-docs/             SPEC(요구사항), STORYBOARD, ARCHITECTURE, CHAPTER_GUIDE, HANDOFF
-scripts/          contrast.mjs(팔레트 대비 검증), shot.mjs(스크린샷), storyboard.mjs
+docs/             ARCHITECTURE(설계), CHAPTER_GUIDE(챕터 구현), STORYBOARD(장면 기획), CONTENT_REVIEW(콘텐츠 검수), readme(README 이미지)
+scripts/          contrast.mjs(팔레트 대비 검증), shot.mjs(스크린샷), scrollcheck.mjs(전체 스크롤 점검), storyboard.mjs
 ```
 
-자세한 설계와 규칙은 `docs/ARCHITECTURE.md`, `docs/CHAPTER_GUIDE.md`, `CLAUDE.md`에 있어요.
+자세한 설계와 규칙은 `docs/ARCHITECTURE.md`와 `docs/CHAPTER_GUIDE.md`에 있어요.
 
 ## 점검 도구
 
