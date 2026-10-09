@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode, type RefObject } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from 'react'
 import { gsap, ScrollTrigger, useGSAP } from '../lib/gsap'
 import { Rich } from '../lib/rich'
 import { UI } from '../content/ui'
@@ -99,6 +99,26 @@ function useNear(ref: RefObject<Element | null>) {
   return near
 }
 
+/**
+ * 그림 칸이 설계 크기(440×480)보다 작은가. 태블릿에서는 글과 나란히 두느라 그림이 0.85~0.95배로 줄어 작은 라벨이 8~9px이 된다
+ * → 모바일(index.css)처럼 작은 라벨을 키운다(--fs-lift, diagram.tsx fs()). 글자 폭을 재는 장면도 있어서
+ * 그림을 그리기 전에 정하고, 창 크기가 바뀌어 값이 달라지면 타임라인을 다시 만든다.
+ */
+function useSmallFigure(ref: RefObject<HTMLElement | null>) {
+  const [small, setSmall] = useState(false)
+  useLayoutEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const check = () => setSmall(el.clientWidth < 440 || el.clientHeight < 480)
+    check()
+    const ro = new ResizeObserver(check)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [ref])
+  return small
+}
+const LIFT = { '--fs-lift': '7px' } as CSSProperties
+
 // GSAP은 요소의 transform을 처음 다룰 때 계산된 스타일(transform-origin 등)을 읽는데, SVG 요소에서는 이 읽기가 레이아웃을 강제한다.
 // 첫 렌더에서 tween마다 '읽기 → 쓰기'가 번갈아 일어나면 대상 수만큼 레이아웃을 다시 계산한다(장면 하나에 수십 번, 느린 폰에서 수백 ms).
 // 첫 렌더 전에 transform을 다룰 대상을 한꺼번에 읽어 GSAP 캐시에 넣어 두면 레이아웃은 한 번만 계산된다.
@@ -119,6 +139,7 @@ function ScrubScene({ id, kind, scene, diagram, build, onStep, tall }: Props) {
   const list = useRef<HTMLOListElement>(null)
   const { mobile } = useEnv()
   const near = useNear(root)
+  const small = useSmallFigure(diag)
   const n = scene.steps.length
   const onStepRef = useRef(onStep)
   onStepRef.current = onStep
@@ -170,7 +191,7 @@ function ScrubScene({ id, kind, scene, diagram, build, onStep, tall }: Props) {
         onLeaveBack: update,
       })
     },
-    { scope: root, dependencies: [mobile, n, near], revertOnUpdate: true },
+    { scope: root, dependencies: [mobile, n, near, small], revertOnUpdate: true },
   )
 
   return (
@@ -183,7 +204,7 @@ function ScrubScene({ id, kind, scene, diagram, build, onStep, tall }: Props) {
           tall ? 'h-[60svh]' : 'h-[56svh]'
         }`}
       >
-        <div ref={diag} className="mx-auto h-full w-full max-w-[36rem]">
+        <div ref={diag} className="mx-auto h-full w-full max-w-[36rem]" style={small ? LIFT : undefined}>
           {near && diagram()}
         </div>
       </div>
@@ -205,6 +226,7 @@ function Snapshot({ diagram, build, n, i }: { diagram: () => ReactNode; build: S
   const ref = useRef<HTMLDivElement>(null)
   const { mobile } = useEnv()
   const near = useNear(ref)
+  const small = useSmallFigure(ref)
   useGSAP(
     () => {
       if (!near || !ref.current) return
@@ -214,10 +236,10 @@ function Snapshot({ diagram, build, n, i }: { diagram: () => ReactNode; build: S
       primeTransforms(tl)
       tl.time(Math.min(i + 0.97, n))
     },
-    { scope: ref, dependencies: [mobile, n, i, near], revertOnUpdate: true },
+    { scope: ref, dependencies: [mobile, n, i, near, small], revertOnUpdate: true },
   )
   return (
-    <div ref={ref} className="mx-auto h-full w-full max-w-[36rem]">
+    <div ref={ref} className="mx-auto h-full w-full max-w-[36rem]" style={small ? LIFT : undefined}>
       {near && diagram()}
     </div>
   )
