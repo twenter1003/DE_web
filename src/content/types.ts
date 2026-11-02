@@ -19,7 +19,7 @@ export type ChapterId = (typeof CHAPTER_IDS)[number]
 /** 퀴즈가 있는(완료 처리되는) 챕터 */
 export const QUIZ_CHAPTERS = CHAPTER_IDS.filter((id) => id !== 'epilogue')
 
-export type Who = 'juni' | 'ceo' | 'seok' | 'taeo' | 'sora' | 'minjae' | 'daon' | 'ria' | 'saebom'
+export type Who = 'juni' | 'ceo' | 'seok' | 'taeo' | 'sora' | 'minjae' | 'daon' | 'ria' | 'saebom' | 'jihu'
 export type Mood = 'panic' | 'focus' | 'proud' | 'relaxed'
 
 export interface Line {
