@@ -25,4 +25,6 @@ function prerenderInDev(): Plugin {
 export default defineConfig({
   base: './',
   plugins: [react(), tailwindcss(), prerenderInDev()],
+  // 페이지가 둘: 기존 DE 트랙(index.html)과 PM 트랙 시범판(pm.html)
+  build: { rollupOptions: { input: { main: 'index.html', pm: 'pm.html' } } },
 })

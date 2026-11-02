@@ -27,7 +27,12 @@ export function App() {
         </main>
         <footer className="paper-grid text-ink" style={stageVars(STAGES[11]) as React.CSSProperties}>
           <div className="mx-auto max-w-[80rem] px-4 py-10 text-sm text-muted md:px-8 lg:pl-[calc(var(--rail-w)+2rem)]">
-            {UI.footer.note}
+            <p>{UI.footer.note}</p>
+            <p className="mt-3">
+              <a href="./pm.html" className="underline underline-offset-4">
+                PM 트랙 시범판 보기 →
+              </a>
+            </p>
           </div>
         </footer>
       </ProgressProvider>

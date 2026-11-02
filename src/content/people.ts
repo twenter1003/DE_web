@@ -11,6 +11,7 @@ export const PEOPLE: Record<Who, { name: string; role: string }> = {
   daon: { name: '다온', role: '데이터 분석가' },
   ria: { name: '리아', role: 'ML 엔지니어' },
   saebom: { name: '새봄', role: '새로 온 신입' },
+  jihu: { name: '지후', role: 'PM' },
 }
 
 // 레벨

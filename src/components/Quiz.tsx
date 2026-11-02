@@ -4,10 +4,14 @@ import type { ChapterId, Quiz as QuizT } from '../content/types'
 import { Rich } from '../lib/rich'
 import { useProgress } from '../state/progress'
 
-/** 확인 퀴즈 1문항. 답을 고르면 모든 보기의 해설이 열리고, 틀려도 해설을 보면 통과 */
+/** 확인 퀴즈 1문항(DE 트랙). 진행도 저장은 DE 진행도에 맡긴다 */
 export function Quiz({ id, quiz }: { id: ChapterId; quiz: QuizT }) {
   const { answers, answer } = useProgress()
-  const saved = answers[id]
+  return <QuizView id={id} quiz={quiz} saved={answers[id]} onAnswer={(option) => answer(id, option)} />
+}
+
+/** 확인 퀴즈 1문항. 답을 고르면 모든 보기의 해설이 열리고, 틀려도 해설을 보면 통과. 어느 트랙에서든 쓸 수 있게 저장은 밖에서 받는다 */
+export function QuizView({ id, quiz, saved, onAnswer }: { id: string; quiz: QuizT; saved: string | undefined; onAnswer: (option: string) => void }) {
   const [pick, setPick] = useState<string | null>(saved ?? null)
   const name = useId()
   const done = Boolean(saved)
@@ -32,7 +36,7 @@ export function Quiz({ id, quiz }: { id: ChapterId; quiz: QuizT }) {
           e.preventDefault()
           if (pick && !done) {
             submitted.current = true
-            answer(id, pick)
+            onAnswer(pick)
           }
         }}
       >
